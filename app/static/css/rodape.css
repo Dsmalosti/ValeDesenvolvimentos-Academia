@@ -1,0 +1,25 @@
+.rodape {
+    height: 100px;
+    margin-top: 45px;
+    background-color: var(--cor-principal);
+    padding-top: 30px;
+}
+
+.rodape-conteudo {
+    display: flex;
+    justify-content: center;
+}
+
+.rodape-conteeudo__item-lista {
+    display: flex;
+    justify-content: center;
+}
+
+.rodape-conteudo__item-link {
+    text-decoration: none;
+    color: var(--amarelo);
+}
+
+.rodape-conteudo__item-link:hover {
+    color: var(--cor-de-fundo) !important;
+}

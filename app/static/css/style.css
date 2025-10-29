@@ -1,0 +1,30 @@
+@import url(cabecalho.css);
+@import url(notificacao.css);
+@import url(administracao.css);
+@import url(rodape.css);
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap');
+
+:root {
+    --cor-de-fundo: #FFFFFF;
+    --cor-principal: #002f52;
+    --cor-titulo: #ebecee;
+    --azul: #0088FF;
+    --amarelo: #FFCC00;
+    --vermelho: #FF2227;
+    --verde: #34C759;
+    --roxo: #CB30E0;
+    --fonte-principal: "Montserrat", sans-serif;
+    --fonte-secundaria: "Josefin Sans";
+}
+
+body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: var(--cor-de-fundo);
+    font-family: var(--fonte-principal);
+    font-size: 12px;
+    font-weight: 400;
+}
+

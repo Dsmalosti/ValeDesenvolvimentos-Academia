@@ -1,0 +1,46 @@
+.administracao {
+    margin-top: 20px;
+}
+
+.administracao-lista {
+    display: flex;
+    justify-content:space-around;
+}
+
+.administracao-lista__topo,
+.administracao-lista__baixo {
+    display: flex;
+    align-items: center;
+    border: 0.2px solid #a7a7a7;
+    border-radius: 16px;
+    height: 80px;
+    width: 170px;
+    padding: 20px;
+}
+
+.administracao-lista__baixo {
+    margin-top: 20px;
+}
+
+.administracao-lista__direita {
+    margin-right: 20px;
+}
+
+.administracao-lista__item {
+    display: flex;
+}
+
+.administracao-lista__item-link {
+    margin-left: 5px;
+}
+
+.administracao-lista__item-link {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 800;
+}
+
+.administracao-lista__item-link:hover {
+    color: var(--azul);
+
+}
