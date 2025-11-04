@@ -8,7 +8,27 @@
         <h3>Cadastro de Aluno</h3>
     </div>
 
-    <form action="" method="post" class="row mt-4"></form>
+    <form action="" method="post" class="row mt-4">
+        {{ form.csrf_token }}
+
+        {{ form.nome.label() }}
+        {{ form.nome(class="form-control") }}
+
+        {{ form.email.label() }}
+        {{ form.email(class="form-control") }}
+
+        {{ form.telefone.label() }}
+        {{ form.telefone(class="form-control") }}
+
+        {{ form.data_nascimento.label() }}
+        {{ form.data_nascimento(class="form-control") }}
+
+        {{ form.cpf.label() }}
+        {{ form.cpf(class="form-control") }}
+
+        {{ form.BtnSubmit(class="btn btn-primary col-12 mt-4") }}
+
+    </form>
 
 </div>
 

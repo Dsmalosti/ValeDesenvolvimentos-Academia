@@ -1,5 +1,8 @@
 from app import app
-from flask import render_template, url_for
+from flask import render_template, url_for, request, redirect
+
+from app.models import Aluno
+from app.form import AlunoForm
 
 
 # Rota inicial
@@ -13,6 +16,12 @@ def painelAdm():
     return render_template('painel-administrativo.html')
 
 # Rota cadastro aluno
-@app.route('/cadastro-aluno/')
+@app.route('/cadastro-aluno/', methods=['GET', 'POST'])
 def cadastroAluno():
-    return render_template('cadastro-aluno.html')
+    form = AlunoForm()
+    context = {}
+    if form.validate_on_submit():
+        form.save()
+        return redirect(url_for('homepage'))
+    
+    return render_template('cadastro-aluno.html', context=context, form=form)
