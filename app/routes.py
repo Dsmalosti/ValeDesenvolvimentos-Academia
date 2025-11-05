@@ -3,7 +3,7 @@ from flask import render_template, url_for, request, redirect
 from flask_login import login_user, logout_user, current_user
 
 from app.models import Aluno
-from app.form import AlunoForm, UserForm
+from app.form import AlunoForm, UserForm, LoginForm
 
 
 # Rota inicial
@@ -11,8 +11,21 @@ from app.form import AlunoForm, UserForm
 def homepage():
     return render_template('index.html')
 
+# rota de login
+@app.route('/login/', methods=['GET', 'POST'])
+def loginUser():
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        user = form.login()
+        login_user(user, remember=True)
+        return redirect(url_for('homepage'))
+    
+    return render_template('tela-login.html', form=form)
+
+
 # Cadastro instrutor
-@app.route('/cadastro-instrutor', methods=['GET', 'POST'])
+@app.route('/cadastro-instrutor/', methods=['GET', 'POST'])
 def cadastroInstrutor():
     form = UserForm()
     if form.validate_on_submit():
@@ -22,6 +35,12 @@ def cadastroInstrutor():
         login_user(user, remember=True)
         return redirect(url_for('homepage'))
     return render_template('cadastro-instrutor.html', form=form)
+
+# Rota para sair deslogar
+@app.route('/sair/')
+def logout():
+    logout_user()
+    return redirect(url_for('loginUser'))
 
 # Rota painel administrativo
 @app.route('/painel-adm/')

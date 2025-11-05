@@ -30,6 +30,27 @@ class UserForm(FlaskForm):
         db.session.add(user)
         db.session.commit()
         return user
+    
+class LoginForm(FlaskForm):
+    email = StringField('E-Mail', validators=[DataRequired(), Email()])
+    senha = PasswordField('Senha', validators=[DataRequired()])
+    btnSubmit = SubmitField('Login')
+
+    def login(self):
+        # Recuperar o usuario do e-mail
+        user = User.query.filter_by(email=self.email.data).first()
+
+        #verifica se a senha é valida
+        if user:
+            if bcrypt.check_password_hash(user.senha, self.senha.data.encode('utf-8')):
+                #Retorna usuario
+                return user
+            raise Exception('Senha incorreta!!!')
+        else:
+            raise Exception('Usuário não encontrado!!!')
+            
+
+        return user
 
 class AlunoForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired()])
