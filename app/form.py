@@ -59,15 +59,3 @@ class AlunoForm(FlaskForm):
     data_nascimento = DateField('Data de Nascimento', validators=[DataRequired()], format='%Y-%m-%d')
     cpf = StringField('CPF', validators=[DataRequired()])
     BtnSubmit = SubmitField('Cadastrar')
-
-    def save(self):
-        aluno = Aluno(
-            nome = self.nome.data,
-            email = self.email.data,
-            telefone = self.telefone.data,
-            data_nascimento = self.data_nascimento.data,
-            cpf = self.cpf.data
-        )
-
-        db.session.add(aluno)
-        db.session.commit()

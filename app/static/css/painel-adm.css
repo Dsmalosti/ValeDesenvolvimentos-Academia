@@ -1,0 +1,56 @@
+.titulo { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+
+.notificacoes {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+.notificacao {
+  background: #e0e7ff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+.notificacao strong { font-size: 20px; color: #2d2dff; }
+
+.alunos {
+  background: #f8f5ff;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  font-weight: bold;
+
+}
+
+.alunos-titulo {
+  font-weight: 700;
+}
+
+.alunos-container {
+    height: 300px;
+    overflow-y: scroll;
+
+}
+
+.alunos-container_card {
+  background: #f0eaff;
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.alunos-card_icone {
+  background: #8a7efb;
+  color: white;
+  border-radius: 50%;
+  padding: 8px;
+  font-weight: bold;
+  width: 30px;
+  text-align: center;
+}
+
+.butao-aluno {
+  margin: 20px 0 0 50px;
+}

@@ -4,8 +4,100 @@
 
 {% include 'cabecalho.html' %}
 
+<h2 class="titulo">Painel de Controle</h2>
 
 {% include 'administracao.html' %}
+<!--
+<div class="container">
+  <div class="notificacoes">
+    <div class="notificacao">
+      <p>Alunos ativos</p>
+      <strong>{{ total_alunos }}</strong>
+    </div>
+    <div class="notificacao">
+      <p>Fichas de treino</p>
+      <strong>total ficha</strong>
+    </div>
+    <div class="notificacao">
+      <p>Planos ativos</p>
+      <strong>tital planos</strong>
+    </div>
+  </div>
+-->
+
+<form id="form-excluir" method="post" action="{{ url_for('excluir_alunos') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <!-- 👥 Alunos -->
+  <div class="alunos">
+    <h3 class="alunos-titulo">Alunos</h3>
+
+    <div class="alunos-container">
+
+      {% if alunos %}
+      {% for aluno in alunos %}
+
+      <ul>
+        <li>
+
+          <div class="alunos-container_card">
+            <span class="alunos-card_icone">A</span>
+            <span>{{ aluno.nome }}</span>
+            <div class="acoes">
+              <a href="{{ url_for('editar_aluno', id=aluno.id) }}" class="btn btn-primary btn-sm">Editar</a>
+              <input type="checkbox" class="checkbox-aluno" name="selected" value="{{ aluno.id }}">
+            </div>
+          </div>
+
+        </li>
+      </ul>
+
+      {% endfor %}
+      {% else %}
+      <h1>Não existe alunos cadastrados!</h1>
+      {% endif %}
+
+    </div>
+
+    <button id="btn-excluir" class="butao-aluno btn btn-danger" type="submit" disabled>
+      Excluir
+    </button>
+
+
+
+  </div>
+</form>
+
+
+
+<!-- Confirmação via JS para evitar exclusões acidentais -->
+<script>
+  // Ativa/desativa botão excluir conforme checkboxes marcados
+  const checkboxes = document.querySelectorAll('.checkbox-aluno');
+  const btnExcluir = document.getElementById('btn-excluir');
+  const formExcluir = document.getElementById('form-excluir');
+
+  function atualizarBotao() {
+    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+    btnExcluir.disabled = !anyChecked;
+  }
+
+  checkboxes.forEach(cb => cb.addEventListener('change', atualizarBotao));
+
+  // Confirma antes de submeter o form
+  formExcluir.addEventListener('submit', function(e) {
+    const count = Array.from(checkboxes).filter(cb => cb.checked).length;
+    if (count === 0) {
+      e.preventDefault();
+      alert('Selecione ao menos um aluno para excluir.');
+      return;
+    }
+    const confirmacao = confirm(`Tem certeza que deseja excluir ${count} aluno(s)? Essa ação não pode ser desfeita.`);
+    if (!confirmacao) e.preventDefault();
+  });
+
+  // inicializa estado do botão
+  atualizarBotao();
+</script>
 
 {% include 'rodape.html' %}
 
