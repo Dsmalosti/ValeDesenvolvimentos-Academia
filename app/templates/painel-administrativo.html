@@ -25,7 +25,7 @@
   </div>
 -->
 
-<form id="form-excluir" method="post" action="{{ url_for('excluir_alunos') }}">
+<form id="form-excluir" method="post" action="{{ url_for('alunos.excluirAlunos') }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <!-- 👥 Alunos -->
   <div class="alunos">
@@ -43,7 +43,7 @@
             <span class="alunos-card_icone">A</span>
             <span>{{ aluno.nome }}</span>
             <div class="acoes">
-              <a href="{{ url_for('editar_aluno', id=aluno.id) }}" class="btn btn-primary btn-sm">Editar</a>
+              <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id) }}" class="btn btn-primary btn-sm">Editar</a>
               <input type="checkbox" class="checkbox-aluno" name="selected" value="{{ aluno.id }}">
             </div>
           </div>
