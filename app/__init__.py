@@ -47,7 +47,9 @@ def create_app():
 
     # Importa e registra os blueprints aqui dentro
     from app.alunos.routes import alunos_blueprint
+    from app.instrutores.routes import instrutores_blueprints
     app.register_blueprint(alunos_blueprint)
+    app.register_blueprint(instrutores_blueprints)
 
     # Outras rotas
     from app.routes import main_blueprint

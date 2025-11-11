@@ -6,14 +6,14 @@
 
             <div class="administracao-lista__topo">
                 <li class="administracao-lista__item">
-                    <img class="administracao-lista__item-img" src="../static/imagens/person_add_24dp_0088FF_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="administracao-lista__item-img" src="{{ url_for('static', filename='imagens/person_add_24dp_0088FF_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
                     <a class="administracao-lista__item-link" href="{{ url_for('alunos.cadastroAluno') }}">Cadastrar Aluno</a>
                 </li>
             </div>
 
             <div class="administracao-lista__baixo">
                 <li class="administracao-lista__item">
-                    <img class="administracao-lista__item-img" src="../static/imagens/create_new_folder_24dp_FF2227_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="administracao-lista__item-img" src="{{ url_for('static', filename='imagens/create_new_folder_24dp_FF2227_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
                     <a class="administracao-lista__item-link" href="#">Criar novo plano</a>
                 </li>
             </div>
@@ -24,15 +24,15 @@
 
             <div class="administracao-lista__topo">
                 <li class="administracao-lista__item">
-                    <img class="administracao-lista__item-img" src="../static/imagens/note_add_24dp_34C759_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="administracao-lista__item-img" src="{{ url_for('static', filename='imagens/note_add_24dp_34C759_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
                     <a class="administracao-lista__item-link" href="#">Criar ficha de treino</a>
                 </li>
             </div>
 
             <div class="administracao-lista__baixo">
                 <li class="administracao-lista__item">
-                    <img class="administracao-lista__item-img" src="../static/imagens/date_range_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg" alt="">
-                    <a class="administracao-lista__item-link" href="{{ url_for('main.cadastroInstrutor') }}">Painel administrativo</a>
+                    <img class="administracao-lista__item-img" src="{{ url_for('static', filename='imagens/date_range_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
+                    <a class="administracao-lista__item-link" href="{{ url_for('instrutores.cadastroInstrutor') }}">Painel administrativo</a>
                 </li>
             </div>
 

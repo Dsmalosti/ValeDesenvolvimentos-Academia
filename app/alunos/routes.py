@@ -37,7 +37,7 @@ def editarAluno(aluno_id):
         form.populate_obj(aluno)  # Atualiza os campos automaticamente
         db.session.commit()
         flash('Aluno atualizado com sucesso!', 'success')
-        return redirect(url_for('main.painelAdm'))
+        return redirect(url_for('instrutores.painelAdm'))
 
     return render_template('aluno_form.html', form=form, titulo=f'Editar Aluno: {aluno.nome}')
 
@@ -50,7 +50,7 @@ def excluirAlunos():
 
     if not ids:
         flash('Nenhum aluno selecionado.', 'warning')
-        return redirect(url_for('painelAdm'))
+        return redirect(url_for('instrutores.painelAdm'))
 
     # 2) converter p/ inteiros e validar
     valid_ids = []
@@ -64,13 +64,13 @@ def excluirAlunos():
 
     if not valid_ids:
         flash('IDs inválidos enviados.', 'danger')
-        return redirect(url_for('painelAdm'))
+        return redirect(url_for('instrutores.painelAdm'))
 
     # 3) segurança extra: checar permissão do usuário
     # Exemplo: permitir exclusão só se current_user.is_admin == True
     if not getattr(current_user, 'is_admin', True):  # ajuste a sua lógica
         flash('Você não tem permissão para excluir alunos.', 'danger')
-        return redirect(url_for('main.painelAdm'))
+        return redirect(url_for('instrutores.painelAdm'))
 
     try:
         # 4a) Carregar os objetos e excluir um a um (mais seguro para cascades)
@@ -78,7 +78,7 @@ def excluirAlunos():
 
         if not to_delete:
             flash('Nenhum aluno encontrado para os IDs informados.', 'warning')
-            return redirect(url_for('main.painelAdm'))
+            return redirect(url_for('instrutores.painelAdm'))
 
         # Opcional: filtrar só alunos que pertencem ao contexto do usuário
         # to_delete = [a for a in to_delete if a.empresa_id == current_user.empresa_id]
@@ -94,4 +94,4 @@ def excluirAlunos():
         traceback.print_exc()
         flash('Erro ao excluir os alunos. Veja logs para detalhes.', 'danger')
 
-    return redirect(url_for('main.painelAdm'))
+    return redirect(url_for('instrutores.painelAdm'))
