@@ -18,7 +18,9 @@ def cadastroAluno():
             email=form.email.data,
             telefone=form.telefone.data,
             data_nascimento=form.data_nascimento.data,
-            cpf=form.cpf.data
+            cpf=form.cpf.data,
+            ativo=form.ativo.data,
+            plano_id=form.plano_id.data
         )
         db.session.add(aluno)
         db.session.commit()

@@ -28,6 +28,15 @@
             {{ form.cpf.label }} {{ form.cpf(class="form-control") }}
         </div>
 
+        <div class="mb-3">
+            {{ form.plano_id.label(class="form-label") }}
+            {{ form.plano_id(class="form-select") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.ativo.label }} {{ form.ativo(class="form-control") }}
+        </div>
+
         {{ form.BtnSubmit(class="btn btn-primary") }}
         <a href="{{ url_for('instrutores.painelAdm') }}" class="btn btn-secondary">Cancelar</a>
     </form>

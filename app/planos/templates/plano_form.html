@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>{{ titulo }}</h2>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form.nome.label }} {{ form.nome(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.valor.label }} {{ form.valor(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.duracao_dias.label }} {{ form.duracao_dias(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.descricao.label }} {{ form.descricao(class="form-control") }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.ativo.label }} {{ form.ativo(class="form-control") }}
+        </div>
+
+        {{ form.btnSubmit(class="btn btn-primary") }}
+        <a href="{{ url_for('main.homepage') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+{% endblock %}

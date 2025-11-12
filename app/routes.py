@@ -16,7 +16,7 @@ def homepage():
     aluno = Aluno.query.all()
 
     # verifica quantos alunos ativos e manda para notifição
-    ativos = sum(1 for a in aluno if a.status == 'ativo')
+    ativos = sum(1 for a in aluno if a.ativo == 'ativo')
 
     # calcular numero de aniversariantes 
 

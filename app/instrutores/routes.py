@@ -42,7 +42,7 @@ def logout():
 @login_required
 def painelAdm():
     # 🔹 Buscar apenas alunos ativos
-    alunos_ativos = Aluno.query.filter_by(status='ativo').all()
+    alunos_ativos = Aluno.query.filter_by(ativo='ativo').all()
     #Testar sem alunos
     #alunos_ativos=[]
 

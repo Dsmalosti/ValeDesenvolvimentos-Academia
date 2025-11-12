@@ -43,13 +43,15 @@ def create_app():
     login_manager.init_app(app)
     csrf.init_app(app)
 
-    login_manager.login_view = 'login'
+    login_manager.login_view = 'instrutores.login'
 
     # Importa e registra os blueprints aqui dentro
     from app.alunos.routes import alunos_blueprint
     from app.instrutores.routes import instrutores_blueprints
+    from app.planos.routes import planos_blueprints
     app.register_blueprint(alunos_blueprint)
     app.register_blueprint(instrutores_blueprints)
+    app.register_blueprint(planos_blueprints)
 
     # Outras rotas
     from app.routes import main_blueprint
