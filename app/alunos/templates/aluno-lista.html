@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="Titulo">Alunos</h2>
+
+<div class="container">
+    <ul>
+        {% if alunos %}
+        {% for aluno in alunos %}
+
+        <li>
+            <span>{{ aluno.nome }}</span>
+            <span>{{ aluno.email }}</span>
+            <span>{{ aluno.cpf }}</span>
+            <div class="acoes">
+                <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id)}}" class="btn btn-primary">Editar</a>
+                <input type="checkbox" class="checkbox-plano" name="selected" value="{{ aluno.id }}">
+                <form action="{{ url_for('alunos.excluirAluno', aluno_id=aluno.id) }}" method="POST"
+                    style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Tem certeza que deseja excluir este aluno?');">Excluir</button>
+                </form>
+
+            
+            </div>
+        </li>
+
+        {% endfor %}
+        {% else %}
+        <li><span>Nenhum aluno cadastrado</span></li>
+        {% endif %}
+    </ul>
+
+</div>
+
+{% endblock %}

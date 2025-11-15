@@ -25,7 +25,7 @@
             <div class="administracao-lista__topo">
                 <li class="administracao-lista__item">
                     <img class="administracao-lista__item-img" src="{{ url_for('static', filename='imagens/note_add_24dp_34C759_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
-                    <a class="administracao-lista__item-link" href="#">Criar ficha de treino</a>
+                    <a class="administracao-lista__item-link" href="{{ url_for('planos.listarPlanos') }}">Criar ficha de treino</a>
                 </li>
             </div>
 
@@ -39,5 +39,8 @@
         </div>
 
     </ul>
+
+    <a href="{{ url_for('instrutores.listarInstrutores') }}">Listar instrutor</a>
+    <a href="{{ url_for('alunos.listarAlunos') }}">Listar alunos</a>
 
 </div>

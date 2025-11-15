@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="Titulo">Instrutores</h2>
+
+<div class="container">
+    <ul>
+        {% if instrutores %}
+        {% for instrutor in instrutores %}
+
+        <li>
+            <span>{{ instrutor.nome }}</span>
+            <span>{{ instrutor.email }}</span>
+            <span>{{ instrutor.senha }}</span>
+            <div class="acoes">
+                <a href="{{ url_for('instrutores.editarInstrutor', instrutor_id=instrutor.id)}}" class="btn btn-primary">Editar</a>
+                <input type="checkbox" class="checkbox-instrutor" name="selected" value="{{ instrutor.id }}">
+                <form action="{{ url_for('instrutores.excluirInstrutor', instrutor_id=instrutor.id) }}" method="POST"
+                    style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Tem certeza que deseja excluir este plano?');">Excluir</button>
+                </form>
+            
+            </div>
+        </li>
+
+        {% endfor %}
+        {% else %}
+        <li><span>Nenhum instrutor cadastrado</span></li>
+        {% endif %}
+    </ul>
+
+</div>
+
+{% endblock %}

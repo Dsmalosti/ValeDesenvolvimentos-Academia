@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 
+
+
 # Carrega o .env
 dotenv_path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv(dotenv_path)
@@ -47,11 +49,11 @@ def create_app():
 
     # Importa e registra os blueprints aqui dentro
     from app.alunos.routes import alunos_blueprint
-    from app.instrutores.routes import instrutores_blueprints
-    from app.planos.routes import planos_blueprints
+    from app.instrutores.routes import instrutores_blueprint
+    from app.planos.routes import planos_blueprint
     app.register_blueprint(alunos_blueprint)
-    app.register_blueprint(instrutores_blueprints)
-    app.register_blueprint(planos_blueprints)
+    app.register_blueprint(instrutores_blueprint)
+    app.register_blueprint(planos_blueprint)
 
     # Outras rotas
     from app.routes import main_blueprint

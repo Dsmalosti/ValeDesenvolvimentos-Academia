@@ -21,10 +21,12 @@
         {{ form.email(class="form-control") }}
 
         {{ form.senha.label() }}
-        {{ form.senha(class="form-control") }}
+        {{ form.senha(class="form-control", required=False) }}
+        <small class="text-muted">Deixe em branco para manter a senha atual.</small>
 
         {{ form.confirmacao_senha.label() }}
-        {{ form.confirmacao_senha(class="form-control") }}
+        {{ form.confirmacao_senha(class="form-control", required=False) }}
+        <small class="text-muted">Deixe em branco para manter a senha atual.</small>
 
         {{ form.BtnSubmit(class="btn btn-primary col-12 mt-4") }}
 

@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, DateField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Optional
 
 from app import db, bcrypt
 from app.models import User
@@ -11,8 +11,8 @@ class UserForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired()])
     sobrenome = StringField('Sobrenome', validators=[DataRequired()])
     email = StringField('E-Mail', validators=[DataRequired(), Email()])
-    senha = PasswordField('Senha', validators=[DataRequired()])
-    confirmacao_senha = PasswordField('Senha', validators=[DataRequired(), EqualTo('senha')])
+    senha = PasswordField('Senha')
+    confirmacao_senha = PasswordField('Senha', validators=[EqualTo('senha')])
     BtnSubmit = SubmitField('Cadastrar')
 
     def validade_email(self, email):
@@ -20,7 +20,7 @@ class UserForm(FlaskForm):
             return ValidationError('Usuário já cadastrado com esse E-Mail!!!')
         
     def save(self):
-        senha = bcrypt.generate_password_hash(self.senha.data.encode('utf-8'))
+        senha = bcrypt.generate_password_hash(self.senha.data).decode('utf-8')
         user = User(
             nome = self.nome.data,
             sobrenome = self.sobrenome.data,

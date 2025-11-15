@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2 class="Titulo">Planos</h2>
+
+<div class="container">
+    <ul>
+        {% if planos %}
+        {% for plano in planos %}
+
+        <li>
+            <span>{{ plano.nome }}</span>
+            <span>{{ plano.valor }}</span>
+            <span>{{ plano.descricao }}</span>
+            <div class="acoes">
+                <a href="{{ url_for('planos.editarPlano', plano_id=plano.id)}}" class="btn btn-primary">Editar</a>
+                <input type="checkbox" class="checkbox-plano" name="selected" value="{{ plano.id }}">
+                <form action="{{ url_for('planos.excluirPlano', plano_id=plano.id) }}" method="POST"
+                    style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Tem certeza que deseja excluir este plano?');">Excluir</button>
+                </form>
+            
+            </div>
+        </li>
+
+        {% endfor %}
+        {% else %}
+        <li><span>Nenhum plano cadastrado</span></li>
+        {% endif %}
+    </ul>
+
+</div>
+
+{% endblock %}
