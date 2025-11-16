@@ -49,6 +49,18 @@ class Plano(db.Model):
 
     def __repr__(self):
         return f'<Plano {self.nome}>'
+    
+class Exercicio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    grupo_muscular = db.Column(db.String(50))
+    descricao = db.Column(db.Text)
+    video_url = db.Column(db.String(200))
+    ativo = db.Column(db.Boolean, default=True)
+
+    def __repr__(self):
+        return f"<Exercicio {self.nome}>"
+
 
 
     

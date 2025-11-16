@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-4">Lista de Exercícios</h2>
+
+    <a href="{{ url_for('exercicios.criarExercicio') }}" class="btn btn-primary mb-3">
+        + Adicionar Exercício
+    </a>
+
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th style="width: 180px;">Ações</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for exercicio in exercicios %}
+            <tr>
+                <td>{{ exercicio.id }}</td>
+                <td>{{ exercicio.nome }}</td>
+                <td>{{ exercicio.categoria }}</td>
+                <td>
+                    <a href="{{ url_for('exercicios.editarExercicio', exercicio_id=exercicio.id) }}" class="btn btn-sm btn-warning">
+                        Editar
+                    </a>
+
+                    <form action="{{ url_for('exercicios.excluirExercicio', exercicio_id=exercicio.id) }}" method="POST"
+                          style="display: inline-block;"
+                          onsubmit="return confirm('Tem certeza que deseja excluir?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-danger">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center py-3">
+                    Nenhum exercício cadastrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+{% endblock %}

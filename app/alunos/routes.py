@@ -39,6 +39,7 @@ def listarAlunos():
 
 # Rota para editar aluno
 @alunos_blueprint.route('/editar/<int:aluno_id>', methods=['GET', 'POST'])
+@login_required
 def editarAluno(aluno_id):
     aluno = Aluno.query.get_or_404(aluno_id)
     form = AlunoForm(obj=aluno)

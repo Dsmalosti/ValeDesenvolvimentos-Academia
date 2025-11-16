@@ -51,9 +51,11 @@ def create_app():
     from app.alunos.routes import alunos_blueprint
     from app.instrutores.routes import instrutores_blueprint
     from app.planos.routes import planos_blueprint
+    from app.exercicios.routes import exercicios_blueprint
     app.register_blueprint(alunos_blueprint)
     app.register_blueprint(instrutores_blueprint)
     app.register_blueprint(planos_blueprint)
+    app.register_blueprint(exercicios_blueprint)
 
     # Outras rotas
     from app.routes import main_blueprint

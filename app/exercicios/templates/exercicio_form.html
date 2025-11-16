@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                {% if form_type == 'edit' %}
+                    Editar Exercício
+                {% else %}
+                    Novo Exercício
+                {% endif %}
+            </h5>
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+                {{ form.csrf_token }}
+
+                <!-- Nome -->
+                <div class="mb-3">
+                    <label class="form-label">{{ form.nome.label }}</label>
+                    {{ form.nome(class="form-control", placeholder="Ex: Supino reto") }}
+                    {% for error in form.nome.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <!-- Grupo Muscular -->
+                <div class="mb-3">
+                    <label class="form-label">{{ form.grupo_muscular.label }}</label>
+                    {{ form.grupo_muscular(class="form-select") }}
+                    {% for error in form.grupo_muscular.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <!-- Descrição -->
+                <div class="mb-3">
+                    <label class="form-label">{{ form.descricao.label }}</label>
+                    {{ form.descricao(class="form-control", rows="3", placeholder="Detalhes, técnicas, observações...") }}
+                </div>
+
+                <!-- URL do Vídeo -->
+                <div class="mb-3">
+                    <label class="form-label">{{ form.video_url.label }}</label>
+                    {{ form.video_url(class="form-control", placeholder="https://youtube.com/...") }}
+                    {% for error in form.video_url.errors %}
+                        <small class="text-danger">{{ error }}</small>
+                    {% endfor %}
+                </div>
+
+                <!-- Ativo -->
+                <div class="form-check mb-3">
+                    {{ form.ativo(class="form-check-input") }}
+                    <label class="form-check-label">{{ form.ativo.label }}</label>
+                </div>
+
+                <!-- Botões -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        {% if form_type == 'edit' %}Salvar Alterações{% else %}Cadastrar{% endif %}
+                    </button>
+
+                    <a href="{{ url_for('exercicios.listarExercicios') }}" class="btn btn-secondary ms-2">
+                        Cancelar
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
