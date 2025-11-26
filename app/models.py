@@ -51,6 +51,8 @@ class Plano(db.Model):
         return f'<Plano {self.nome}>'
     
 class Exercicio(db.Model):
+    __tablename__ = 'exercicio'
+
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
     grupo_muscular = db.Column(db.String(50))
@@ -60,6 +62,51 @@ class Exercicio(db.Model):
 
     def __repr__(self):
         return f"<Exercicio {self.nome}>"
+
+class Ficha(db.Model):
+    __tablename__ = 'ficha'
+
+    id = db.Column(db.Integer, primary_key=True)
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
+    nome = db.Column(db.String(100), nullable=False)
+    observacoes = db.Column(db.Text)
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    ativo = db.Column(db.Boolean, default=True)
+    treinos = db.relationship('Treino', backref='ficha', lazy=True, cascade="all, delete")
+
+    #relacionamento 
+    aluno = db.relationship("Aluno", backref="fichas")
+
+
+    def __repr__(self):
+        return f"<Ficha {self.nome}>"
+    
+class Treino(db.Model):
+    __tablename__ = "treino"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    ficha_id = db.Column(db.Integer, db.ForeignKey('ficha.id'), nullable=False)
+    exercicio_id = db.Column(db.Integer, db.ForeignKey('exercicio.id'), nullable=False)
+
+    series = db.Column(db.Integer, nullable=False)
+    repeticoes = db.Column(db.Integer, nullable=False)
+    carga = db.Column(db.String(20))
+    descanso = db.Column(db.String(20))
+    ordem = db.Column(db.Integer, nullable=False)
+    observacoes = db.Column(db.Text)
+
+    # relacionamentos
+    exercicio = db.relationship("Exercicio", backref="treinos")
+    def __repr__(self):
+        return f"<Treino {self.id} - Ficha {self.ficha_id}>"
+
+
+
+
+
+
+
 
 
 

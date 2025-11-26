@@ -26,3 +26,4 @@ class ExercicioForm(FlaskForm):
         validators=[Optional(), URL(message="Informe uma URL válida.")]
     )
     ativo = BooleanField('Ativo', default=True)
+

@@ -1,0 +1,40 @@
+<h1>Lista de Fichas</h1>
+
+<a href="{{ url_for('fichas.criarFicha') }}">Criar Nova ficha</a>
+
+<table cellpadding="8">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nome da Ficha</th>
+            <th>Aluno</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for ficha in fichas %}
+        <tr>
+            <td>{{ ficha.id }}</td>
+            <td>{{ ficha.nome }}</td>
+            <td>{{ ficha.aluno.nome if ficha.aluno else '—' }}</td>
+            <td>
+                <a href="{{ url_for('fichas.fichaDetalhes', ficha_id=ficha.id) }}" 
+                    class="btn btn-primary btn-sm">
+                    Ver Detalhes
+                </a>
+                <a href="{{ url_for('fichas.editarFicha', ficha_id=ficha.id)}}" class="btn btn-primary">Editar</a>
+                <input type="checkbox" class="checkbox-ficha" name="selected" value="{{ ficha.id }}">
+
+                <form action="{{ url_for('fichas.excluirFicha', ficha_id=ficha.id) }}" method="POST"
+                    style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Tem certeza que deseja excluir este plano?');">Excluir</button>
+                </form>
+            </td>
+           
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
