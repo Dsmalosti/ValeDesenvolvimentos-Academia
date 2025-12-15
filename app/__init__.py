@@ -48,11 +48,11 @@ def create_app():
     login_manager.login_view = 'instrutores.login'
 
     # Importa e registra os blueprints aqui dentro
-    from app.alunos.routes import alunos_blueprint
-    from app.instrutores.routes import instrutores_blueprint
-    from app.planos.routes import planos_blueprint
-    from app.exercicios.routes import exercicios_blueprint
-    from app.fichas.routes import fichas_blueprint
+    from .blueprints.alunos.routes import alunos_blueprint
+    from .blueprints.instrutores.routes import instrutores_blueprint
+    from .blueprints.planos.routes import planos_blueprint
+    from .blueprints.exercicios.routes import exercicios_blueprint
+    from .blueprints.fichas.routes import fichas_blueprint
     app.register_blueprint(alunos_blueprint)
     app.register_blueprint(instrutores_blueprint)
     app.register_blueprint(planos_blueprint)

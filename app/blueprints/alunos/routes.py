@@ -1,7 +1,7 @@
 from app import  db
 from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
-from app.alunos.form import AlunoForm
+from app.blueprints.alunos.form import AlunoForm
 from app.models import Aluno
 
 alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos', template_folder='templates')

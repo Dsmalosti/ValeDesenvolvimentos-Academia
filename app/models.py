@@ -63,6 +63,7 @@ class Exercicio(db.Model):
     def __repr__(self):
         return f"<Exercicio {self.nome}>"
 
+
 class Ficha(db.Model):
     __tablename__ = 'ficha'
 
@@ -72,34 +73,55 @@ class Ficha(db.Model):
     observacoes = db.Column(db.Text)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)
-    treinos = db.relationship('Treino', backref='ficha', lazy=True, cascade="all, delete")
 
-    #relacionamento 
+    # relacionamento com aluno
     aluno = db.relationship("Aluno", backref="fichas")
 
+    # cada ficha tem vários treinos
+    treinos = db.relationship("Treino", backref="ficha", lazy=True, cascade="all, delete")
 
     def __repr__(self):
         return f"<Ficha {self.nome}>"
-    
+
+
 class Treino(db.Model):
-    __tablename__ = "treino"
+    __tablename__ = 'treino'
+
+    id = db.Column(db.Integer, primary_key=True)
+    ficha_id = db.Column(db.Integer, db.ForeignKey('ficha.id'), nullable=False)
+
+    dia_semana = db.Column(db.String(20), nullable=True)
+
+    # cada treino tem vários exercícios
+    exercicios = db.relationship(
+        "TreinoExercicio",
+        backref="treino",
+        lazy=True,
+        cascade="all, delete"
+    )
+
+    def __repr__(self):
+        return f"<Treino {self.id} - Ficha {self.ficha_id}>"
+
+
+class TreinoExercicio(db.Model):
+    __tablename__ = 'treino_exercicio'
 
     id = db.Column(db.Integer, primary_key=True)
 
-    ficha_id = db.Column(db.Integer, db.ForeignKey('ficha.id'), nullable=False)
+    treino_id = db.Column(db.Integer, db.ForeignKey('treino.id'), nullable=False)
     exercicio_id = db.Column(db.Integer, db.ForeignKey('exercicio.id'), nullable=False)
 
+    # acesso ao exercício
+    exercicio = db.relationship("Exercicio")
+
     series = db.Column(db.Integer, nullable=False)
-    repeticoes = db.Column(db.Integer, nullable=False)
-    carga = db.Column(db.String(20))
-    descanso = db.Column(db.String(20))
-    ordem = db.Column(db.Integer, nullable=False)
+    repeticoes = db.Column(db.String(50), nullable=False)
+    carga = db.Column(db.String(50))
     observacoes = db.Column(db.Text)
 
-    # relacionamentos
-    exercicio = db.relationship("Exercicio", backref="treinos")
     def __repr__(self):
-        return f"<Treino {self.id} - Ficha {self.ficha_id}>"
+        return f"<TreinoExercicio {self.exercicio.nome}>"
 
 
 

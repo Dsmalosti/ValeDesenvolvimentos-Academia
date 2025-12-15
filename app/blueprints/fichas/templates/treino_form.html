@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2>{{ 'Editar Treino' if form.id.data else 'Cadastrar Treino' }}</h2>
+    <hr>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <!-- Campo oculto ID (para edição) -->
+        {{ form.id }}
+
+        <!-- Campo oculto Ficha -->
+        {{ form.ficha_id }}
+
+        <!-- Dia da Semana -->
+        <div class="mb-3">
+            <label for="dia_semana" class="form-label">{{ form.dia_semana.label }}</label>
+            {{ form.dia_semana(class="form-select") }}
+            {% for error in form.dia_semana.errors %}
+                <div class="text-danger">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- Botões -->
+        <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+        <a href="{{ url_for('fichas.fichaDetalhes', ficha_id=form.ficha_id.data) }}" class="btn btn-secondary">
+            Voltar
+        </a>
+
+    </form>
+
+</div>
+{% endblock %}

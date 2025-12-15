@@ -1,8 +1,8 @@
 from app import  db
 from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
-from app.fichas.form import TreinoForm, FichaForm
-from app.models import Treino, Aluno, Ficha, Exercicio
+from app.blueprints.fichas.form import TreinoForm, FichaForm, TreinoExercicioForm
+from app.models import Treino, Aluno, Ficha, Exercicio, TreinoExercicio
 
 fichas_blueprint = Blueprint('fichas', __name__, url_prefix='/fichas', template_folder='templates')
 
@@ -73,46 +73,81 @@ def excluirFicha(ficha_id):
 
 # criar treino
 @fichas_blueprint.route("/<int:ficha_id>/treino/novo", methods=["GET", "POST"])
+@login_required
 def criarTreino(ficha_id):
     ficha = Ficha.query.get_or_404(ficha_id)
 
     form = TreinoForm()
-
-    # pegar o maior número de ordem já existente nesse ficha
-    ultima_ordem = (Treino.query.filter_by(ficha_id=ficha_id).order_by(Treino.ordem.desc()).first())
-
-    ordem_nova = (ultima_ordem.ordem + 1) if ultima_ordem else 1
-
-
-    # Preenche o select de exercícios
-    form.exercicio_id.choices = [
-        (e.id, e.nome) for e in Exercicio.query.order_by(Exercicio.nome).all()
-    ]
-
-    # ficha fixo, então oculta o select e coloca valor direto
-    form.ficha_id.choices = [(ficha.id, ficha.nome)]
+    form.ficha_id.data = ficha_id  # define o hidden field
 
     if form.validate_on_submit():
         treino = Treino(
-            ficha_id=ficha.id,
-            exercicio_id=form.exercicio_id.data,
-            series=form.series.data,
-            repeticoes=form.repeticoes.data,
-            carga=form.carga.data,
-            descanso=form.descanso.data,
-            ordem=ordem_nova,
-            observacoes=form.observacoes.data
+            ficha_id=ficha_id,
+            dia_semana=form.dia_semana.data
         )
 
         db.session.add(treino)
         db.session.commit()
 
-        
-        return redirect(url_for("fichas.fichaDetalhes", ficha_id=ficha.id))
+        return redirect(url_for("fichas.fichaDetalhes", ficha_id=ficha_id))
+
+    return render_template("treino_form.html", form=form, ficha=ficha)
+
+# editar treino
+@fichas_blueprint.route("/treino/<int:treino_id>/editar", methods=["GET", "POST"])
+@login_required
+def editarTreino(treino_id):
+    treino = Treino.query.get_or_404(treino_id)
+    form = TreinoForm(obj=treino)
+
+    form.id.data = treino.id
+    form.ficha_id.data = treino.ficha_id
+
+    if form.validate_on_submit():
+        treino.dia_semana = form.dia_semana.data
+        db.session.commit()
+        return redirect(url_for("fichas.fichaDetalhes", ficha_id=treino.ficha_id))
+
+    return render_template("treino_form.html", form=form)
+
+#excluir treino 
+@fichas_blueprint.route("/treino/<int:treino_id>/excluir", methods=["GET", "POST"])
+@login_required
+def excluirTreino(treino_id):
+    treino = Treino.query.get_or_404(treino_id)
+    form = TreinoForm(obj=treino)
+    form.ficha_id.data = treino.ficha_id
+    db.session.delete(treino)
+    db.session.commit()
+
+
+    return redirect(url_for("fichas.fichaDetalhes", ficha_id=treino.ficha_id))
+
+#adicionar exercicio no treino
+@fichas_blueprint.route("/treino/<int:treino_id>/exercicio/adicionar", methods=["GET", "POST"])
+@login_required
+def adicionarExercicio(treino_id):
+    treino = Treino.query.get_or_404(treino_id)
+    form = TreinoExercicioForm()
+
+    form.exercicio_id.choices = [
+        (ex.id, ex.nome) for ex in Exercicio.query.order_by(Exercicio.nome).all()
+    ]
+
+    if form.validate_on_submit():
+        novo = TreinoExercicio(
+            treino_id=treino_id,
+            exercicio_id=form.exercicio_id.data,
+            series=form.series.data,
+            repeticoes=form.repeticoes.data,
+            carga=form.carga.data
+        )
+        db.session.add(novo)
+        db.session.commit()
+        return redirect(url_for("fichas.fichaDetalhes", ficha_id=treino.ficha_id))
 
     return render_template(
-        "treino_form.html",
+        "adicionar_exercicio.html",
         form=form,
-        ficha=ficha,
-        form_type="create"
+        treino=treino
     )

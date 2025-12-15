@@ -1,7 +1,7 @@
 from app import  db
 from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
-from app.exercicios.form import ExercicioForm
+from app.blueprints.exercicios.form import ExercicioForm
 from app.models import Exercicio
 
 exercicios_blueprint = Blueprint('exercicios', __name__, url_prefix='/exercicios', template_folder='templates')

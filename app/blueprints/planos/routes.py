@@ -1,7 +1,7 @@
 from app import  db
 from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
-from app.planos.form import PlanoForm
+from app.blueprints.planos.form import PlanoForm
 from app.models import Plano
 
 planos_blueprint = Blueprint('planos', __name__, url_prefix='/planos', template_folder='templates')

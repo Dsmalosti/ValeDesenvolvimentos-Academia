@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <!-- Cabeçalho da Ficha -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Ficha: {{ ficha.nome }}</h4>
+        </div>
+        <div class="card-body">
+
+            <p><strong>Aluno:</strong> {{ ficha.aluno.nome }}</p>
+
+            {% if ficha.observacoes %}
+            <p><strong>Observações:</strong> {{ ficha.observacoes }}</p>
+            {% endif %}
+
+            {% if ficha.ativo %}
+                <span class="badge bg-success">Ativa</span>
+            {% else %}
+                <span class="badge bg-danger">Inativa</span>
+            {% endif %}
+
+            <div class="mt-3">
+                <a href="{{ url_for('fichas.editarFicha', ficha_id=ficha.id) }}" 
+                   class="btn btn-warning">Editar Ficha</a>
+
+                <a href="{{ url_for('fichas.listarFichas') }}" 
+                   class="btn btn-secondary">Voltar</a>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Treinos por Dia -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Treinos</h5>
+
+            <a href="{{ url_for('fichas.criarTreino', ficha_id=ficha.id) }}" 
+               class="btn btn-success btn-sm">
+                + Adicionar Treino
+            </a>
+        </div>
+
+        <div class="card-body">
+
+            {% if ficha.treinos|length == 0 %}
+                <p>Nenhum treino cadastrado nessa ficha ainda.</p>
+            {% else %}
+
+                {% set dias = {
+                    "segunda": "Segunda",
+                    "terca": "Terça",
+                    "quarta": "Quarta",
+                    "quinta": "Quinta",
+                    "sexta": "Sexta",
+                    "sabado": "Sábado",
+                    "domingo": "Domingo"
+                } %}
+
+                {% for dia_key, dia_nome in dias.items() %}
+                    {% set treinos_do_dia = ficha.treinos | selectattr("dia_semana", "equalto", dia_key) | list %}
+
+
+                    {% if treinos_do_dia %}
+                    <div class="mb-4">
+
+                        <h5 class="border-bottom pb-1">{{ dia_nome }}</h5>
+
+                        {% for treino in treinos_do_dia %}
+                            <div class="p-3 border rounded mb-3">
+
+                                <h6 class="mb-1">{{ treino.titulo }}</h6>
+
+                                <!-- Lista de exercícios do treino -->
+                                {% if treino.exercicios|length == 0 %}
+                                    <p class="text-muted">Nenhum exercício cadastrado.</p>
+                                {% else %}
+                                    <ul>
+                                        {% for te in treino.exercicios %}
+                                            <li>
+                                                <strong>{{ te.exercicio.nome }}</strong> —
+                                                {{ te.series }} séries • {{ te.repeticoes }} reps
+                                                {% if te.carga %}
+                                                    • {{ te.carga }} kg
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+
+                                <a href="{{ url_for('fichas.editarTreino', treino_id=treino.id)}}" 
+                                   class="btn btn-primary btn-sm">
+                                    Editar Treino
+                                </a>
+
+                                <form action="{{ url_for('fichas.excluirTreino', treino_id=treino.id) }}" method="POST"
+                                    style="display: inline-block;"
+                                    onsubmit="return confirm('Tem certeza que deseja excluir?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-danger">Excluir</button>
+                                </form>
+
+                                <a href="{{ url_for('fichas.adicionarExercicio', treino_id=treino.id) }}" 
+                                   class="btn btn-success btn-sm">
+                                    + Exercício
+                                </a>
+
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                {% endfor %}
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
