@@ -1,8 +1,10 @@
-from app import  db
+from app.extensions.database import db
 from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from app.blueprints.alunos.form import AlunoForm
+from app.services.aluno_service import AlunoService
 from app.models import Aluno
+from app.exceptions import BusinessError
 
 alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos', template_folder='templates')
 
@@ -11,23 +13,24 @@ alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos', template_
 @alunos_blueprint.route('/cadastro/', methods=['GET', 'POST'])
 @login_required
 def cadastroAluno():
-    form = AlunoForm()
-    if form.validate_on_submit():
-        aluno = Aluno(
-            nome=form.nome.data,
-            email=form.email.data,
-            telefone=form.telefone.data,
-            data_nascimento=form.data_nascimento.data,
-            cpf=form.cpf.data,
-            ativo=form.ativo.data,
-            plano_id=form.plano_id.data
-        )
-        db.session.add(aluno)
-        db.session.commit()
-        flash('Aluno cadastrado com sucesso!', 'success')
-        return redirect(url_for('main.homepage'))
     
-    return render_template('aluno_form.html', form=form, titulo='Cadastrar Aluno')
+    form = AlunoForm()
+
+    if form.validate_on_submit():
+        try:
+            AlunoService.criar_aluno(form.data)
+
+            flash("Aluno cadastrado com sucesso!", "success")
+            return redirect(url_for("main.homepage"))
+
+        except BusinessError as e:
+            flash(str(e), "danger")
+
+        except Exception:
+            flash("Erro inesperado ao cadastrar aluno", "danger")
+
+    return render_template("aluno_form.html", form=form)
+
 
 #Rota para listar aluno
 @alunos_blueprint.route('/listar/')

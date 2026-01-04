@@ -1,4 +1,5 @@
-from app import  db, bcrypt
+from app.extensions.database import db
+from app.extensions.security import bcrypt
 from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from app.blueprints.instrutores.form import UserForm, LoginForm

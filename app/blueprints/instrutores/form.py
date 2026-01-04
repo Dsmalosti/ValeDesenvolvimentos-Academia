@@ -2,7 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Optional
 
-from app import db, bcrypt
+from app.extensions.database import db
+from app.extensions.security import bcrypt
 from app.models import User
 
 

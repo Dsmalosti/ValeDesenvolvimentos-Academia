@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, DateField, BooleanField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 
-from app import db, bcrypt
+from app.extensions.database import db
 from app.models import Aluno, Plano
 
 
