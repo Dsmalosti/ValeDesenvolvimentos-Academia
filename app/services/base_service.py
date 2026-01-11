@@ -1,4 +1,5 @@
 from app.extensions.database import db
+from app.exceptions import BusinessError
 
 
 class BaseService:
@@ -9,20 +10,34 @@ class BaseService:
 
     @staticmethod
     def salvar(obj):
+        print("SALVANDO:", obj)
+
         """
         Adiciona e commita um objeto no banco
         """
-        db.session.add(obj)
-        db.session.commit()
-        return obj
+        try:
+            print("ANTES DO COMMIT")
+            db.session.add(obj)
+            db.session.commit()
+            print("DEPOIS DO COMMIT")
+            return obj
+        except Exception:
+            db.session.rollback()
+            raise BusinessError("Erro ao salvar registro")
+
 
     @staticmethod
     def deletar(obj):
         """
         Remove e commita um objeto do banco
         """
-        db.session.delete(obj)
-        db.session.commit()
+        try:
+            db.session.delete(obj)
+            db.session.commit()
+            return obj
+        except Exception:
+            db.session.rollback()
+            raise BusinessError("Erro ao excluir registro")
 
     @staticmethod
     def commit():
