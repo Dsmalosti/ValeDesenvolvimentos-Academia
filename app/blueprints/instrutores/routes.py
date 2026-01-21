@@ -5,6 +5,9 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app.blueprints.instrutores.form import UserForm, LoginForm
 from app.models import User, Aluno
 from wtforms.validators import Optional, DataRequired
+from app.services.instrutor_service import InstrutorService
+from app.services.auth_service import AuthService
+from app.exceptions import BusinessError
 
 
 instrutores_blueprint = Blueprint('instrutores', __name__, url_prefix='/instrutores', template_folder='templates')
@@ -16,6 +19,21 @@ def cadastroInstrutor():
     form.senha.validators = [DataRequired()]
     if form.validate_on_submit():
         user = form.save()
+        dados = {
+            "nome": form.nome.data,
+            "sobrenome": form.sobrenome.data,
+            "email":form.email.data,
+            "senha": form.senha.data
+        }
+
+        try:
+            InstrutorService.criar_plano(dados)
+            return redirect(url_for("planos.listarPlanos"))
+        except BusinessError as e:
+            flash(str(e), "danger")
+        except Exception:
+            flash("Erro inesperado ao cadastrar aluno", "danger")
+
         if current_user.is_authenticated:
             return redirect(url_for('main.homepage'))
         login_user(user, remember=True)
@@ -42,18 +60,23 @@ def editarInstrutor(instrutor_id):
         instrutor.nome = form.nome.data
         instrutor.sobrenome = form.sobrenome.data
         instrutor.email = form.email.data
-        
 
-        # Se a senha foi preenchida, altera
-        if form.senha.data:
-            instrutor.senha = bcrypt.generate_password_hash(
-                form.senha.data
-            ).decode('utf-8')
+        if form.validate_on_submit():
 
-        db.session.commit()
+            user = form.save()
+            dados = {
+                "nome": form.nome.data,
+                "sobrenome": form.sobrenome.data,
+                "email":form.email.data,
+                "senha": form.senha.data
+            }
 
-        #flash('Instrutor atualizado com sucesso!')
-        return redirect(url_for('instrutores.listarInstrutores'))
+            try:
+                InstrutorService.editar_plano(instrutor_id,dados)
+                flash('Instrutor atualizado com sucesso!')
+                return redirect(url_for('instrutores.listarInstrutores'))
+            except BusinessError as e:
+                flash(str(e), "error")
     
     return render_template('cadastro-instrutor.html', form=form)
 
@@ -61,10 +84,11 @@ def editarInstrutor(instrutor_id):
 @instrutores_blueprint.route('/excluir/<int:instrutor_id>', methods=['POST'])
 @login_required
 def excluirInstrutor(instrutor_id):
-    instrutor = User.query.get_or_404(instrutor_id)
-    db.session.delete(instrutor)
-    db.session.commit()
-    flash('Instrutor excluido com sucesso')
+    try:
+        InstrutorService.excluir_instrutor(instrutor_id)
+        flash('Instrutor excluido com sucesso')
+    except BusinessError as e:
+        flash(str(e), "error")
     return redirect(url_for('instrutores.listarInstrutores'))
 
 # Rota para logar
@@ -73,9 +97,17 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        user = form.login()
-        login_user(user, remember=True)
-        return redirect(url_for('main.homepage'))
+        try:
+            instrutor = AuthService.autentificar_instrutor(
+                email=form.email.data,
+                senha=form.senha.data
+            )
+            login_user(instrutor)
+            flash("Login realizado com sucesso", "success")
+            return redirect(url_for('main.homepage'))
+        
+        except BusinessError as e:
+            flash(str(e), "danger")
     
     return render_template('tela-login.html', form=form)
 
