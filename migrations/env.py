@@ -2,6 +2,7 @@ import logging
 from logging.config import fileConfig
 
 from flask import current_app
+from sqlalchemy import text
 
 from alembic import context
 
@@ -97,6 +98,22 @@ def run_migrations_online():
     connectable = get_engine()
 
     with connectable.connect() as connection:
+        # No SQLite, o modo "batch" do Alembic recria a tabela inteira
+        # (renomeia, cria nova, copia dados, apaga a antiga) para poder
+        # adicionar colunas/FKs. Se PRAGMA foreign_keys estiver ligado,
+        # o DROP TABLE falha quando outra tabela referencia essa tabela.
+        # Por isso desligamos aqui, só durante a migration, e religamos
+        # no final.
+        # OBS: precisa ser executado direto no driver (cursor do DBAPI),
+        # não via connection.execute() do SQLAlchemy — esse método abre
+        # uma transação automaticamente, e o SQLite ignora PRAGMA
+        # foreign_keys quando já existe uma transação em andamento.
+        is_sqlite = connectable.dialect.name == 'sqlite'
+        if is_sqlite:
+            raw_cursor = connection.connection.cursor()
+            raw_cursor.execute('PRAGMA foreign_keys=OFF')
+            raw_cursor.close()
+
         context.configure(
             connection=connection,
             target_metadata=get_metadata(),
@@ -105,6 +122,11 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+        if is_sqlite:
+            raw_cursor = connection.connection.cursor()
+            raw_cursor.execute('PRAGMA foreign_keys=ON')
+            raw_cursor.close()
 
 
 if context.is_offline_mode():

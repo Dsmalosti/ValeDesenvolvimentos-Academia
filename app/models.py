@@ -15,6 +15,7 @@ class User(db.Model, UserMixin):
     sobrenome = db.Column(db.String(100), nullable=True)
     email = db.Column(db.String(120), unique=True, nullable=True)
     senha = db.Column(db.String(100), nullable=True)
+    ativo = db.Column(db.Boolean, default=True, nullable=False, server_default='true')
 
     def __repr__(self):
         return f'<Instrutor {self.nome}>'
@@ -31,9 +32,14 @@ class Aluno(db.Model):
     ativo = db.Column(db.Boolean, default=True)
     # chave extrangeira para plano
     plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=True)
+    # chave estrangeira para o instrutor (academia) dono deste aluno
+    # OBS: nullable=True por enquanto, só até preenchermos os registros
+    # antigos. Depois trocamos para nullable=False (passo 4 do plano).
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)
 
     # Relacionamento com o plano
     plano = db.relationship('Plano', backref='alunos', lazy=True)
+    instrutor = db.relationship('User', backref='alunos', lazy=True)
 
     def __repr__(self):
         return f'<Aluno {self.nome}>'
@@ -46,7 +52,12 @@ class Plano(db.Model):
     duracao_dias = db.Column(db.Integer, nullable=False)
     descricao = db.Column(db.Text, nullable=True)
     ativo = db.Column(db.Boolean, default=True)
+    # chave estrangeira para o instrutor (academia) dono deste plano
+    # OBS: nullable=True por enquanto, só até preenchermos os registros
+    # antigos. Depois trocamos para nullable=False (passo 4 do plano).
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)
 
+    instrutor = db.relationship('User', backref='planos', lazy=True)
 
     def __repr__(self):
         return f'<Plano {self.nome}>'

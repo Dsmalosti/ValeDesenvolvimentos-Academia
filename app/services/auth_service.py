@@ -1,4 +1,4 @@
-from models import User
+from app.models import User
 from app.exceptions import BusinessError
 from app.extensions.security import bcrypt
 
