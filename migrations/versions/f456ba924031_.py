@@ -23,7 +23,8 @@ def upgrade():
         batch_op.alter_column('repeticoes',
                existing_type=sa.VARCHAR(length=20),
                type_=sa.Integer(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='repeticoes::integer')
         batch_op.drop_column('observacao')
 
     # ### end Alembic commands ###
@@ -36,7 +37,8 @@ def downgrade():
         batch_op.alter_column('repeticoes',
                existing_type=sa.Integer(),
                type_=sa.VARCHAR(length=20),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='repeticoes::varchar')
         batch_op.drop_column('observacoes')
 
     # ### end Alembic commands ###

@@ -1,26 +1,146 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | MinhaAcademia</title>
 
-{% block content %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-<div class="container">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        principal: '#002f52',
+                        'principal-dark': '#001b30',
+                        amarelo: '#FFCC00',
+                        azul: '#0088FF',
+                        vermelho: '#FF2227',
+                        verde: '#34C759',
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-white font-sans antialiased">
 
-    <form action="" method="post" class="row mt-4">
-        <h3>Faça seu Login</h3>
-        {{ form.csrf_token }}
+    <div class="min-h-screen flex">
 
-        {{ form.email.label() }}
-        {{ form.email(class="form-control") }}
+        <!-- Painel de marca (oculto em telas pequenas) -->
+        <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-principal via-principal to-principal-dark">
+            <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-amarelo/10 blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 w-[28rem] h-[28rem] rounded-full bg-azul/10 blur-3xl"></div>
 
-        {{ form.senha.label() }}
-        {{ form.senha(class="form-control") }}
+            <div class="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 rounded-lg bg-amarelo flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='imagens/gamepad_down_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="" class="w-6 h-6 invert brightness-0">
+                    </div>
+                    <span class="text-white font-display font-semibold text-xl tracking-wide">MinhaAcademia</span>
+                </div>
 
-        {{ form.btnSubmit(class="btn btn-primary col-12 mt-3") }}
+                <div class="max-w-md">
+                    <h1 class="font-display font-bold text-4xl xl:text-5xl text-white leading-tight">
+                        Gerencie sua academia com <span class="text-amarelo">simplicidade</span>.
+                    </h1>
+                    <p class="mt-5 text-white/70 text-base leading-relaxed">
+                        Alunos, planos, fichas de treino e instrutores em um só lugar. Acesse o painel e continue de onde parou.
+                    </p>
+                </div>
 
-        <div class="col-12 mt-4">Não tem cadastro? <a href="{{url_for('instrutores.cadastroInstrutor')}}">Clique aqui e faça seu cadastro</a></div>
+                <p class="text-white/40 text-xs">&copy; {{ 2024 }} Vale Desenvolvimentos. Todos os direitos reservados.</p>
+            </div>
+        </div>
 
-    </form>
+        <!-- Painel de login -->
+        <div class="flex flex-1 items-center justify-center px-6 py-12 sm:px-10">
+            <div class="w-full max-w-sm">
 
-</div>
+                <div class="lg:hidden flex items-center gap-2 mb-10 justify-center">
+                    <div class="w-10 h-10 rounded-lg bg-principal flex items-center justify-center">
+                        <img src="{{ url_for('static', filename='imagens/gamepad_down_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="" class="w-6 h-6">
+                    </div>
+                    <span class="text-principal font-display font-semibold text-xl tracking-wide">MinhaAcademia</span>
+                </div>
 
+                <h2 class="font-display font-bold text-2xl text-principal">Bem-vindo de volta</h2>
+                <p class="mt-1.5 text-sm text-gray-500">Faça login para acessar o painel administrativo.</p>
 
-{% endblock %}
+                {% with mensagens = get_flashed_messages(with_categories=true) %}
+                    {% if mensagens %}
+                        <div class="mt-6 space-y-2">
+                            {% for categoria, mensagem in mensagens %}
+                                <div class="rounded-lg px-4 py-3 text-sm font-medium
+                                    {% if categoria == 'danger' or categoria == 'error' %}
+                                        bg-vermelho/10 text-vermelho
+                                    {% elif categoria == 'success' %}
+                                        bg-verde/10 text-verde
+                                    {% else %}
+                                        bg-azul/10 text-azul
+                                    {% endif %}">
+                                    {{ mensagem }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <form action="" method="post" class="mt-8 space-y-5" novalidate>
+                    {{ form.csrf_token }}
+
+                    <div>
+                        {{ form.email.label(class="block text-sm font-medium text-gray-700 mb-1.5") }}
+                        {{ form.email(
+                            class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400
+                                   focus:outline-none focus:ring-2 focus:ring-azul focus:border-azul transition
+                                   " ~ ("border-vermelho" if form.email.errors else "border-gray-300"),
+                            placeholder="seu@email.com"
+                        ) }}
+                        {% for erro in form.email.errors %}
+                            <p class="mt-1.5 text-xs text-vermelho">{{ erro }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            {{ form.senha.label(class="block text-sm font-medium text-gray-700") }}
+                        </div>
+                        {{ form.senha(
+                            class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400
+                                   focus:outline-none focus:ring-2 focus:ring-azul focus:border-azul transition
+                                   " ~ ("border-vermelho" if form.senha.errors else "border-gray-300"),
+                            placeholder="••••••••"
+                        ) }}
+                        {% for erro in form.senha.errors %}
+                            <p class="mt-1.5 text-xs text-vermelho">{{ erro }}</p>
+                        {% endfor %}
+                    </div>
+
+                    {{ form.btnSubmit(class="w-full rounded-lg bg-amarelo hover:bg-yellow-400 text-principal font-display
+                                       font-semibold text-sm py-3 mt-2 transition-colors shadow-sm
+                                       shadow-amarelo/30 cursor-pointer") }}
+
+                    <p class="text-center text-sm text-gray-500 pt-2">
+                        Não tem cadastro?
+                        <a href="{{ url_for('instrutores.cadastroInstrutor') }}" class="text-azul font-medium hover:underline">
+                            Crie sua conta
+                        </a>
+                    </p>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
