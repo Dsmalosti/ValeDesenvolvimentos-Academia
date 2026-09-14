@@ -1,16 +1,16 @@
 
-<div class="notificacao">
+<div class="notificacao-dashboard">
     <ul class="notificacao-lista">
 
         
         <div class="notificacao-lista__item-div">
             <li class="notificacao-lista__item-lista">
                 <div class="notificacao-lista__item-lista--esquerda">
-                    <p class="notificacao-lista__item-lista">Alunos ativos</p>
-                    <img class="notificacao-lista__item-lista--img" src="../static/imagens/group_24dp_34C759_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="notificacao-lista__item-lista--img" src="{{ url_for('static', filename='imagens/group_24dp_34C759_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
+                    <p class="notificacao-lista__item-lista--label">Alunos ativos</p>
                 </div>
                 <div class="notificacao-lista__item-lista--direita">
-                    <p class="notificacao-lista__item-lista">{{ ativos }}</p>
+                    <p class="notificacao-lista__item-lista--valor">{{ ativos }}</p>
                 </div>
             </li>
         </div>
@@ -18,11 +18,11 @@
         <div class="notificacao-lista__item-div">
             <li class="notificacao-lista__item-lista">
                 <div class="notificacao-lista__item-lista--esquerda">
-                    <p class="notificacao-lista__item-lista">Pagamentos pendentes</p>
-                    <img class="notificacao-lista__item-lista--img" src="../static/imagens/warning_24dp_FF2227_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="notificacao-lista__item-lista--img" src="{{ url_for('static', filename='imagens/warning_24dp_FF2227_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
+                    <p class="notificacao-lista__item-lista--label">Pagamentos pendentes</p>
                 </div>
                 <div class="notificacao-lista__item-lista--direita">
-                    <p class="notificacao-lista__item-lista">237</p>
+                    <p class="notificacao-lista__item-lista--valor">237</p>
                 </div>
             </li>
         </div>
@@ -30,11 +30,11 @@
         <div class="notificacao-lista__item-div">
             <li class="notificacao-lista__item-lista">
                 <div class="notificacao-lista__item-lista--esquerda">
-                    <p class="notificacao-lista__item-lista">Planos a vencer</p>
-                    <img class="notificacao-lista__item-lista--img" src="../static/imagens/schedule_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="notificacao-lista__item-lista--img" src="{{ url_for('static', filename='imagens/schedule_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
+                    <p class="notificacao-lista__item-lista--label">Planos a vencer</p>
                 </div>
                 <div class="notificacao-lista__item-lista--direita">
-                    <p class="notificacao-lista__item-lista">237</p>
+                    <p class="notificacao-lista__item-lista--valor">237</p>
                 </div>
             </li>
         </div>
@@ -42,11 +42,11 @@
         <div class="notificacao-lista__item-div">
             <li class="notificacao-lista__item-lista">
                 <div class="notificacao-lista__item-lista--esquerda">
-                    <p class="notificacao-lista__item-lista">Aniversariantes</p>
-                    <img class="notificacao-lista__item-lista--img" src="../static/imagens/mood_24dp_0088FF_FILL0_wght400_GRAD0_opsz24.svg" alt="">
+                    <img class="notificacao-lista__item-lista--img" src="{{ url_for('static', filename='imagens/mood_24dp_0088FF_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
+                    <p class="notificacao-lista__item-lista--label">Aniversariantes</p>
                 </div>
                 <div class="notificacao-lista__item-lista--direita">
-                    <p class="notificacao-lista__item-lista">{{ aniversariantes }}</p>
+                    <p class="notificacao-lista__item-lista--valor">{{ aniversariantes }}</p>
                 </div>
             </li>
         </div>

@@ -82,3 +82,22 @@ def excluirAluno(aluno_id):
         flash(str(e), "error")
 
     return redirect(url_for("alunos.listarAlunos"))
+
+
+# Rota para excluir vários alunos de uma vez (painel administrativo)
+@alunos_blueprint.route('/excluir-varios/', methods=['POST'])
+@login_required
+def excluirAlunos():
+    ids = request.form.getlist('selected')
+
+    if not ids:
+        flash("Nenhum aluno selecionado", "error")
+        return redirect(url_for("instrutores.painelAdm"))
+
+    try:
+        AlunoService.excluir_varios([int(aluno_id) for aluno_id in ids])
+        flash(f"{len(ids)} aluno(s) excluído(s) com sucesso", "success")
+    except BusinessError as e:
+        flash(str(e), "error")
+
+    return redirect(url_for("instrutores.painelAdm"))

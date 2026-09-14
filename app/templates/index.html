@@ -6,7 +6,7 @@
 
 {% include 'notificacao.html' %}
 
-<span class="btn btn-primary"> {{current_user.nome}} {{current_user.sobrenome}} </span>
+<p class="pagina-inicial__saudacao">Olá, {{ current_user.nome }} {{ current_user.sobrenome }}</p>
 
 {% include 'administracao.html' %}
 

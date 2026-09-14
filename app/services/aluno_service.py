@@ -79,7 +79,7 @@ class AlunoService:
     def excluir_aluno(aluno_id: int):
         """
         Docstring for excluir_aluno
-        
+
         :param aluno_id: id do aluno
         :type aluno_id: int
         """
@@ -89,6 +89,14 @@ class AlunoService:
             raise BusinessError("Aluno não encontrado")
 
         BaseService.deletar(aluno)
+
+    @staticmethod
+    def excluir_varios(aluno_ids: list[int]):
+        """
+        Exclui vários alunos de uma vez (usado na exclusão em massa do painel)
+        """
+        for aluno_id in aluno_ids:
+            AlunoService.excluir_aluno(aluno_id)
 
     @staticmethod
     def salvar(aluno):

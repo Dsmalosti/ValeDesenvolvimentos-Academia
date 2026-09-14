@@ -7,9 +7,44 @@
     letter-spacing: 1px;
 }
 
+.navbar-brand--marca {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.navbar-brand__icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: var(--amarelo);
+}
+
+.navbar-brand__icone img {
+    width: 18px;
+    height: 18px;
+}
+
 .navbar .nav-link,
 .navbar .navbar-brand {
     color: var(--cor-de-fundo) !important;
+}
+
+.navbar-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-color: var(--amarelo);
+    color: var(--cor-principal) !important;
+    font-weight: 800;
+    font-size: 14px;
+    margin-left: 8px;
 }
 
 .navbar-toggler-icon {

@@ -29,3 +29,23 @@ body {
     font-weight: 400;
 }
 
+section.container-fluid.content-area {
+    padding-left: 32px !important;
+    padding-right: 32px !important;
+    padding-bottom: 24px;
+}
+
+@media (max-width: 576px) {
+    section.container-fluid.content-area {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+}
+
+.pagina-inicial__saudacao {
+    margin-top: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--cor-principal);
+}
+

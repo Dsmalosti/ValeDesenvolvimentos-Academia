@@ -1,56 +1,76 @@
-.titulo { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
-
-.notificacoes {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 30px;
+.titulo {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  color: var(--cor-principal);
 }
-.notificacao {
-  background: #e0e7ff;
-  padding: 10px 20px;
-  border-radius: 10px;
-  text-align: center;
-}
-.notificacao strong { font-size: 20px; color: #2d2dff; }
 
 .alunos {
-  background: #f8f5ff;
-  padding: 15px;
+  background: #fafbff;
+  border: 1px solid #ececec;
+  padding: 20px;
   margin-bottom: 20px;
-  border-radius: 10px;
-  font-weight: bold;
-
+  border-radius: 16px;
 }
 
 .alunos-titulo {
   font-weight: 700;
+  color: var(--cor-principal);
+  margin-bottom: 14px;
 }
 
 .alunos-container {
-    height: 300px;
-    overflow-y: scroll;
+    max-height: 340px;
+    overflow-y: auto;
+}
 
+.alunos-container ul {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .alunos-container_card {
-  background: #f0eaff;
+  background: #ffffff;
+  border: 1px solid #ececec;
   border-radius: 12px;
-  padding: 10px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 12px;
+  box-shadow: 0 2px 6px rgba(0, 47, 82, 0.05);
 }
+
 .alunos-card_icone {
-  background: #8a7efb;
+  background: var(--azul);
   color: white;
   border-radius: 50%;
-  padding: 8px;
+  min-width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: bold;
-  width: 30px;
-  text-align: center;
+  flex-shrink: 0;
+}
+
+.alunos-card_nome {
+  flex-grow: 1;
+  font-weight: 600;
+}
+
+.acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alunos-vazio {
+  color: #667085;
+  font-size: 13px;
 }
 
 .butao-aluno {
-  margin: 20px 0 0 50px;
+  margin-top: 20px;
 }

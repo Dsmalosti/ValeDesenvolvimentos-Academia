@@ -44,3 +44,36 @@
     color: var(--azul);
 
 }
+
+.administracao-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #ececec;
+}
+
+.administracao-links a {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cor-principal);
+    text-decoration: none;
+}
+
+.administracao-links a:hover {
+    color: var(--azul);
+    text-decoration: underline;
+}
+
+@media (max-width: 576px) {
+    .administracao-lista {
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .administracao-lista__esquerda,
+    .administracao-lista__direita {
+        margin-right: 0 !important;
+    }
+}

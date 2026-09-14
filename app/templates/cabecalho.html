@@ -5,7 +5,12 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
             <!-- Logo -->
-            <a class="navbar-brand" href="#">MinhaAcademia</a>
+            <a class="navbar-brand navbar-brand--marca" href="/">
+                <span class="navbar-brand__icone">
+                    <img src="{{ url_for('static', filename='imagens/gamepad_down_24dp_FFCC00_FILL0_wght400_GRAD0_opsz24.svg') }}" alt="">
+                </span>
+                MinhaAcademia
+            </a>
 
             <!-- Botão hamburguer -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuNav"
@@ -15,11 +20,16 @@
 
             <!-- Itens do menu -->
             <div class="collapse navbar-collapse" id="menuNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
                     <li class="nav-item"><a class="nav-link active" href="/">Início</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('instrutores.painelAdm') }}">Painel Administrativo</a></li>
                     <li class="nav-item"><a class="nav-link" href="/planos">Planos</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('instrutores.logout') }}">Sair</a></li>
+                    <li class="nav-item">
+                        <span class="navbar-avatar" title="{{ current_user.nome }} {{ current_user.sobrenome }}">
+                            {{ current_user.nome[0] | upper }}
+                        </span>
+                    </li>
                 </ul>
             </div>
         </div>
