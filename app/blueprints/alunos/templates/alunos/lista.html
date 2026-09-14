@@ -1,0 +1,136 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Alunos{% endblock %}
+
+{% block conteudo %}
+{% set subtitulo = (contagem.todos ~ (" resultado para “" ~ busca ~ "”" if contagem.todos == 1 else " resultados para “" ~ busca ~ "”")) if busca
+                   else (contagem.todos ~ (" aluno cadastrado" if contagem.todos == 1 else " alunos cadastrados")) %}
+{% call ui.cabecalho("Alunos", subtitulo) %}
+  <a href="{{ url_for('alunos.cadastroAluno') }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Novo aluno</a>
+{% endcall %}
+
+<div class="cartao">
+  <div class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+    <nav class="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:pb-0" aria-label="Filtrar por situação">
+      {% for chave, rotulo in filtros.items() %}
+      {% set ativo = situacao == chave %}
+      <a href="{{ url_for('alunos.listarAlunos', situacao=None if chave == 'todos' else chave, q=busca or None) }}" {% if ativo %}aria-current="page"{% endif %}
+         class="inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition duration-150 {{ 'bg-navy-800 text-white' if ativo else 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
+        {{ rotulo }}
+        <span class="rounded-md px-1.5 py-0.5 text-xs tabular-nums {{ 'bg-white/15 text-white' if ativo else 'bg-slate-100 text-slate-500' }}">{{ contagem[chave] }}</span>
+      </a>
+      {% endfor %}
+    </nav>
+
+    <form method="get" role="search" class="relative w-full lg:w-80">
+      {% if situacao != 'todos' %}<input type="hidden" name="situacao" value="{{ situacao }}">{% endif %}
+      <label for="busca-alunos" class="sr-only">Buscar alunos</label>
+      <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{{ ui.icone("busca", "h-4 w-4") }}</span>
+      <input id="busca-alunos" type="search" name="q" value="{{ busca }}" placeholder="Nome, e-mail, CPF ou telefone" class="input pl-9">
+    </form>
+  </div>
+
+  {% if pagina.itens %}
+  <form id="form-lote" method="post" action="{{ url_for('alunos.excluirAlunos') }}"
+        data-confirmar="Excluir os alunos selecionados?" data-confirmar-titulo="Excluir alunos" data-confirmar-botao="Excluir">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  </form>
+
+  {# ===== Tabela (tablet e desktop) ===== #}
+  <div class="hidden overflow-x-auto md:block" data-lote="form-lote">
+    <table class="tabela">
+      <thead class="bg-slate-50/70">
+        <tr>
+          <th scope="col" class="w-10"><input type="checkbox" data-lote-todos aria-label="Selecionar todos os alunos desta página"></th>
+          <th scope="col">Aluno</th>
+          <th scope="col">Plano</th>
+          <th scope="col">Vencimento</th>
+          <th scope="col">Situação</th>
+          <th scope="col" class="text-right"><span class="sr-only">Ações</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for aluno in pagina.itens %}
+        <tr class="transition-colors hover:bg-slate-50/70">
+          <td><input type="checkbox" name="selecionados" value="{{ aluno.id }}" form="form-lote" data-lote-item aria-label="Selecionar {{ aluno.nome }}"></td>
+          <td>
+            <div class="flex items-center gap-3">
+              {{ ui.avatar(aluno.nome) }}
+              <div class="min-w-0">
+                <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id) }}" class="block max-w-[15rem] truncate font-semibold text-slate-900 hover:text-navy-700">{{ aluno.nome }}</a>
+                <p class="max-w-[15rem] truncate text-xs text-slate-500">{{ aluno.email }}</p>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if aluno.plano %}
+            <p class="font-medium text-slate-800">{{ aluno.plano.nome }}</p>
+            <p class="text-xs text-slate-500 tabular-nums">{{ aluno.plano.valor|moeda }}</p>
+            {% else %}<span class="text-slate-400">—</span>{% endif %}
+          </td>
+          <td>
+            {% if aluno.data_vencimento %}
+            <p class="text-slate-800 tabular-nums">{{ aluno.data_vencimento|data_br }}</p>
+            <p class="text-xs text-slate-500">{{ aluno.dias_para_vencer|dias_relativos }}</p>
+            {% else %}<span class="text-slate-400">—</span>{% endif %}
+          </td>
+          <td>{{ ui.badge_situacao(aluno.situacao) }}</td>
+          <td class="text-right">
+            <div class="flex items-center justify-end gap-0.5">
+              {% if aluno.plano and aluno.situacao in ('vencido', 'a_vencer', 'inativo') %}
+              {{ ui.form_acao(url_for('alunos.renovarPlano', aluno_id=aluno.id),
+                              "Renovar o plano " ~ aluno.plano.nome ~ " de " ~ aluno.nome ~ "?",
+                              titulo="Renovar plano", rotulo="Renovar plano", nome_icone="renovar", tom="neutro",
+                              classe="btn-icone hover:text-emerald-700 hover:bg-emerald-50", so_icone=true,
+                              ocultos={"proximo": request.full_path}) }}
+              {% endif %}
+              <a href="{{ url_for('fichas.listarFichas', aluno_id=aluno.id) }}" class="btn-icone" title="Fichas de treino" aria-label="Fichas de treino de {{ aluno.nome }}">{{ ui.icone("prancheta", "h-4 w-4") }}</a>
+              <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id) }}" class="btn-icone" title="Editar" aria-label="Editar {{ aluno.nome }}">{{ ui.icone("lapis", "h-4 w-4") }}</a>
+              {{ ui.form_acao(url_for('alunos.excluirAluno', aluno_id=aluno.id),
+                              "Excluir " ~ aluno.nome ~ "? As fichas de treino deste aluno também serão excluídas.",
+                              titulo="Excluir aluno", rotulo="Excluir aluno", classe="btn-icone btn-icone-perigo", so_icone=true) }}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# ===== Lista (celular) ===== #}
+  <ul class="divide-y divide-slate-100 md:hidden">
+    {% for aluno in pagina.itens %}
+    <li>
+      <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id) }}" class="flex items-center gap-3 px-4 py-3.5 transition active:bg-slate-50">
+        {{ ui.avatar(aluno.nome, "h-10 w-10 text-xs") }}
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-sm font-semibold text-slate-900">{{ aluno.nome }}</span>
+          <span class="block truncate text-xs text-slate-500">
+            {{ aluno.plano.nome if aluno.plano else 'Sem plano' }}{% if aluno.data_vencimento %} · vence {{ aluno.data_vencimento|data_br }}{% endif %}
+          </span>
+        </span>
+        {{ ui.badge_situacao(aluno.situacao) }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+
+  {# `hidden` vem depois de `flex` no CSS gerado, então o JS só precisa alternar `hidden` #}
+  <div data-lote-barra="form-lote" class="sticky bottom-4 z-20 mx-4 mb-4 flex hidden items-center justify-between gap-3 rounded-xl bg-navy-900 px-4 py-3 text-white shadow-lg md:mx-6">
+    <p class="text-sm font-medium" data-lote-contador aria-live="polite">0 selecionados</p>
+    <button type="submit" form="form-lote" class="btn btn-perigo btn-sm">{{ ui.icone("lixeira", "h-4 w-4") }}Excluir selecionados</button>
+  </div>
+
+  {{ ui.paginacao(pagina, 'alunos.listarAlunos', {"situacao": None if situacao == 'todos' else situacao, "q": busca or None}) }}
+
+  {% elif contagem.todos == 0 and not busca %}
+    {% call ui.estado_vazio("usuarios", "Nenhum aluno cadastrado ainda", "Cadastre o primeiro aluno para acompanhar planos, vencimentos e fichas de treino.") %}
+      <a href="{{ url_for('alunos.cadastroAluno') }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Cadastrar primeiro aluno</a>
+    {% endcall %}
+  {% else %}
+    {% call ui.estado_vazio("busca", "Nenhum aluno encontrado", "Tente outro termo de busca ou mude o filtro de situação.") %}
+      <a href="{{ url_for('alunos.listarAlunos') }}" class="btn btn-secundario">Limpar filtros</a>
+    {% endcall %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Exercícios{% endblock %}
+
+{% macro botao_importar(rotulo, classe) -%}
+<form method="post" action="{{ url_for('exercicios.importarPadrao') }}" class="inline-flex">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="{{ classe }}">{{ ui.icone("importar", "h-4 w-4") }}{{ rotulo }}</button>
+</form>
+{%- endmacro %}
+
+{% block conteudo %}
+{% call ui.cabecalho("Exercícios", (total_biblioteca ~ (" exercício na sua biblioteca" if total_biblioteca == 1 else " exercícios na sua biblioteca"))) %}
+  {% if total_biblioteca %}{{ botao_importar("Importar padrão", "btn btn-secundario") }}{% endif %}
+  <a href="{{ url_for('exercicios.criarExercicio') }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Novo exercício</a>
+{% endcall %}
+
+{% if total_biblioteca == 0 %}
+<div class="cartao">
+  {% call ui.estado_vazio("halter", "Sua biblioteca está vazia", "Comece com 26 exercícios de musculação já organizados por grupo muscular. Você pode editar, desativar ou excluir qualquer um depois.") %}
+    {{ botao_importar("Importar 26 exercícios", "btn btn-primario") }}
+    <a href="{{ url_for('exercicios.criarExercicio') }}" class="btn btn-secundario">Cadastrar manualmente</a>
+  {% endcall %}
+</div>
+{% else %}
+<div class="cartao">
+  <div class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+    <nav class="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:pb-0" aria-label="Filtrar por grupo muscular">
+      {% for chave, rotulo in [("", "Todos")] + GRUPOS_MUSCULARES %}
+      {% set ativo = grupo == chave %}
+      <a href="{{ url_for('exercicios.listarExercicios', grupo=chave or None, q=busca or None) }}" {% if ativo %}aria-current="page"{% endif %}
+         class="shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition duration-150 {{ 'bg-navy-800 text-white' if ativo else 'text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">{{ rotulo }}</a>
+      {% endfor %}
+    </nav>
+    <form method="get" role="search" class="relative w-full lg:w-72">
+      {% if grupo %}<input type="hidden" name="grupo" value="{{ grupo }}">{% endif %}
+      <label for="busca-exercicios" class="sr-only">Buscar exercícios</label>
+      <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{{ ui.icone("busca", "h-4 w-4") }}</span>
+      <input id="busca-exercicios" type="search" name="q" value="{{ busca }}" placeholder="Buscar exercício" class="input pl-9">
+    </form>
+  </div>
+
+  {% if exercicios %}
+  <div class="overflow-x-auto">
+    <table class="tabela">
+      <thead class="bg-slate-50/70">
+        <tr>
+          <th scope="col">Exercício</th>
+          <th scope="col">Grupo</th>
+          <th scope="col">Situação</th>
+          <th scope="col" class="text-right"><span class="sr-only">Ações</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for exercicio in exercicios %}
+        <tr class="transition-colors hover:bg-slate-50/70">
+          <td>
+            <div class="flex items-center gap-2">
+              <a href="{{ url_for('exercicios.editarExercicio', exercicio_id=exercicio.id) }}" class="font-semibold text-slate-900 hover:text-navy-700">{{ exercicio.nome }}</a>
+              {% if exercicio.video_url and exercicio.video_url.startswith(('http://', 'https://')) %}
+              <a href="{{ exercicio.video_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 transition hover:bg-red-50 hover:text-red-600" title="Ver vídeo" aria-label="Ver vídeo de {{ exercicio.nome }} (abre em nova aba)">{{ ui.icone("play", "h-3.5 w-3.5") }}</a>
+              {% endif %}
+            </div>
+            {% if exercicio.descricao %}<p class="max-w-md truncate text-xs text-slate-500">{{ exercicio.descricao }}</p>{% endif %}
+          </td>
+          <td>{{ ui.badge(exercicio.grupo_label, "navy") }}</td>
+          <td>{{ ui.badge("Ativo", "verde") if exercicio.ativo else ui.badge("Inativo") }}</td>
+          <td class="text-right">
+            <div class="flex items-center justify-end gap-0.5">
+              <a href="{{ url_for('exercicios.editarExercicio', exercicio_id=exercicio.id) }}" class="btn-icone" title="Editar" aria-label="Editar {{ exercicio.nome }}">{{ ui.icone("lapis", "h-4 w-4") }}</a>
+              {{ ui.form_acao(url_for('exercicios.excluirExercicio', exercicio_id=exercicio.id),
+                              "Excluir " ~ exercicio.nome ~ "? Exercícios usados em fichas não podem ser excluídos.",
+                              titulo="Excluir exercício", rotulo="Excluir exercício", classe="btn-icone btn-icone-perigo", so_icone=true) }}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    {% call ui.estado_vazio("busca", "Nenhum exercício encontrado", "Tente outro nome ou escolha outro grupo muscular.") %}
+      <a href="{{ url_for('exercicios.listarExercicios') }}" class="btn btn-secundario">Limpar filtros</a>
+    {% endcall %}
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

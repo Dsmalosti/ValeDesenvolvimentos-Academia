@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "preview-academia",
+      "runtimeExecutable": "C:\\Users\\Adauto Netto\\Documents\\GitHub\\ValeDesenvolvimentos-Academia\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["C:\\Users\\ADAUTO~1\\AppData\\Local\\Temp\\claude\\C--Users-Adauto-Netto-Desktop-skills-pack\\dc8e1fad-7f00-4a96-90b7-da4f057f56d5\\scratchpad\\preview_server.py"],
+      "port": 5055
+    }
+  ]
+}

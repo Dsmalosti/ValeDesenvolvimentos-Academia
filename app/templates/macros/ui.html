@@ -1,0 +1,263 @@
+{#
+  Componentes de interface do painel.
+  Uso: {% import "macros/ui.html" as ui %}
+#}
+
+{# ===== Ícones (Lucide, licença ISC) ===== #}
+{% set ICONES = {
+  "inicio": '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  "usuarios": '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  "usuario": '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  "cartao": '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>',
+  "halter": '<path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/>',
+  "prancheta": '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  "sair": '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+  "mais": '<path d="M5 12h14"/><path d="M12 5v14"/>',
+  "busca": '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  "lapis": '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
+  "lixeira": '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>',
+  "check": '<path d="M20 6 9 17l-5-5"/>',
+  "x": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  "alerta": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  "relogio": '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+  "bolo": '<path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/>',
+  "carteira": '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  "seta-esquerda": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+  "seta-direita": '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  "menu": '<line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/>',
+  "olho": '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  "olho-fechado": '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>',
+  "impressora": '<polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/>',
+  "renovar": '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>',
+  "check-circulo": '<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+  "info": '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  "play": '<polygon points="6 3 20 12 6 21 6 3"/>',
+  "calendario": '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+  "importar": '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  "escudo": '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>'
+} %}
+
+{% macro icone(nome, classe="h-5 w-5") -%}
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="{{ classe }}" aria-hidden="true" focusable="false">{{ ICONES.get(nome, "")|safe }}</svg>
+{%- endmacro %}
+
+{% macro logo(tema="claro") -%}
+<span class="inline-flex items-center gap-2.5">
+  <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-amarelo-400 text-navy-950 shadow-sm">{{ icone("halter", "h-5 w-5") }}</span>
+  <span class="font-display text-lg font-semibold tracking-tight {{ 'text-white' if tema == 'escuro' else 'text-navy-900' }}">Minha<span class="{{ 'text-amarelo-400' if tema == 'escuro' else 'text-navy-500' }}">Academia</span></span>
+</span>
+{%- endmacro %}
+
+{# ===== Layout de página ===== #}
+
+{% macro cabecalho(titulo, subtitulo=None, voltar=None) -%}
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div class="min-w-0">
+    {% if voltar %}
+    <a href="{{ voltar }}" class="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-navy-800 print:hidden">{{ icone("seta-esquerda", "h-4 w-4") }}Voltar</a>
+    {% endif %}
+    <h1 class="truncate font-display text-2xl font-semibold tracking-tight text-navy-900 sm:text-[1.75rem]">{{ titulo }}</h1>
+    {% if subtitulo %}<p class="mt-1 text-sm text-slate-500">{{ subtitulo }}</p>{% endif %}
+  </div>
+  {% if caller %}
+  <div class="flex flex-wrap items-center gap-2 print:hidden">{{ caller() }}</div>
+  {% endif %}
+</div>
+{%- endmacro %}
+
+{% macro estado_vazio(nome_icone, titulo, texto) -%}
+<div class="flex flex-col items-center px-6 py-14 text-center sm:py-16">
+  <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-navy-50 text-navy-700 ring-8 ring-navy-50/50">{{ icone(nome_icone, "h-6 w-6") }}</span>
+  <h2 class="mt-5 font-display text-lg font-semibold text-navy-900">{{ titulo }}</h2>
+  <p class="mt-1.5 max-w-md text-sm text-slate-500">{{ texto }}</p>
+  {% if caller %}<div class="mt-6 flex flex-wrap justify-center gap-2">{{ caller() }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro kpi(rotulo, valor, nome_icone, tom="navy", detalhe=None, href=None) -%}
+{% set tons = {
+  "navy": "bg-navy-50 text-navy-700",
+  "verde": "bg-emerald-50 text-emerald-700",
+  "ambar": "bg-amber-50 text-amber-700",
+  "vermelho": "bg-red-50 text-red-600"
+} %}
+{% if href %}<a href="{{ href }}" class="cartao group block p-5 transition duration-150 hover:border-slate-300 hover:shadow-md">{% else %}<div class="cartao p-5">{% endif %}
+  <div class="flex items-start justify-between gap-3">
+    <p class="text-sm font-medium text-slate-500">{{ rotulo }}</p>
+    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg {{ tons.get(tom, tons.navy) }}">{{ icone(nome_icone, "h-[1.125rem] w-[1.125rem]") }}</span>
+  </div>
+  <p class="mt-2 font-display text-[1.75rem] font-semibold leading-none tracking-tight text-slate-900 tabular-nums">{{ valor }}</p>
+  {% if detalhe %}<p class="mt-2 flex items-center gap-1 text-xs text-slate-500">{{ detalhe }}{% if href %}<span class="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-navy-700">{{ icone("seta-direita", "h-3.5 w-3.5") }}</span>{% endif %}</p>{% endif %}
+{% if href %}</a>{% else %}</div>{% endif %}
+{%- endmacro %}
+
+{% macro paginacao(p, endpoint, args={}) -%}
+{% if p.paginas > 1 %}
+<nav class="flex items-center justify-between gap-4 border-t border-slate-100 px-4 py-3 sm:px-6" aria-label="Paginação">
+  <p class="text-sm text-slate-500">
+    <span class="font-medium text-slate-700 tabular-nums">{{ p.inicio }}–{{ p.fim }}</span> de <span class="font-medium text-slate-700 tabular-nums">{{ p.total }}</span>
+  </p>
+  <div class="flex gap-2">
+    {% if p.tem_anterior %}
+    <a class="btn btn-secundario btn-sm" href="{{ url_for(endpoint, pagina=p.pagina - 1, **args) }}" rel="prev">Anterior</a>
+    {% endif %}
+    {% if p.tem_proxima %}
+    <a class="btn btn-secundario btn-sm" href="{{ url_for(endpoint, pagina=p.pagina + 1, **args) }}" rel="next">Próxima</a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{# ===== Dados ===== #}
+
+{% set SITUACOES = {
+  "em_dia": ("Em dia", "bg-emerald-50 text-emerald-700 ring-emerald-600/20"),
+  "a_vencer": ("A vencer", "bg-amber-50 text-amber-800 ring-amber-600/25"),
+  "vencido": ("Vencido", "bg-red-50 text-red-700 ring-red-600/20"),
+  "inativo": ("Inativo", "bg-slate-100 text-slate-600 ring-slate-500/20"),
+  "sem_plano": ("Sem plano", "bg-slate-100 text-slate-600 ring-slate-500/20")
+} %}
+
+{% macro badge_situacao(situacao) -%}
+{% set item = SITUACOES.get(situacao, SITUACOES.sem_plano) %}
+<span class="badge {{ item[1] }}"><span class="h-1.5 w-1.5 rounded-full bg-current opacity-70" aria-hidden="true"></span>{{ item[0] }}</span>
+{%- endmacro %}
+
+{% set TONS_BADGE = {
+  "verde": "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+  "ambar": "bg-amber-50 text-amber-800 ring-amber-600/25",
+  "vermelho": "bg-red-50 text-red-700 ring-red-600/20",
+  "navy": "bg-navy-50 text-navy-700 ring-navy-600/20",
+  "neutro": "bg-slate-100 text-slate-600 ring-slate-500/20"
+} %}
+
+{% macro badge(texto, tom="neutro") -%}
+<span class="badge {{ TONS_BADGE.get(tom, TONS_BADGE.neutro) }}">{{ texto }}</span>
+{%- endmacro %}
+
+{% set CORES_AVATAR = [
+  "bg-sky-100 text-sky-800",
+  "bg-emerald-100 text-emerald-800",
+  "bg-amber-100 text-amber-900",
+  "bg-rose-100 text-rose-800",
+  "bg-violet-100 text-violet-800",
+  "bg-navy-100 text-navy-800"
+] %}
+
+{% macro avatar(nome, tamanho="h-9 w-9 text-xs") -%}
+<span class="inline-flex {{ tamanho }} shrink-0 items-center justify-center rounded-full font-semibold {{ CORES_AVATAR[(nome or '')|length % CORES_AVATAR|length] }}" aria-hidden="true">{{ nome|iniciais }}</span>
+{%- endmacro %}
+
+{# Formulário POST com confirmação (exclusões, renovações) #}
+{% macro form_acao(action, confirmacao, titulo="Confirmar exclusão", rotulo="Excluir", classe="btn btn-secundario btn-sm", nome_icone="lixeira", so_icone=False, tom="perigo", ocultos={}) -%}
+<form action="{{ action }}" method="post" class="inline-flex" data-confirmar="{{ confirmacao }}" data-confirmar-titulo="{{ titulo }}" data-confirmar-botao="{{ rotulo }}" data-confirmar-tom="{{ tom }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for nome, valor in ocultos.items() %}<input type="hidden" name="{{ nome }}" value="{{ valor }}">{% endfor %}
+  <button type="submit" class="{{ classe }}" {% if so_icone %}aria-label="{{ rotulo }}" title="{{ rotulo }}"{% endif %}>
+    {{ icone(nome_icone, "h-4 w-4") }}{% if not so_icone %}<span>{{ rotulo }}</span>{% endif %}
+  </button>
+</form>
+{%- endmacro %}
+
+{# ===== Campos de formulário ===== #}
+
+{% macro _mensagem(field, ajuda) -%}
+{% if field.errors %}
+<p id="{{ field.id }}-descricao" class="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">{{ icone("alerta", "h-3.5 w-3.5 shrink-0") }}{{ field.errors[0] }}</p>
+{% elif ajuda %}
+<p id="{{ field.id }}-descricao" class="mt-1.5 text-xs text-slate-500">{{ ajuda }}</p>
+{% endif %}
+{%- endmacro %}
+
+{% macro campo(field, ajuda=None, prefixo=None, classe="", opcional=None) -%}
+{% set erro = field.errors|length > 0 %}
+{% set mostrar_opcional = (not field.flags.required) if opcional is none else opcional %}
+<div class="{{ classe }}">
+  <label for="{{ field.id }}" class="label">{{ field.label.text }}{% if mostrar_opcional %} <span class="font-normal text-slate-400">(opcional)</span>{% endif %}</label>
+  <div class="relative">
+    {% if prefixo %}<span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-medium text-slate-500">{{ prefixo }}</span>{% endif %}
+    {{ field(class="input" ~ (" input-erro" if erro else "") ~ (" pl-11" if prefixo else ""),
+             aria_invalid=("true" if erro else "false"),
+             aria_describedby=((field.id ~ "-descricao") if (erro or ajuda) else False),
+             **kwargs) }}
+  </div>
+  {{ _mensagem(field, ajuda) }}
+</div>
+{%- endmacro %}
+
+{% macro campo_senha(field, ajuda=None, classe="") -%}
+{% set erro = field.errors|length > 0 %}
+<div class="{{ classe }}">
+  <label for="{{ field.id }}" class="label">{{ field.label.text }}</label>
+  <div class="relative">
+    {{ field(class="input pr-11" ~ (" input-erro" if erro else ""),
+             aria_invalid=("true" if erro else "false"),
+             aria_describedby=((field.id ~ "-descricao") if (erro or ajuda) else False),
+             **kwargs) }}
+    <button type="button" data-alternar-senha aria-controls="{{ field.id }}" aria-pressed="false" aria-label="Mostrar senha"
+            class="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-slate-400 transition hover:text-slate-700">
+      <span data-icone-mostrar>{{ icone("olho", "h-4 w-4") }}</span>
+      <span data-icone-ocultar class="hidden">{{ icone("olho-fechado", "h-4 w-4") }}</span>
+    </button>
+  </div>
+  {{ _mensagem(field, ajuda) }}
+</div>
+{%- endmacro %}
+
+{% macro checkbox(field) -%}
+<label for="{{ field.id }}" class="inline-flex cursor-pointer select-none items-center gap-2.5 text-sm text-slate-600">{{ field() }}{{ field.label.text }}</label>
+{%- endmacro %}
+
+{% macro interruptor(field, descricao=None) -%}
+<label for="{{ field.id }}" class="flex cursor-pointer items-center justify-between gap-4 rounded-lg border border-slate-200 p-4 transition hover:bg-slate-50">
+  <span class="min-w-0">
+    <span class="block text-sm font-medium text-slate-800">{{ field.label.text }}</span>
+    {% if descricao %}<span class="mt-0.5 block text-xs text-slate-500">{{ descricao }}</span>{% endif %}
+  </span>
+  <span class="relative inline-flex shrink-0 items-center">
+    {{ field(class="peer sr-only", role="switch") }}
+    <span class="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-emerald-500 peer-focus-visible:ring-2 peer-focus-visible:ring-navy-500 peer-focus-visible:ring-offset-2"></span>
+    <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5"></span>
+  </span>
+</label>
+{%- endmacro %}
+
+{% macro aviso(titulo, texto, tom="ambar") -%}
+{% set estilos = {
+  "ambar": ("border-amber-200 bg-amber-50", "text-amber-600", "text-amber-900", "text-amber-800"),
+  "navy": ("border-navy-100 bg-navy-50", "text-navy-600", "text-navy-900", "text-navy-700")
+} %}
+{% set e = estilos.get(tom, estilos.ambar) %}
+<div class="mb-6 flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between {{ e[0] }}" role="status">
+  <div class="flex gap-3">
+    <span class="mt-0.5 shrink-0 {{ e[1] }}">{{ icone("info") }}</span>
+    <div>
+      <p class="text-sm font-semibold {{ e[2] }}">{{ titulo }}</p>
+      <p class="mt-0.5 text-sm {{ e[3] }}">{{ texto }}</p>
+    </div>
+  </div>
+  {% if caller %}<div class="flex shrink-0 flex-wrap gap-2">{{ caller() }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro acoes_form(rotulo_principal, cancelar, rotulo_secundario=None, desabilitado=False) -%}
+{# ordem no DOM: o botão principal vem primeiro para ser o padrão ao apertar Enter #}
+<div class="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
+  <button type="submit" class="btn btn-primario" {% if desabilitado %}disabled{% endif %}>{{ rotulo_principal }}</button>
+  {% if rotulo_secundario %}
+  <button type="submit" name="acao" value="salvar_e_novo" class="btn btn-secundario" {% if desabilitado %}disabled{% endif %}>{{ rotulo_secundario }}</button>
+  {% endif %}
+  <a href="{{ cancelar }}" class="btn btn-fantasma">Cancelar</a>
+</div>
+{%- endmacro %}
+
+{% macro secao(titulo, descricao=None) -%}
+<section class="cartao">
+  <header class="border-b border-slate-100 px-5 py-4 sm:px-6">
+    <h2 class="font-display text-base font-semibold text-navy-900">{{ titulo }}</h2>
+    {% if descricao %}<p class="mt-0.5 text-sm text-slate-500">{{ descricao }}</p>{% endif %}
+  </header>
+  {{ caller() }}
+</section>
+{%- endmacro %}

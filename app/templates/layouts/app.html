@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% import "macros/ui.html" as ui %}
+
+{% block body %}
+<a href="#conteudo" class="sr-only z-[70] rounded-lg bg-white px-4 py-2 text-sm font-semibold text-navy-900 shadow focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Pular para o conteúdo</a>
+
+<div class="min-h-full lg:pl-64 print:pl-0">
+
+  <div data-sidebar-overlay class="pointer-events-none fixed inset-0 z-40 bg-navy-950/60 opacity-0 backdrop-blur-sm transition-opacity duration-200 lg:hidden"></div>
+
+  <aside id="menu-lateral" data-sidebar class="fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-navy-900 transition-transform duration-200 ease-out lg:w-64 lg:translate-x-0 print:hidden">
+    <div class="flex h-16 shrink-0 items-center justify-between px-5">
+      <a href="{{ url_for('main.homepage') }}" aria-label="Ir para o início">{{ ui.logo("escuro") }}</a>
+      <button type="button" data-sidebar-close class="flex h-10 w-10 items-center justify-center rounded-lg text-navy-200 transition hover:bg-white/10 hover:text-white lg:hidden" aria-label="Fechar menu">
+        {{ ui.icone("x") }}
+      </button>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto px-3 pb-4 pt-2" aria-label="Principal">
+      <a href="{{ url_for('alunos.cadastroAluno') }}" class="btn btn-primario mb-5 w-full">{{ ui.icone("mais", "h-4 w-4") }}Novo aluno</a>
+
+      <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-navy-300/80">Gestão</p>
+      {% set itens_menu = [
+        ("main.homepage", "Início", "inicio", "main."),
+        ("alunos.listarAlunos", "Alunos", "usuarios", "alunos."),
+        ("planos.listarPlanos", "Planos", "cartao", "planos."),
+        ("fichas.listarFichas", "Fichas de treino", "prancheta", "fichas."),
+        ("exercicios.listarExercicios", "Exercícios", "halter", "exercicios.")
+      ] %}
+      <ul class="space-y-1">
+        {% for endpoint, rotulo, nome_icone, prefixo in itens_menu %}
+        {% set ativo = request.endpoint and request.endpoint.startswith(prefixo) %}
+        <li>
+          <a href="{{ url_for(endpoint) }}" {% if ativo %}aria-current="page"{% endif %}
+             class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 {{ 'bg-white/10 text-white' if ativo else 'text-navy-200 hover:bg-white/5 hover:text-white' }}">
+            <span class="{{ 'text-amarelo-400' if ativo else 'text-navy-300 group-hover:text-navy-100' }}">{{ ui.icone(nome_icone, "h-[1.125rem] w-[1.125rem]") }}</span>
+            {{ rotulo }}
+            {% if ativo %}<span class="ml-auto h-1.5 w-1.5 rounded-full bg-amarelo-400" aria-hidden="true"></span>{% endif %}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <div class="border-t border-white/10 p-3">
+      {% set conta_ativa = request.endpoint == 'instrutores.conta' %}
+      <a href="{{ url_for('instrutores.conta') }}" class="flex items-center gap-3 rounded-lg p-2 transition {{ 'bg-white/10' if conta_ativa else 'hover:bg-white/5' }}" {% if conta_ativa %}aria-current="page"{% endif %}>
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amarelo-400 text-xs font-bold text-navy-950">{{ current_user.nome_completo|iniciais }}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-sm font-semibold text-white">{{ current_user.nome_completo }}</span>
+          <span class="block truncate text-xs text-navy-300">{{ current_user.email }}</span>
+        </span>
+      </a>
+      <form action="{{ url_for('instrutores.logout') }}" method="post" class="mt-1">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-navy-200 transition hover:bg-white/5 hover:text-white">
+          {{ ui.icone("sair", "h-[1.125rem] w-[1.125rem] text-navy-300") }}Sair
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur sm:px-6 lg:px-8 print:hidden">
+    <button type="button" data-sidebar-open class="btn-icone -ml-2 lg:hidden" aria-label="Abrir menu" aria-controls="menu-lateral" aria-expanded="false">
+      {{ ui.icone("menu") }}
+    </button>
+
+    <form action="{{ url_for('alunos.listarAlunos') }}" method="get" role="search" class="relative w-full max-w-md">
+      <label for="busca-global" class="sr-only">Buscar aluno</label>
+      <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">{{ ui.icone("busca", "h-4 w-4") }}</span>
+      <input id="busca-global" type="search" name="q" value="{{ request.args.get('q', '') if request.endpoint == 'alunos.listarAlunos' else '' }}"
+             placeholder="Buscar aluno por nome, e-mail ou CPF"
+             class="block h-10 w-full rounded-lg border-transparent bg-slate-100 pl-9 pr-3 text-base text-slate-900 transition placeholder:text-slate-500 focus:border-navy-600 focus:bg-white focus:ring-4 focus:ring-navy-600/10 sm:text-sm">
+    </form>
+
+    <div class="ml-auto hidden items-center gap-2 sm:flex">
+      <a href="{{ url_for('fichas.criarFicha') }}" class="btn btn-secundario">{{ ui.icone("prancheta", "h-4 w-4") }}Nova ficha</a>
+    </div>
+  </header>
+
+  <main id="conteudo" class="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8 print:max-w-none print:p-0">
+    {% block conteudo %}{% endblock %}
+  </main>
+</div>
+
+{% include "partials/flash.html" %}
+{% include "partials/confirmar.html" %}
+{% endblock %}

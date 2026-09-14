@@ -1,3 +1,6 @@
+from flask import current_app
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
 from app.extensions.database import db
 from app.exceptions import BusinessError
 
@@ -10,21 +13,21 @@ class BaseService:
 
     @staticmethod
     def salvar(obj):
-        print("SALVANDO:", obj)
-
         """
         Adiciona e commita um objeto no banco
         """
         try:
-            print("ANTES DO COMMIT")
             db.session.add(obj)
             db.session.commit()
-            print("DEPOIS DO COMMIT")
             return obj
-        except Exception:
+        except IntegrityError:
             db.session.rollback()
-            raise BusinessError("Erro ao salvar registro")
-
+            current_app.logger.exception("Violação de integridade ao salvar %r", obj)
+            raise BusinessError("Já existe um registro com esses dados.")
+        except SQLAlchemyError:
+            db.session.rollback()
+            current_app.logger.exception("Erro ao salvar %r", obj)
+            raise BusinessError("Erro ao salvar registro. Tente novamente.")
 
     @staticmethod
     def deletar(obj):
@@ -35,16 +38,22 @@ class BaseService:
             db.session.delete(obj)
             db.session.commit()
             return obj
-        except Exception:
+        except SQLAlchemyError:
             db.session.rollback()
-            raise BusinessError("Erro ao excluir registro")
+            current_app.logger.exception("Erro ao excluir %r", obj)
+            raise BusinessError("Erro ao excluir registro. Tente novamente.")
 
     @staticmethod
     def commit():
         """
-        Apenas commit (casos específicos)
+        Commit com rollback automático em caso de erro
         """
-        db.session.commit()
+        try:
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            current_app.logger.exception("Erro ao salvar alterações")
+            raise BusinessError("Erro ao salvar alterações. Tente novamente.")
 
     @staticmethod
     def rollback():

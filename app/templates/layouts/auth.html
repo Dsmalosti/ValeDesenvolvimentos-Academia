@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% import "macros/ui.html" as ui %}
+
+{% block body_class %}bg-white{% endblock %}
+
+{% block body %}
+<div class="flex min-h-full">
+
+  <div class="flex flex-1 flex-col px-5 py-8 sm:px-10 lg:w-[520px] lg:flex-none xl:w-[580px] xl:px-16">
+    <a href="{{ url_for('instrutores.login') }}" class="self-start" aria-label="MinhaAcademia">{{ ui.logo() }}</a>
+
+    <main class="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-12">
+      {% block formulario %}{% endblock %}
+    </main>
+
+    <p class="text-xs text-slate-400">&copy; {{ ano_atual }} Vale Desenvolvimentos</p>
+  </div>
+
+  <div class="relative hidden flex-1 flex-col justify-center overflow-hidden bg-navy-900 px-14 lg:flex xl:px-20">
+    <div aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(to_right,rgb(255_255_255/0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgb(255_255_255/0.045)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_75%)]"></div>
+    <div aria-hidden="true" class="absolute -right-40 -top-40 h-[32rem] w-[32rem] rounded-full bg-amarelo-400/10 blur-3xl"></div>
+    <div aria-hidden="true" class="absolute -bottom-48 -left-24 h-[28rem] w-[28rem] rounded-full bg-navy-500/20 blur-3xl"></div>
+
+    <div class="relative max-w-xl">
+      <p class="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-medium text-navy-100 ring-1 ring-inset ring-white/10">
+        <span class="h-1.5 w-1.5 rounded-full bg-amarelo-400" aria-hidden="true"></span>
+        Gestão para academias e personal trainers
+      </p>
+
+      <h2 class="mt-6 font-display text-4xl font-semibold leading-[1.1] tracking-tight text-white xl:text-5xl">
+        Menos planilha.<br><span class="text-amarelo-400">Mais tempo no salão.</span>
+      </h2>
+      <p class="mt-5 max-w-md text-base leading-relaxed text-navy-200">
+        Alunos, planos, vencimentos e fichas de treino num painel só, feito para a rotina da academia.
+      </p>
+
+      <ul class="mt-8 space-y-3">
+        {% for item in [
+          "Alerta de vencimento antes de o aluno sumir",
+          "Fichas por dia da semana, prontas para imprimir",
+          "Dados de cada academia isolados e protegidos"
+        ] %}
+        <li class="flex items-center gap-3 text-sm text-navy-100">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amarelo-400/15 text-amarelo-400">{{ ui.icone("check", "h-3.5 w-3.5") }}</span>
+          {{ item }}
+        </li>
+        {% endfor %}
+      </ul>
+
+      <figure class="mt-12 rounded-2xl bg-white/[0.04] p-4 ring-1 ring-inset ring-white/10" aria-hidden="true">
+        <div class="grid grid-cols-3 gap-3">
+          {% for rotulo, valor, cor in [
+            ("Alunos ativos", "128", "text-white"),
+            ("Receita mensal", "R$ 18,9 mil", "text-white"),
+            ("Vencem em 7 dias", "6", "text-amarelo-400")
+          ] %}
+          <div class="rounded-xl bg-navy-950/60 p-3.5">
+            <p class="text-[11px] text-navy-300">{{ rotulo }}</p>
+            <p class="mt-1 font-display text-xl font-semibold {{ cor }}">{{ valor }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="mt-3 space-y-2.5 rounded-xl bg-navy-950/60 p-3.5">
+          {% for nome, info, tom in [
+            ("Marina Costa", "Vence amanhã", "bg-amber-400/15 text-amber-300"),
+            ("Rafael Lima", "Em dia", "bg-emerald-400/15 text-emerald-300"),
+            ("Juliana Reis", "Em dia", "bg-emerald-400/15 text-emerald-300")
+          ] %}
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[10px] font-semibold text-navy-100">{{ nome|iniciais }}</span>
+              <span class="text-sm text-navy-100">{{ nome }}</span>
+            </div>
+            <span class="rounded-full px-2 py-0.5 text-[11px] font-medium {{ tom }}">{{ info }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <figcaption class="mt-3 text-center text-[11px] text-navy-400">Prévia ilustrativa do painel</figcaption>
+      </figure>
+    </div>
+  </div>
+
+</div>
+
+{% include "partials/flash.html" %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Fichas de treino{% endblock %}
+
+{% block conteudo %}
+{% call ui.cabecalho("Fichas de treino", "Treinos de cada aluno organizados por dia da semana.") %}
+  <a href="{{ url_for('fichas.criarFicha', aluno_id=aluno_filtro.id if aluno_filtro else None) }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Nova ficha</a>
+{% endcall %}
+
+{% if aluno_filtro %}
+<div class="mb-5 flex flex-wrap items-center gap-2 text-sm">
+  <span class="text-slate-500">Mostrando fichas de</span>
+  <a href="{{ url_for('fichas.listarFichas') }}" class="inline-flex items-center gap-1.5 rounded-full bg-navy-50 py-1 pl-3 pr-2 font-medium text-navy-800 ring-1 ring-inset ring-navy-200 transition hover:bg-navy-100">
+    {{ aluno_filtro.nome }}{{ ui.icone("x", "h-3.5 w-3.5") }}<span class="sr-only">Remover filtro</span>
+  </a>
+</div>
+{% endif %}
+
+{% if fichas %}
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+  {% for ficha in fichas %}
+  {% set dias = ficha.treinos|map(attribute='dia_semana')|list %}
+  <article class="cartao group relative flex flex-col p-5 transition duration-150 hover:border-slate-300 hover:shadow-md">
+    <div class="flex items-start justify-between gap-3">
+      <h2 class="min-w-0 font-display text-base font-semibold text-navy-900">
+        <a href="{{ url_for('fichas.fichaDetalhes', ficha_id=ficha.id) }}" class="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none">{{ ficha.nome }}</a>
+      </h2>
+      {{ ui.badge("Em uso", "verde") if ficha.ativo else ui.badge("Arquivada") }}
+    </div>
+
+    <div class="mt-3 flex items-center gap-2.5">
+      {{ ui.avatar(ficha.aluno.nome, "h-7 w-7 text-[10px]") }}
+      <span class="truncate text-sm text-slate-600">{{ ficha.aluno.nome }}</span>
+    </div>
+
+    <div class="mt-4 grid grid-cols-7 gap-1">
+      {% for chave, rotulo in DIAS_SEMANA %}
+      {% set tem = chave in dias %}
+      <span class="flex h-8 items-center justify-center rounded-md text-[11px] font-semibold {{ 'bg-navy-800 text-white' if tem else 'bg-slate-100 text-slate-400' }}">
+        <span aria-hidden="true">{{ rotulo[:3] }}</span>
+        <span class="sr-only">{{ rotulo }}: {{ 'com treino' if tem else 'sem treino' }}</span>
+      </span>
+      {% endfor %}
+    </div>
+
+    <p class="mt-4 text-xs text-slate-500">
+      {{ ficha.treinos|length }} {{ 'dia' if ficha.treinos|length == 1 else 'dias' }} ·
+      {{ ficha.total_exercicios }} {{ 'exercício' if ficha.total_exercicios == 1 else 'exercícios' }} ·
+      criada em {{ ficha.data_criacao|data_br }}
+    </p>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cartao">
+  {% if aluno_filtro %}
+    {% call ui.estado_vazio("prancheta", aluno_filtro.nome ~ " ainda não tem ficha", "Monte a primeira ficha de treino deste aluno.") %}
+      <a href="{{ url_for('fichas.criarFicha', aluno_id=aluno_filtro.id) }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Criar ficha</a>
+    {% endcall %}
+  {% else %}
+    {% call ui.estado_vazio("prancheta", "Nenhuma ficha de treino ainda", "Crie uma ficha para um aluno e distribua os exercícios pelos dias da semana.") %}
+      <a href="{{ url_for('fichas.criarFicha') }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Criar primeira ficha</a>
+    {% endcall %}
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

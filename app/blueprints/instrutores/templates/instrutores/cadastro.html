@@ -1,0 +1,33 @@
+{% extends "layouts/auth.html" %}
+
+{% block titulo %}Criar conta{% endblock %}
+
+{% block formulario %}
+<h1 class="font-display text-[1.75rem] font-semibold tracking-tight text-navy-900">Crie a conta da sua academia</h1>
+<p class="mt-2 text-sm text-slate-500">Em poucos minutos você cadastra o primeiro plano e o primeiro aluno.</p>
+
+<form method="post" class="mt-8 space-y-5">
+  {{ form.csrf_token }}
+
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+    {{ ui.campo(form.nome, placeholder="Ana", autocomplete="given-name", autofocus=true, opcional=false) }}
+    {{ ui.campo(form.sobrenome, placeholder="Souza", autocomplete="family-name") }}
+  </div>
+
+  {{ ui.campo(form.email, placeholder="voce@academia.com", autocomplete="email", opcional=false,
+              ajuda="Você vai usar este e-mail para entrar.") }}
+  {{ ui.campo_senha(form.senha, autocomplete="new-password", minlength="8", ajuda="Mínimo de 8 caracteres.") }}
+
+  <button type="submit" class="btn btn-primario h-11 w-full">Criar minha conta{{ ui.icone("seta-direita", "h-4 w-4") }}</button>
+
+  <p class="flex items-center justify-center gap-2 text-xs text-slate-500">
+    <span class="text-emerald-600">{{ ui.icone("escudo", "h-4 w-4") }}</span>
+    Senha criptografada e dados visíveis só para a sua academia.
+  </p>
+</form>
+
+<p class="mt-8 text-center text-sm text-slate-500">
+  Já tem conta?
+  <a href="{{ url_for('instrutores.login') }}" class="font-semibold text-navy-700 underline-offset-4 hover:text-navy-900 hover:underline">Entrar</a>
+</p>
+{% endblock %}

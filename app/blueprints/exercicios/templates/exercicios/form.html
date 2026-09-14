@@ -1,0 +1,31 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}{{ 'Editar exercício' if exercicio else 'Novo exercício' }}{% endblock %}
+
+{% block conteudo %}
+{{ ui.cabecalho(
+    "Editar exercício" if exercicio else "Novo exercício",
+    "Exercícios ficam disponíveis para montar as fichas de treino.",
+    voltar=url_for('exercicios.listarExercicios')) }}
+
+<form method="post" class="max-w-2xl space-y-6">
+  {{ form.csrf_token }}
+
+  <section class="cartao">
+    <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6">
+      {{ ui.campo(form.nome, placeholder="Ex: Supino reto com barra", autofocus=not exercicio) }}
+      {{ ui.campo(form.grupo_muscular) }}
+      {{ ui.campo(form.descricao, classe="sm:col-span-2", rows="3", placeholder="Postura, amplitude, cuidados na execução...") }}
+      {{ ui.campo(form.video_url, classe="sm:col-span-2", placeholder="https://youtube.com/...", ajuda="Aparece como atalho na lista de exercícios.") }}
+      <div class="sm:col-span-2">
+        {{ ui.interruptor(form.ativo, "Exercícios inativos continuam nas fichas existentes, mas não aparecem para novas.") }}
+      </div>
+    </div>
+  </section>
+
+  {{ ui.acoes_form(
+      "Salvar alterações" if exercicio else "Criar exercício",
+      url_for('exercicios.listarExercicios'),
+      None if exercicio else "Salvar e criar outro") }}
+</form>
+{% endblock %}

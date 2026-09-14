@@ -1,72 +1,70 @@
+from sqlalchemy import func
+
 from app.models import User
 from app.services.base_service import BaseService
 from app.exceptions import BusinessError
+from app.extensions.database import db
 from app.extensions.security import bcrypt
+from app.helpers.validators import normalizar_email, texto_ou_none
+
+TAMANHO_MINIMO_SENHA = 8
 
 
 class InstrutorService:
 
     @staticmethod
+    def email_em_uso(email, ignorar_id=None):
+        query = User.query.filter(func.lower(User.email) == (email or "").strip().lower())
+        if ignorar_id:
+            query = query.filter(User.id != ignorar_id)
+        return db.session.query(query.exists()).scalar()
+
+    @staticmethod
     def criar_instrutor(dados):
         """
-        Docstring for criar_instrutor
-        
-        :param dados: Description
+        Cria a conta do instrutor (a academia) com senha criptografada
         """
+        email = normalizar_email(dados.get("email"))
+        if InstrutorService.email_em_uso(email):
+            raise BusinessError("Já existe uma conta com este e-mail.")
+
+        nome = (dados.get("nome") or "").strip()
+        if not nome:
+            raise BusinessError("Informe seu nome.")
+
         instrutor = User(
-            nome=dados["nome"],
-            sobrenome=dados["sobrenome"],
-            email=dados["email"],
-            senha=dados["senha"]
+            nome=nome,
+            sobrenome=texto_ou_none(dados.get("sobrenome")),
+            email=email,
+            senha=InstrutorService._hash(dados.get("senha")),
+            ativo=True,
         )
+        return BaseService.salvar(instrutor)
+
+    @staticmethod
+    def atualizar_conta(instrutor: User, dados: dict) -> User:
+        """
+        Atualiza dados do próprio instrutor. Trocar a senha exige a senha atual.
+        """
+        email = normalizar_email(dados.get("email"))
+        if InstrutorService.email_em_uso(email, ignorar_id=instrutor.id):
+            raise BusinessError("Já existe uma conta com este e-mail.")
+
+        nova_senha = dados.get("nova_senha")
+        if nova_senha:
+            senha_atual = dados.get("senha_atual") or ""
+            if not bcrypt.check_password_hash(instrutor.senha, senha_atual):
+                raise BusinessError("Senha atual incorreta.")
+            instrutor.senha = InstrutorService._hash(nova_senha)
+
+        instrutor.nome = (dados.get("nome") or "").strip() or instrutor.nome
+        instrutor.sobrenome = texto_ou_none(dados.get("sobrenome"))
+        instrutor.email = email
 
         return BaseService.salvar(instrutor)
-    
+
     @staticmethod
-    def editar_instrutor(instrutor_id: int, dados: dict) -> User:
-        """
-        Docstring for editar_instrutor
-        
-        :param instrutor_id: Description
-        :type instrutor_id: int
-        :param dados: Description
-        :type dados: dict
-        :return: Description
-        :rtype: User
-        """
-        instrutor = User.query.get_or_404(instrutor_id)
-
-        if not instrutor:
-            raise BusinessError("Instrutor não encontrado")
-        
-        if "nome" in dados:
-            instrutor.nome = dados["nome"]
-
-        if "sobrenome" in dados:
-            instrutor.sobrenome = dados["sobrenome"]
-
-        if "email" in dados:
-            instrutor.email = dados["email"]
-
-         # Se a senha foi preenchida, altera
-        if dados.get("senha"):
-            instrutor.senha = bcrypt.generate_password_hash(
-                dados["senha"]
-            ).decode("utf-8")
-        
-        return BaseService.salvar(instrutor)
-    
-    @staticmethod
-    def excluir_instrutor(instrutor_id: int):
-        """
-        Docstring for excluir_instrutor
-        
-        :param instrutor_id: Description
-        :type instrutor_id: int
-        """
-        instrutor = User.query.get_or_404(instrutor_id)
-
-        if not instrutor:
-            raise BusinessError("Instrutor não encontrado!")
-        
-        return BaseService.deletar(instrutor)
+    def _hash(senha):
+        if not senha or len(senha) < TAMANHO_MINIMO_SENHA:
+            raise BusinessError(f"A senha precisa ter pelo menos {TAMANHO_MINIMO_SENHA} caracteres.")
+        return bcrypt.generate_password_hash(senha).decode("utf-8")

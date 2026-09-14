@@ -1,29 +1,20 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, DateField, BooleanField, SelectField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, Optional, URL
+from wtforms import BooleanField, SelectField, StringField, TextAreaField, URLField
+from wtforms.validators import DataRequired, Length, Optional, URL
+
+from app.models import GRUPOS_MUSCULARES
 
 
 class ExercicioForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired(message="O nome é obrigatório."), Length(min=2, max=100)])
     grupo_muscular = SelectField(
-        'Grupo Muscular',
-        choices=[
-            ('peito', 'Peito'),
-            ('costas', 'Costas'),
-            ('ombro', 'Ombros'),
-            ('biceps', 'Bíceps'),
-            ('triceps', 'Tríceps'),
-            ('pernas', 'Pernas'),
-            ('gluteo', 'Glúteo'),
-            ('abdomen', 'Abdômen'),
-            ('outro', 'Outro')
-        ],
+        'Grupo muscular',
+        choices=[('', 'Selecione')] + GRUPOS_MUSCULARES,
         validators=[DataRequired(message="Selecione um grupo muscular.")]
     )
-    descricao = TextAreaField('Descrição / Observações', validators=[Optional()])
-    video_url = StringField(
-        'URL do Vídeo (opcional)',
-        validators=[Optional(), URL(message="Informe uma URL válida.")]
+    descricao = TextAreaField('Execução e observações', validators=[Optional(), Length(max=1000)])
+    video_url = URLField(
+        'Link do vídeo',
+        validators=[Optional(), URL(message="Informe uma URL válida."), Length(max=200)]
     )
-    ativo = BooleanField('Ativo', default=True)
-
+    ativo = BooleanField('Disponível para novas fichas', default=True)

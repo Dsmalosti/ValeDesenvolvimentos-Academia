@@ -1,0 +1,41 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}{{ 'Editar plano' if plano else 'Novo plano' }}{% endblock %}
+
+{% block conteudo %}
+{{ ui.cabecalho(
+    "Editar plano" if plano else "Novo plano",
+    "Alterações de valor e duração valem para os próximos vencimentos." if plano else "Defina quanto custa e quanto tempo dura a matrícula.",
+    voltar=url_for('planos.listarPlanos')) }}
+
+<form method="post" class="max-w-2xl space-y-6">
+  {{ form.csrf_token }}
+
+  <section class="cartao">
+    <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6">
+      {{ ui.campo(form.nome, classe="sm:col-span-2", placeholder="Ex: Mensal, Trimestral, Anual", autofocus=not plano) }}
+      {{ ui.campo(form.valor, prefixo="R$", placeholder="129,90", inputmode="decimal") }}
+
+      <div>
+        {{ ui.campo(form.duracao_dias, inputmode="numeric", min="1", max="3650") }}
+        <div class="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Durações comuns">
+          {% for dias, rotulo in [(30, "Mensal"), (90, "Trimestral"), (180, "Semestral"), (365, "Anual")] %}
+          <button type="button" data-preencher="{{ form.duracao_dias.id }}" data-valor="{{ dias }}"
+                  class="rounded-md bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition duration-150 hover:bg-navy-50 hover:text-navy-800">
+            {{ rotulo }} · {{ dias }}d
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      {{ ui.campo(form.descricao, classe="sm:col-span-2", rows="3", placeholder="O que está incluso? Ex: musculação livre + avaliação física a cada 3 meses") }}
+
+      <div class="sm:col-span-2">
+        {{ ui.interruptor(form.ativo, "Planos inativos somem do cadastro de alunos, mas continuam valendo para quem já está matriculado.") }}
+      </div>
+    </div>
+  </section>
+
+  {{ ui.acoes_form("Salvar alterações" if plano else "Criar plano", url_for('planos.listarPlanos')) }}
+</form>
+{% endblock %}

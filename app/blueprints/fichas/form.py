@@ -1,55 +1,36 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, HiddenField,FloatField,DateField, BooleanField, IntegerField,SelectField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, Optional, URL, NumberRange
+from wtforms import BooleanField, IntegerField, SelectField, StringField, TextAreaField
+from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional
+
+from app.models import DIAS_SEMANA
 
 
 class FichaForm(FlaskForm):
-    nome = StringField("Nome da ficha", validators=[DataRequired()])
-    observacoes = TextAreaField("Observações")
-    aluno_id = SelectField("Aluno", coerce=int, validators=[DataRequired()])
-    ativo = BooleanField('Ativo', default=True)
-    submit = SubmitField("Salvar")
+    nome = StringField("Nome da ficha", validators=[DataRequired("Informe o nome da ficha."), Length(max=100)])
+    # choices preenchidas na rota com os alunos da academia logada
+    aluno_id = SelectField("Aluno", coerce=int, validators=[DataRequired("Selecione um aluno.")])
+    observacoes = TextAreaField("Objetivo e observações", validators=[Optional(), Length(max=1000)])
+    ativo = BooleanField("Ficha em uso", default=True)
+
 
 class TreinoForm(FlaskForm):
-    id = HiddenField()
-    ficha_id = HiddenField("Ficha")
-
     dia_semana = SelectField(
-        "Dia da Semana",
-        choices=[
-            ("segunda", "Segunda-feira"),
-            ("terca", "Terça-feira"),
-            ("quarta", "Quarta-feira"),
-            ("quinta", "Quinta-feira"),
-            ("sexta", "Sexta-feira"),
-            ("sabado", "Sábado"),
-            ("domingo", "Domingo")
-        ],
-        validators=[DataRequired()]
+        "Dia da semana",
+        choices=[("", "Selecione")] + DIAS_SEMANA,
+        validators=[DataRequired("Selecione o dia.")]
     )
-
-    submit = SubmitField("Salvar")
 
 
 class TreinoExercicioForm(FlaskForm):
-    ficha_id = HiddenField("Ficha")
-    exercicio_id = SelectField("Exercício", coerce=int, validators=[DataRequired()])
-
-
-    
-    series = IntegerField("Séries", validators=[
-        DataRequired(),
-        NumberRange(min=1, max=20)
+    # choices preenchidas na rota com os exercícios ativos da academia
+    exercicio_id = SelectField("Exercício", coerce=int, validators=[DataRequired("Selecione um exercício.")])
+    series = IntegerField("Séries", default=3, validators=[
+        InputRequired("Informe as séries."),
+        NumberRange(min=1, max=20, message="Use entre 1 e 20 séries.")
     ])
-
-    repeticoes = IntegerField("Repetições", validators=[
-        DataRequired(),
-        NumberRange(min=1, max=100)
+    repeticoes = StringField("Repetições", default="12", validators=[
+        DataRequired("Informe as repetições."),
+        Length(max=50)
     ])
-
-    carga = FloatField("Carga (kg)", validators=[Optional()])
-
-    observacoes = TextAreaField("Observações", validators=[Optional()])
-
-    submit = SubmitField("Salvar")
-
+    carga = StringField("Carga", validators=[Optional(), Length(max=50)])
+    observacoes = TextAreaField("Observações", validators=[Optional(), Length(max=500)])

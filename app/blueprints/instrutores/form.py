@@ -1,56 +1,51 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, DateField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Optional
+from wtforms import BooleanField, EmailField, PasswordField, StringField
+from wtforms.validators import DataRequired, Email, Length, Optional, ValidationError
 
-from app.extensions.database import db
-from app.extensions.security import bcrypt
-from app.models import User
+from app.services.instrutor_service import TAMANHO_MINIMO_SENHA, InstrutorService
 
 
-# Formulario Instrutor
-class UserForm(FlaskForm):
-    nome = StringField('Nome', validators=[DataRequired()])
-    sobrenome = StringField('Sobrenome', validators=[DataRequired()])
-    email = StringField('E-Mail', validators=[DataRequired(), Email()])
-    senha = PasswordField('Senha')
-    confirmacao_senha = PasswordField('Senha', validators=[EqualTo('senha')])
-    BtnSubmit = SubmitField('Cadastrar')
+# Formulario de criação de conta (instrutor = academia)
+class CadastroForm(FlaskForm):
+    nome = StringField('Nome', validators=[DataRequired('Informe seu nome.'), Length(max=100)])
+    sobrenome = StringField('Sobrenome', validators=[Optional(), Length(max=100)])
+    email = EmailField('E-mail', validators=[DataRequired('Informe seu e-mail.'), Email('E-mail inválido.'), Length(max=120)])
+    senha = PasswordField('Senha', validators=[
+        DataRequired('Crie uma senha.'),
+        Length(min=TAMANHO_MINIMO_SENHA, message=f'Use pelo menos {TAMANHO_MINIMO_SENHA} caracteres.'),
+    ])
 
-    def validade_email(self, email):
-        if User.query.filter(email=email.data).first():
-            return ValidationError('Usuário já cadastrado com esse E-Mail!!!')
-        
-    def save(self):
-        senha = bcrypt.generate_password_hash(self.senha.data).decode('utf-8')
-        user = User(
-            nome = self.nome.data,
-            sobrenome = self.sobrenome.data,
-            email = self.email.data,
-            senha=senha
-        )
+    def validate_email(self, field):
+        if InstrutorService.email_em_uso(field.data):
+            raise ValidationError('Já existe uma conta com este e-mail.')
 
-        db.session.add(user)
-        db.session.commit()
-        return user
-    
+
 # Formulario login
 class LoginForm(FlaskForm):
-    email = StringField('E-Mail', validators=[DataRequired(), Email()])
-    senha = PasswordField('Senha', validators=[DataRequired()])
-    btnSubmit = SubmitField('Login')
+    email = EmailField('E-mail', validators=[DataRequired('Informe seu e-mail.'), Email('E-mail inválido.')])
+    senha = PasswordField('Senha', validators=[DataRequired('Informe sua senha.')])
+    lembrar = BooleanField('Manter conectado', default=True)
 
-    def login(self):
-        # Recuperar o usuario do e-mail
-        user = User.query.filter_by(email=self.email.data).first()
 
-        #verifica se a senha é valida
-        if user:
-            if bcrypt.check_password_hash(user.senha, self.senha.data.encode('utf-8')):
-                #Retorna usuario
-                return user
-            raise Exception('Senha incorreta!!!')
-        else:
-            raise Exception('Usuário não encontrado!!!')
-            
+# Formulario da própria conta
+class ContaForm(FlaskForm):
+    nome = StringField('Nome', validators=[DataRequired('Informe seu nome.'), Length(max=100)])
+    sobrenome = StringField('Sobrenome', validators=[Optional(), Length(max=100)])
+    email = EmailField('E-mail', validators=[DataRequired('Informe seu e-mail.'), Email('E-mail inválido.'), Length(max=120)])
+    senha_atual = PasswordField('Senha atual')
+    nova_senha = PasswordField('Nova senha', validators=[
+        Optional(),
+        Length(min=TAMANHO_MINIMO_SENHA, message=f'Use pelo menos {TAMANHO_MINIMO_SENHA} caracteres.'),
+    ])
 
-        return user
+    def __init__(self, *args, instrutor_id=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._instrutor_id = instrutor_id
+
+    def validate_email(self, field):
+        if InstrutorService.email_em_uso(field.data, ignorar_id=self._instrutor_id):
+            raise ValidationError('Já existe uma conta com este e-mail.')
+
+    def validate_senha_atual(self, field):
+        if self.nova_senha.data and not field.data:
+            raise ValidationError('Informe a senha atual para definir uma nova.')

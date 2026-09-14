@@ -1,0 +1,36 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Minha conta{% endblock %}
+
+{% block conteudo %}
+{{ ui.cabecalho("Minha conta", "Dados de acesso ao painel da academia.") }}
+
+<form method="post" class="max-w-4xl space-y-6">
+  {{ form.csrf_token }}
+
+  <section class="cartao md:grid md:grid-cols-3">
+    <div class="border-b border-slate-100 p-5 sm:p-6 md:border-b-0 md:border-r">
+      <h2 class="font-display text-base font-semibold text-navy-900">Perfil</h2>
+      <p class="mt-1 text-sm text-slate-500">Nome e e-mail usados para entrar.</p>
+    </div>
+    <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6 md:col-span-2">
+      {{ ui.campo(form.nome, autocomplete="given-name") }}
+      {{ ui.campo(form.sobrenome, autocomplete="family-name") }}
+      {{ ui.campo(form.email, classe="sm:col-span-2", autocomplete="email") }}
+    </div>
+  </section>
+
+  <section class="cartao md:grid md:grid-cols-3">
+    <div class="border-b border-slate-100 p-5 sm:p-6 md:border-b-0 md:border-r">
+      <h2 class="font-display text-base font-semibold text-navy-900">Senha</h2>
+      <p class="mt-1 text-sm text-slate-500">Deixe em branco para manter a senha atual.</p>
+    </div>
+    <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6 md:col-span-2">
+      {{ ui.campo_senha(form.senha_atual, autocomplete="current-password") }}
+      {{ ui.campo_senha(form.nova_senha, autocomplete="new-password", ajuda="Mínimo de 8 caracteres.") }}
+    </div>
+  </section>
+
+  {{ ui.acoes_form("Salvar alterações", url_for('main.homepage')) }}
+</form>
+{% endblock %}

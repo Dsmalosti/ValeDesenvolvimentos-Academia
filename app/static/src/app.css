@@ -1,0 +1,134 @@
+/*
+ * Fonte do CSS do painel. NÃO edite app/static/css/app.css à mão:
+ *   npm run build:css   (ou npm run dev:css para modo watch)
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-slate-50 font-sans text-slate-900 antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-navy-500 ring-offset-2;
+  }
+
+  [type="checkbox"] {
+    @apply h-4 w-4 cursor-pointer rounded border-slate-300 text-navy-800 focus:ring-navy-500;
+  }
+
+  dialog::backdrop {
+    background: rgb(0 22 42 / 0.55);
+    backdrop-filter: blur(2px);
+  }
+}
+
+@layer components {
+  /* ===== Botões ===== */
+  .btn {
+    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 whitespace-nowrap rounded-lg px-4 text-sm font-semibold transition duration-150 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 sm:min-h-[2.5rem];
+  }
+  .btn-primario {
+    @apply bg-amarelo-400 text-navy-950 shadow-sm hover:bg-amarelo-300;
+  }
+  .btn-escuro {
+    @apply bg-navy-800 text-white shadow-sm hover:bg-navy-700;
+  }
+  .btn-secundario {
+    @apply bg-white text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 hover:text-slate-900;
+  }
+  .btn-perigo {
+    @apply bg-red-600 text-white shadow-sm hover:bg-red-500;
+  }
+  .btn-fantasma {
+    @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+  .btn-sm {
+    @apply min-h-[2.25rem] px-3 text-xs sm:min-h-[2.25rem];
+  }
+  .btn-icone {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition duration-150 hover:bg-slate-100 hover:text-slate-900 active:scale-95;
+  }
+  .btn-icone-perigo {
+    @apply hover:bg-red-50 hover:text-red-600;
+  }
+
+  /* ===== Superfícies ===== */
+  .cartao {
+    @apply rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgb(15_23_42/0.04)];
+  }
+
+  /* ===== Formulários ===== */
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .input {
+    @apply block w-full rounded-lg border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 shadow-sm transition duration-150 placeholder:text-slate-400 focus:border-navy-600 focus:ring-4 focus:ring-navy-600/10 sm:text-sm;
+  }
+  .input-erro {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500/10;
+  }
+
+  /* ===== Dados ===== */
+  .badge {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset;
+  }
+  .tabela {
+    @apply min-w-full divide-y divide-slate-200 text-sm;
+  }
+  .tabela th {
+    @apply whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 first:pl-6 last:pr-6;
+  }
+  .tabela td {
+    @apply whitespace-nowrap px-4 py-3.5 align-middle text-slate-700 first:pl-6 last:pr-6;
+  }
+
+  /* ===== Feedback ===== */
+  .toast {
+    animation: toast-entrada 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dialogo {
+    @apply m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 shadow-2xl ring-1 ring-slate-900/10;
+  }
+  .dialogo[open] {
+    animation: dialogo-entrada 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@keyframes toast-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@keyframes dialogo-entrada {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  .cartao {
+    box-shadow: none;
+  }
+}

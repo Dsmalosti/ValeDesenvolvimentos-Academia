@@ -1,15 +1,19 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, DateField, FloatField, BooleanField, DecimalField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, NumberRange
+from wtforms import BooleanField, IntegerField, StringField, TextAreaField
+from wtforms.validators import DataRequired, InputRequired, Length, NumberRange, Optional
 
-from app.extensions.database import db
-from app.extensions.security import bcrypt
-from app.models import Plano
+from app.helpers.campos import MoedaField
+
 
 class PlanoForm(FlaskForm):
-    nome = StringField('Nome do plano', validators=[DataRequired()])
-    valor = DecimalField('Valor (R$)', validators=[DataRequired(), NumberRange(min=0)])
-    duracao_dias = FloatField('Duração (dias)', validators=[DataRequired(), NumberRange(min=0)])
-    descricao  = StringField('Descrição', validators=[DataRequired()])
-    ativo = BooleanField('Ativo', default=True)
-    btnSubmit = SubmitField('Salvar Plano')
+    nome = StringField('Nome do plano', validators=[DataRequired('Informe o nome do plano.'), Length(max=100)])
+    valor = MoedaField('Valor (R$)', places=2, validators=[
+        InputRequired('Informe o valor.'),
+        NumberRange(min=0, message='O valor não pode ser negativo.'),
+    ])
+    duracao_dias = IntegerField('Duração (dias)', validators=[
+        InputRequired('Informe a duração.'),
+        NumberRange(min=1, max=3650, message='Use entre 1 e 3650 dias.'),
+    ])
+    descricao = TextAreaField('Descrição', validators=[Optional(), Length(max=500)])
+    ativo = BooleanField('Disponível para novas matrículas', default=True)

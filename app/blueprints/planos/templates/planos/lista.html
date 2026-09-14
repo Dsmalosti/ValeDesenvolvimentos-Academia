@@ -1,0 +1,61 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Planos{% endblock %}
+
+{% block conteudo %}
+{% call ui.cabecalho("Planos", "Valores e durações oferecidos na sua academia.") %}
+  <a href="{{ url_for('planos.criarPlano') }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Novo plano</a>
+{% endcall %}
+
+{% if planos %}
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  {% for plano in planos %}
+  {% set qtd = alunos_por_plano.get(plano.id, 0) %}
+  <article class="cartao flex flex-col p-5 sm:p-6 {{ '' if plano.ativo else 'bg-slate-50/60' }}">
+    <div class="flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <h2 class="truncate font-display text-lg font-semibold text-navy-900">{{ plano.nome }}</h2>
+        <p class="text-sm text-slate-500">{{ plano.duracao_dias }} dias</p>
+      </div>
+      {{ ui.badge("Ativo", "verde") if plano.ativo else ui.badge("Inativo") }}
+    </div>
+
+    <p class="mt-5 font-display text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">{{ plano.valor|moeda }}</p>
+    {% if plano.duracao_dias != 30 %}
+    <p class="mt-1 text-xs text-slate-500">equivale a <span class="tabular-nums">{{ plano.valor_mensal|moeda }}</span>/mês</p>
+    {% endif %}
+
+    {% if plano.descricao %}
+    <p class="mt-4 line-clamp-3 text-sm text-slate-600">{{ plano.descricao }}</p>
+    {% endif %}
+
+    <div class="mt-auto pt-6">
+      <div class="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        <p class="flex items-center gap-1.5 text-sm text-slate-600">
+          <span class="text-slate-400">{{ ui.icone("usuarios", "h-4 w-4") }}</span>
+          <span class="tabular-nums">{{ qtd }}</span> {{ 'aluno ativo' if qtd == 1 else 'alunos ativos' }}
+        </p>
+        <div class="flex items-center gap-0.5">
+          <a href="{{ url_for('planos.editarPlano', plano_id=plano.id) }}" class="btn-icone" title="Editar" aria-label="Editar plano {{ plano.nome }}">{{ ui.icone("lapis", "h-4 w-4") }}</a>
+          {{ ui.form_acao(url_for('planos.excluirPlano', plano_id=plano.id),
+                          "Excluir o plano " ~ plano.nome ~ "? Planos com alunos vinculados não podem ser excluídos.",
+                          titulo="Excluir plano", rotulo="Excluir plano", classe="btn-icone btn-icone-perigo", so_icone=true) }}
+        </div>
+      </div>
+    </div>
+  </article>
+  {% endfor %}
+
+  <a href="{{ url_for('planos.criarPlano') }}" class="flex min-h-[14rem] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 p-6 text-sm font-semibold text-slate-500 transition duration-150 hover:border-navy-400 hover:bg-white hover:text-navy-800">
+    {{ ui.icone("mais", "h-6 w-6") }}
+    Adicionar plano
+  </a>
+</div>
+{% else %}
+<div class="cartao">
+  {% call ui.estado_vazio("cartao", "Nenhum plano cadastrado", "Crie os planos que sua academia vende, como Mensal, Trimestral e Anual. Eles definem o valor e o vencimento de cada aluno.") %}
+    <a href="{{ url_for('planos.criarPlano') }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Criar primeiro plano</a>
+  {% endcall %}
+</div>
+{% endif %}
+{% endblock %}

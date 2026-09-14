@@ -1,0 +1,41 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}{{ 'Mudar dia do treino' if treino else 'Adicionar treino' }}{% endblock %}
+
+{% block conteudo %}
+{{ ui.cabecalho(
+    "Mudar dia do treino" if treino else "Adicionar dia de treino",
+    ficha.nome ~ " · " ~ ficha.aluno.nome,
+    voltar=url_for('fichas.fichaDetalhes', ficha_id=ficha.id)) }}
+
+{% set usados = ficha.treinos|rejectattr('id', 'equalto', treino.id if treino else 0)|map(attribute='dia_semana')|list %}
+
+<form method="post" class="max-w-3xl space-y-6">
+  {{ form.csrf_token }}
+
+  <fieldset class="cartao p-5 sm:p-6" {% if form.dia_semana.errors %}aria-describedby="dia-erro"{% endif %}>
+    <legend class="sr-only">Dia da semana</legend>
+    <p class="label" aria-hidden="true">Dia da semana</p>
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {% for chave, rotulo in DIAS_SEMANA %}
+      {% set ocupado = chave in usados %}
+      <label class="relative {{ 'cursor-not-allowed' if ocupado else 'cursor-pointer' }}">
+        <input type="radio" name="dia_semana" value="{{ chave }}" class="peer sr-only"
+               {% if form.dia_semana.data == chave %}checked{% endif %} {% if ocupado %}disabled{% endif %} required>
+        <span class="flex flex-col rounded-lg border px-4 py-3 text-sm font-medium transition duration-150 peer-checked:border-navy-800 peer-checked:bg-navy-800 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-navy-500 peer-focus-visible:ring-offset-2 {{ 'border-slate-200 bg-slate-50 text-slate-400' if ocupado else 'border-slate-200 bg-white text-slate-700 hover:border-navy-300' }}">
+          {{ rotulo }}
+          <span class="text-xs font-normal opacity-80">{{ 'já tem treino' if ocupado else 'disponível' }}</span>
+        </span>
+      </label>
+      {% endfor %}
+    </div>
+    {% if form.dia_semana.errors %}
+    <p id="dia-erro" class="mt-3 text-xs font-medium text-red-600">{{ form.dia_semana.errors[0] }}</p>
+    {% endif %}
+  </fieldset>
+
+  {{ ui.acoes_form(
+      "Salvar dia" if treino else "Criar treino e adicionar exercícios",
+      url_for('fichas.fichaDetalhes', ficha_id=ficha.id)) }}
+</form>
+{% endblock %}

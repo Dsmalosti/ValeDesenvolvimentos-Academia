@@ -1,0 +1,123 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}{{ ficha.nome }}{% endblock %}
+
+{% block conteudo %}
+{% call ui.cabecalho(ficha.nome, None, voltar=url_for('fichas.listarFichas')) %}
+  <button type="button" data-imprimir class="btn btn-secundario">{{ ui.icone("impressora", "h-4 w-4") }}Imprimir</button>
+  <a href="{{ url_for('fichas.editarFicha', ficha_id=ficha.id) }}" class="btn btn-secundario">{{ ui.icone("lapis", "h-4 w-4") }}Editar</a>
+  {{ ui.form_acao(url_for('fichas.excluirFicha', ficha_id=ficha.id),
+                  "Excluir a ficha " ~ ficha.nome ~ " com todos os treinos e exercícios?",
+                  titulo="Excluir ficha", rotulo="Excluir",
+                  classe="btn btn-secundario text-red-600 hover:bg-red-50 hover:text-red-700") }}
+{% endcall %}
+
+<section class="cartao mb-6 flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+  <div class="flex items-center gap-3">
+    {{ ui.avatar(ficha.aluno.nome, "h-11 w-11 text-sm") }}
+    <div class="min-w-0">
+      <p class="text-xs text-slate-500">Aluno</p>
+      <a href="{{ url_for('alunos.editarAluno', aluno_id=ficha.aluno.id) }}" class="block truncate font-semibold text-slate-900 hover:text-navy-700">{{ ficha.aluno.nome }}</a>
+    </div>
+  </div>
+  <dl class="grid grid-cols-3 gap-6 text-sm sm:flex sm:gap-10">
+    <div>
+      <dt class="text-xs text-slate-500">Dias</dt>
+      <dd class="mt-0.5 font-display text-lg font-semibold text-slate-900 tabular-nums">{{ ficha.treinos|length }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs text-slate-500">Exercícios</dt>
+      <dd class="mt-0.5 font-display text-lg font-semibold text-slate-900 tabular-nums">{{ ficha.total_exercicios }}</dd>
+    </div>
+    <div>
+      <dt class="text-xs text-slate-500">Situação</dt>
+      <dd class="mt-1">{{ ui.badge("Em uso", "verde") if ficha.ativo else ui.badge("Arquivada") }}</dd>
+    </div>
+  </dl>
+</section>
+
+{% if ficha.observacoes %}
+<section class="mb-6 rounded-xl border-l-4 border-amarelo-400 bg-amarelo-50 p-4 sm:p-5">
+  <h2 class="text-sm font-semibold text-slate-900">Objetivo e observações</h2>
+  <p class="mt-1 whitespace-pre-line text-sm text-slate-700">{{ ficha.observacoes }}</p>
+</section>
+{% endif %}
+
+<nav class="mb-6 grid grid-cols-7 gap-1.5 print:hidden" aria-label="Dias da semana">
+  {% for chave, rotulo in DIAS_SEMANA %}
+  {% set treino = ficha.treinos|selectattr('dia_semana', 'equalto', chave)|first %}
+  {% if treino %}
+  <a href="#treino-{{ treino.id }}" class="flex flex-col items-center rounded-lg bg-navy-800 px-1 py-2.5 text-white transition duration-150 hover:bg-navy-700">
+    <span class="text-xs font-semibold">{{ rotulo[:3] }}</span>
+    <span class="mt-0.5 text-[11px] text-navy-200 tabular-nums">{{ treino.exercicios|length }} ex.</span>
+  </a>
+  {% else %}
+  <a href="{{ url_for('fichas.criarTreino', ficha_id=ficha.id, dia=chave) }}" class="flex flex-col items-center rounded-lg border border-dashed border-slate-300 px-1 py-2.5 text-slate-400 transition duration-150 hover:border-navy-400 hover:bg-white hover:text-navy-700" aria-label="Adicionar treino na {{ rotulo }}">
+    <span class="text-xs font-semibold">{{ rotulo[:3] }}</span>
+    <span class="mt-0.5">{{ ui.icone("mais", "h-3.5 w-3.5") }}</span>
+  </a>
+  {% endif %}
+  {% endfor %}
+</nav>
+
+{% if ficha.treinos %}
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-2 print:grid-cols-2 print:gap-4">
+  {% for treino in ficha.treinos_ordenados %}
+  <section id="treino-{{ treino.id }}" class="cartao scroll-mt-24 break-inside-avoid" aria-labelledby="titulo-treino-{{ treino.id }}">
+    <header class="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-3.5">
+      <div class="flex min-w-0 items-center gap-3">
+        <span class="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amarelo-400 font-display text-sm font-bold text-navy-950 sm:flex" aria-hidden="true">{{ treino.dia_label[:3] }}</span>
+        <div class="min-w-0">
+          <h2 id="titulo-treino-{{ treino.id }}" class="truncate font-display text-base font-semibold text-navy-900">{{ treino.dia_label }}</h2>
+          <p class="text-xs text-slate-500">{{ treino.exercicios|length }} {{ 'exercício' if treino.exercicios|length == 1 else 'exercícios' }}</p>
+        </div>
+      </div>
+      <div class="flex shrink-0 items-center gap-0.5 print:hidden">
+        <a href="{{ url_for('fichas.adicionarExercicio', treino_id=treino.id) }}" class="btn btn-escuro btn-sm mr-1 w-9 px-0 sm:w-auto sm:px-3" aria-label="Adicionar exercício na {{ treino.dia_label }}">{{ ui.icone("mais", "h-3.5 w-3.5") }}<span class="hidden sm:inline">Exercício</span></a>
+        <a href="{{ url_for('fichas.editarTreino', treino_id=treino.id) }}" class="btn-icone" title="Mudar dia" aria-label="Mudar o dia do treino de {{ treino.dia_label }}">{{ ui.icone("calendario", "h-4 w-4") }}</a>
+        {{ ui.form_acao(url_for('fichas.excluirTreino', treino_id=treino.id),
+                        "Excluir o treino de " ~ treino.dia_label ~ " e todos os exercícios dele?",
+                        titulo="Excluir treino", rotulo="Excluir treino", classe="btn-icone btn-icone-perigo", so_icone=true) }}
+      </div>
+    </header>
+
+    {% if treino.exercicios %}
+    <ol class="divide-y divide-slate-100">
+      {% for item in treino.exercicios %}
+      <li class="flex items-start gap-3 px-5 py-3.5">
+        <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 tabular-nums">{{ loop.index }}</span>
+        <div class="min-w-0 flex-1">
+          <p class="font-medium text-slate-900">{{ item.exercicio.nome }}</p>
+          <p class="mt-0.5 text-sm text-slate-600">
+            <span class="font-semibold text-navy-800 tabular-nums">{{ item.series }} × {{ item.repeticoes }}</span>
+            {% if item.carga %}<span class="text-slate-400">·</span> {{ item.carga }}{% endif %}
+            <span class="text-slate-400">· {{ item.exercicio.grupo_label }}</span>
+          </p>
+          {% if item.observacoes %}<p class="mt-1 text-xs text-slate-500">{{ item.observacoes }}</p>{% endif %}
+        </div>
+        <div class="print:hidden">
+          {{ ui.form_acao(url_for('fichas.removerExercicio', item_id=item.id),
+                          "Remover " ~ item.exercicio.nome ~ " do treino de " ~ treino.dia_label ~ "?",
+                          titulo="Remover exercício", rotulo="Remover exercício", nome_icone="x",
+                          classe="btn-icone btn-icone-perigo", so_icone=true) }}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <div class="px-5 py-8 text-center">
+      <p class="text-sm text-slate-500">Nenhum exercício neste dia ainda.</p>
+      <a href="{{ url_for('fichas.adicionarExercicio', treino_id=treino.id) }}" class="btn btn-secundario btn-sm mt-3 print:hidden">{{ ui.icone("mais", "h-3.5 w-3.5") }}Adicionar exercício</a>
+    </div>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<div class="cartao">
+  {% call ui.estado_vazio("calendario", "Nenhum dia de treino ainda", "Escolha um dia da semana acima para começar a montar a ficha.") %}
+    <a href="{{ url_for('fichas.criarTreino', ficha_id=ficha.id) }}" class="btn btn-primario">{{ ui.icone("mais", "h-4 w-4") }}Adicionar primeiro treino</a>
+  {% endcall %}
+</div>
+{% endif %}
+{% endblock %}

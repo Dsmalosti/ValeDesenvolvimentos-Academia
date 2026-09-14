@@ -1,0 +1,61 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Adicionar exercício{% endblock %}
+
+{% block conteudo %}
+{{ ui.cabecalho(
+    "Adicionar exercício",
+    "Treino de " ~ treino.dia_label ~ " · " ~ treino.ficha.nome ~ " · " ~ treino.ficha.aluno.nome,
+    voltar=url_for('fichas.fichaDetalhes', ficha_id=treino.ficha_id)) }}
+
+{% if sem_exercicios %}
+{% call ui.aviso("Sua biblioteca de exercícios está vazia", "Importe os exercícios padrão ou cadastre os seus para montar o treino.") %}
+  <form method="post" action="{{ url_for('exercicios.importarPadrao') }}" class="inline-flex">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-escuro btn-sm">{{ ui.icone("importar", "h-4 w-4") }}Importar padrão</button>
+  </form>
+  <a href="{{ url_for('exercicios.criarExercicio') }}" class="btn btn-secundario btn-sm">Cadastrar exercício</a>
+{% endcall %}
+{% endif %}
+
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <form method="post" class="space-y-6 lg:col-span-2">
+    {{ form.csrf_token }}
+
+    <section class="cartao">
+      <div class="grid grid-cols-2 gap-5 p-5 sm:grid-cols-3 sm:p-6">
+        {{ ui.campo(form.exercicio_id, classe="col-span-2 sm:col-span-3", autofocus=true) }}
+        {{ ui.campo(form.series, inputmode="numeric", min="1", max="20") }}
+        {{ ui.campo(form.repeticoes, placeholder="12 ou 8-12") }}
+        {{ ui.campo(form.carga, classe="col-span-2 sm:col-span-1", placeholder="Ex: 20 kg") }}
+        {{ ui.campo(form.observacoes, classe="col-span-2 sm:col-span-3", rows="2", placeholder="Ex: descanso de 60s, cadência controlada") }}
+      </div>
+    </section>
+
+    <div class="flex flex-col gap-2 sm:flex-row-reverse sm:justify-start">
+      <button type="submit" name="acao" value="salvar_e_novo" class="btn btn-primario" {% if sem_exercicios %}disabled{% endif %}>Salvar e adicionar outro</button>
+      <button type="submit" class="btn btn-secundario" {% if sem_exercicios %}disabled{% endif %}>Salvar e voltar à ficha</button>
+      <a href="{{ url_for('fichas.fichaDetalhes', ficha_id=treino.ficha_id) }}" class="btn btn-fantasma">Cancelar</a>
+    </div>
+  </form>
+
+  <aside class="cartao h-fit p-5" aria-labelledby="titulo-ja-no-treino">
+    <h2 id="titulo-ja-no-treino" class="text-sm font-semibold text-slate-900">Já no treino de {{ treino.dia_label }}</h2>
+    {% if treino.exercicios %}
+    <ol class="mt-3 space-y-2.5 text-sm">
+      {% for item in treino.exercicios %}
+      <li class="flex items-center justify-between gap-3">
+        <span class="flex min-w-0 items-center gap-2">
+          <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-semibold text-slate-600">{{ loop.index }}</span>
+          <span class="truncate text-slate-700">{{ item.exercicio.nome }}</span>
+        </span>
+        <span class="shrink-0 text-xs font-medium text-slate-500 tabular-nums">{{ item.series }}×{{ item.repeticoes }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="mt-2 text-sm text-slate-500">Nenhum exercício ainda. O primeiro que você salvar aparece aqui.</p>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

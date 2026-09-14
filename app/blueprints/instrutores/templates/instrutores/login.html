@@ -1,0 +1,24 @@
+{% extends "layouts/auth.html" %}
+
+{% block titulo %}Entrar{% endblock %}
+
+{% block formulario %}
+<h1 class="font-display text-[1.75rem] font-semibold tracking-tight text-navy-900">Bem-vindo de volta</h1>
+<p class="mt-2 text-sm text-slate-500">Entre para acessar o painel da sua academia.</p>
+
+<form method="post" class="mt-8 space-y-5">
+  {{ form.csrf_token }}
+
+  {{ ui.campo(form.email, placeholder="voce@academia.com", autocomplete="email", autofocus=true, opcional=false) }}
+  {{ ui.campo_senha(form.senha, autocomplete="current-password") }}
+
+  {{ ui.checkbox(form.lembrar) }}
+
+  <button type="submit" class="btn btn-escuro h-11 w-full">Entrar</button>
+</form>
+
+<p class="mt-8 text-center text-sm text-slate-500">
+  Ainda não tem conta?
+  <a href="{{ url_for('instrutores.cadastroInstrutor') }}" class="font-semibold text-navy-700 underline-offset-4 hover:text-navy-900 hover:underline">Criar conta da academia</a>
+</p>
+{% endblock %}

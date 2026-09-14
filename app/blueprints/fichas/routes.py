@@ -1,153 +1,202 @@
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user, login_required
+from sqlalchemy.orm import joinedload
+
+from app.blueprints.fichas.form import FichaForm, TreinoExercicioForm, TreinoForm
+from app.exceptions import BusinessError
 from app.extensions.database import db
-from flask import Blueprint,render_template, url_for, request, redirect, flash
-from flask_login import login_user, logout_user, current_user, login_required
-from app.blueprints.fichas.form import TreinoForm, FichaForm, TreinoExercicioForm
-from app.models import Treino, Aluno, Ficha, Exercicio, TreinoExercicio
+from app.models import Aluno, Exercicio, Ficha, Treino, TreinoExercicio
+from app.services.ficha_service import FichaService
+from app.tenancy import do_instrutor, obter_do_instrutor_ou_404
 
 fichas_blueprint = Blueprint('fichas', __name__, url_prefix='/fichas', template_folder='templates')
 
-# Criar tficha
-@fichas_blueprint.route('/novo/', methods=['GET', 'POST'])
-def criarFicha():
-    form = FichaForm()
 
-    # preencher select de alunos
-    form.aluno_id.choices = [(a.id, a.nome) for a in Aluno.query.order_by(Aluno.nome).all()]
+def _opcoes_alunos():
+    alunos = do_instrutor(Aluno).order_by(Aluno.nome).all()
+    return [(0, 'Selecione um aluno')] + [(a.id, a.nome) for a in alunos]
 
-    if form.validate_on_submit():
-        ficha = Ficha(
-            nome=form.nome.data,
-            observacoes=form.observacoes.data,
-            aluno_id=form.aluno_id.data,
-            ativo=form.ativo.data
-        )
 
-        db.session.add(ficha)
-        db.session.commit()
+def _treino_ou_404(treino_id):
+    treino = db.session.get(Treino, treino_id)
+    if treino is None or treino.ficha.instrutor_id != current_user.id:
+        abort(404)
+    return treino
 
-        return redirect(url_for('fichas.listarFichas'))
-
-    return render_template('ficha_form.html', form=form)
-
-# Rota detalhes 
-@fichas_blueprint.route("/detalhes/<int:ficha_id>")
-def fichaDetalhes(ficha_id):
-    ficha = Ficha.query.get_or_404(ficha_id)
-    return render_template("ficha-detalhes.html", ficha=ficha)
 
 # Rota listar
+@fichas_blueprint.route('/')
 @fichas_blueprint.route('/listar/')
 @login_required
 def listarFichas():
-    fichas = Ficha.query.all()
-    
-    return render_template('ficha-lista.html', fichas=fichas)
+    aluno_id = request.args.get('aluno_id', type=int)
+    query = do_instrutor(Ficha).options(joinedload(Ficha.aluno)).order_by(Ficha.data_criacao.desc())
+    aluno_filtro = None
+    if aluno_id:
+        aluno_filtro = obter_do_instrutor_ou_404(Aluno, aluno_id)
+        query = query.filter(Ficha.aluno_id == aluno_id)
+
+    return render_template('fichas/lista.html', fichas=query.all(), aluno_filtro=aluno_filtro)
+
+
+# Criar ficha
+@fichas_blueprint.route('/novo/', methods=['GET', 'POST'])
+@login_required
+def criarFicha():
+    form = FichaForm()
+    form.aluno_id.choices = _opcoes_alunos()
+    if request.method == 'GET' and request.args.get('aluno_id', type=int):
+        form.aluno_id.data = request.args.get('aluno_id', type=int)
+
+    if form.validate_on_submit():
+        try:
+            ficha = FichaService.criar_ficha(current_user.id, form.data)
+            flash("Ficha criada. Agora adicione os dias de treino.", "success")
+            return redirect(url_for('fichas.fichaDetalhes', ficha_id=ficha.id))
+        except BusinessError as e:
+            flash(str(e), "danger")
+
+    return render_template('fichas/form.html', form=form, ficha=None, sem_alunos=len(form.aluno_id.choices) == 1)
+
+
+# Rota detalhes
+@fichas_blueprint.route('/detalhes/<int:ficha_id>')
+@login_required
+def fichaDetalhes(ficha_id):
+    ficha = obter_do_instrutor_ou_404(Ficha, ficha_id)
+    dias_usados = {treino.dia_semana for treino in ficha.treinos}
+    return render_template('fichas/detalhes.html', ficha=ficha, dias_usados=dias_usados)
+
 
 # Rota editar
-@fichas_blueprint.route('/editar/<int:ficha_id>', methods=['Get', 'POST'])
+@fichas_blueprint.route('/editar/<int:ficha_id>', methods=['GET', 'POST'])
 @login_required
 def editarFicha(ficha_id):
-    ficha = Ficha.query.get_or_404(ficha_id)
+    ficha = obter_do_instrutor_ou_404(Ficha, ficha_id)
     form = FichaForm(obj=ficha)
-    form.aluno_id.choices = [(a.id, a.nome) for a in Aluno.query.all()]
-    if request.method == "GET":
-        form.aluno_id.data = ficha.aluno_id
-
+    form.aluno_id.choices = _opcoes_alunos()
 
     if form.validate_on_submit():
-        form.populate_obj(ficha)
-        db.session.commit()
+        try:
+            FichaService.editar_ficha(ficha, form.data)
+            flash("Ficha atualizada com sucesso.", "success")
+            return redirect(url_for('fichas.fichaDetalhes', ficha_id=ficha.id))
+        except BusinessError as e:
+            flash(str(e), "danger")
 
-        return redirect(url_for('fichas.listarFichas'))
-    
-    return render_template('treino_form.html', form=form)
+    return render_template('fichas/form.html', form=form, ficha=ficha, sem_alunos=False)
+
 
 # Rota excluir
-@fichas_blueprint.route('/excuir/<int:ficha_id>', methods=['POST'])
+@fichas_blueprint.route('/excluir/<int:ficha_id>', methods=['POST'])
 @login_required
 def excluirFicha(ficha_id):
-    ficha = Ficha.query.get_or_404(ficha_id)
-    db.session.delete(ficha)
-    db.session.commit()
+    ficha = obter_do_instrutor_ou_404(Ficha, ficha_id)
+    try:
+        FichaService.excluir_ficha(ficha)
+        flash("Ficha excluída com sucesso.", "success")
+    except BusinessError as e:
+        flash(str(e), "danger")
     return redirect(url_for('fichas.listarFichas'))
 
+
 # criar treino
-@fichas_blueprint.route("/<int:ficha_id>/treino/novo", methods=["GET", "POST"])
+@fichas_blueprint.route('/<int:ficha_id>/treino/novo', methods=['GET', 'POST'])
 @login_required
 def criarTreino(ficha_id):
-    ficha = Ficha.query.get_or_404(ficha_id)
-
+    ficha = obter_do_instrutor_ou_404(Ficha, ficha_id)
     form = TreinoForm()
-    form.ficha_id.data = ficha_id  # define o hidden field
+    if request.method == 'GET' and request.args.get('dia'):
+        form.dia_semana.data = request.args.get('dia')
 
     if form.validate_on_submit():
-        treino = Treino(
-            ficha_id=ficha_id,
-            dia_semana=form.dia_semana.data
-        )
+        try:
+            treino = FichaService.adicionar_treino(ficha, form.dia_semana.data)
+            flash(f"Treino de {treino.dia_label} criado. Adicione os exercícios.", "success")
+            return redirect(url_for('fichas.adicionarExercicio', treino_id=treino.id))
+        except BusinessError as e:
+            flash(str(e), "danger")
 
-        db.session.add(treino)
-        db.session.commit()
+    return render_template('fichas/treino_form.html', form=form, ficha=ficha, treino=None)
 
-        return redirect(url_for("fichas.fichaDetalhes", ficha_id=ficha_id))
-
-    return render_template("treino_form.html", form=form, ficha=ficha)
 
 # editar treino
-@fichas_blueprint.route("/treino/<int:treino_id>/editar", methods=["GET", "POST"])
+@fichas_blueprint.route('/treino/<int:treino_id>/editar', methods=['GET', 'POST'])
 @login_required
 def editarTreino(treino_id):
-    treino = Treino.query.get_or_404(treino_id)
+    treino = _treino_ou_404(treino_id)
     form = TreinoForm(obj=treino)
-
-    form.id.data = treino.id
-    form.ficha_id.data = treino.ficha_id
 
     if form.validate_on_submit():
-        treino.dia_semana = form.dia_semana.data
-        db.session.commit()
-        return redirect(url_for("fichas.fichaDetalhes", ficha_id=treino.ficha_id))
+        try:
+            FichaService.editar_treino(treino, form.dia_semana.data)
+            flash("Treino atualizado.", "success")
+            return redirect(url_for('fichas.fichaDetalhes', ficha_id=treino.ficha_id))
+        except BusinessError as e:
+            flash(str(e), "danger")
 
-    return render_template("treino_form.html", form=form)
+    return render_template('fichas/treino_form.html', form=form, ficha=treino.ficha, treino=treino)
 
-#excluir treino 
-@fichas_blueprint.route("/treino/<int:treino_id>/excluir", methods=["GET", "POST"])
+
+# excluir treino
+@fichas_blueprint.route('/treino/<int:treino_id>/excluir', methods=['POST'])
 @login_required
 def excluirTreino(treino_id):
-    treino = Treino.query.get_or_404(treino_id)
-    form = TreinoForm(obj=treino)
-    form.ficha_id.data = treino.ficha_id
-    db.session.delete(treino)
-    db.session.commit()
+    treino = _treino_ou_404(treino_id)
+    ficha_id = treino.ficha_id
+    try:
+        FichaService.excluir_treino(treino)
+        flash("Treino excluído.", "success")
+    except BusinessError as e:
+        flash(str(e), "danger")
+    return redirect(url_for('fichas.fichaDetalhes', ficha_id=ficha_id))
 
 
-    return redirect(url_for("fichas.fichaDetalhes", ficha_id=treino.ficha_id))
-
-#adicionar exercicio no treino
-@fichas_blueprint.route("/treino/<int:treino_id>/exercicio/adicionar", methods=["GET", "POST"])
+# adicionar exercicio no treino
+@fichas_blueprint.route('/treino/<int:treino_id>/exercicio/adicionar', methods=['GET', 'POST'])
 @login_required
 def adicionarExercicio(treino_id):
-    treino = Treino.query.get_or_404(treino_id)
+    treino = _treino_ou_404(treino_id)
     form = TreinoExercicioForm()
-
-    form.exercicio_id.choices = [
-        (ex.id, ex.nome) for ex in Exercicio.query.order_by(Exercicio.nome).all()
+    exercicios = (
+        do_instrutor(Exercicio)
+        .filter(Exercicio.ativo.is_(True))
+        .order_by(Exercicio.grupo_muscular, Exercicio.nome)
+        .all()
+    )
+    form.exercicio_id.choices = [(0, 'Selecione um exercício')] + [
+        (ex.id, f"{ex.nome} ({ex.grupo_label})") for ex in exercicios
     ]
 
     if form.validate_on_submit():
-        novo = TreinoExercicio(
-            treino_id=treino_id,
-            exercicio_id=form.exercicio_id.data,
-            series=form.series.data,
-            repeticoes=form.repeticoes.data,
-            carga=form.carga.data
-        )
-        db.session.add(novo)
-        db.session.commit()
-        return redirect(url_for("fichas.fichaDetalhes", ficha_id=treino.ficha_id))
+        try:
+            item = FichaService.adicionar_exercicio(treino, form.data)
+            flash(f"{item.exercicio.nome} adicionado ao treino de {treino.dia_label}.", "success")
+            if request.form.get('acao') == 'salvar_e_novo':
+                return redirect(url_for('fichas.adicionarExercicio', treino_id=treino.id))
+            return redirect(url_for('fichas.fichaDetalhes', ficha_id=treino.ficha_id))
+        except BusinessError as e:
+            flash(str(e), "danger")
 
     return render_template(
-        "adicionar_exercicio.html",
+        'fichas/adicionar_exercicio.html',
         form=form,
-        treino=treino
+        treino=treino,
+        sem_exercicios=not exercicios,
     )
+
+
+# remover exercicio do treino
+@fichas_blueprint.route('/treino/exercicio/<int:item_id>/remover', methods=['POST'])
+@login_required
+def removerExercicio(item_id):
+    item = db.session.get(TreinoExercicio, item_id)
+    if item is None or item.treino.ficha.instrutor_id != current_user.id:
+        abort(404)
+    ficha_id = item.treino.ficha_id
+    try:
+        FichaService.remover_exercicio(item)
+        flash("Exercício removido do treino.", "success")
+    except BusinessError as e:
+        flash(str(e), "danger")
+    return redirect(url_for('fichas.fichaDetalhes', ficha_id=ficha_id))

@@ -1,0 +1,21 @@
+{% import "macros/ui.html" as ui %}
+{% with mensagens = get_flashed_messages(with_categories=true) %}
+<div class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex flex-col items-center gap-2 px-4 sm:inset-x-auto sm:right-6 sm:items-end" aria-live="polite">
+  {% for categoria, mensagem in mensagens %}
+    {% set tom = {
+      "success": ("check-circulo", "text-emerald-600"),
+      "danger": ("alerta", "text-red-600"),
+      "error": ("alerta", "text-red-600"),
+      "info": ("info", "text-sky-600")
+    }.get(categoria, ("info", "text-sky-600")) %}
+    <div data-toast role="{{ 'alert' if categoria in ('danger', 'error') else 'status' }}"
+         class="toast pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl bg-white p-4 shadow-lg ring-1 ring-slate-900/10">
+      <span class="mt-0.5 shrink-0 {{ tom[1] }}">{{ ui.icone(tom[0]) }}</span>
+      <p class="flex-1 text-sm font-medium text-slate-800">{{ mensagem }}</p>
+      <button type="button" data-toast-fechar class="-m-1.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" aria-label="Fechar aviso">
+        {{ ui.icone("x", "h-4 w-4") }}
+      </button>
+    </div>
+  {% endfor %}
+</div>
+{% endwith %}

@@ -1,0 +1,36 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}{{ 'Editar ficha' if ficha else 'Nova ficha' }}{% endblock %}
+
+{% block conteudo %}
+{{ ui.cabecalho(
+    "Editar ficha" if ficha else "Nova ficha de treino",
+    "Depois de salvar você adiciona os dias e os exercícios.",
+    voltar=url_for('fichas.fichaDetalhes', ficha_id=ficha.id) if ficha else url_for('fichas.listarFichas')) }}
+
+{% if sem_alunos %}
+{% call ui.aviso("Cadastre um aluno antes de criar a ficha", "Cada ficha de treino pertence a um aluno.") %}
+  <a href="{{ url_for('alunos.cadastroAluno') }}" class="btn btn-escuro btn-sm">Cadastrar aluno</a>
+{% endcall %}
+{% endif %}
+
+<form method="post" class="max-w-2xl space-y-6">
+  {{ form.csrf_token }}
+
+  <section class="cartao">
+    <div class="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:p-6">
+      {{ ui.campo(form.nome, placeholder="Ex: Hipertrofia — fase 1", autofocus=not ficha) }}
+      {{ ui.campo(form.aluno_id) }}
+      {{ ui.campo(form.observacoes, classe="sm:col-span-2", rows="3", placeholder="Objetivo, restrições, orientações gerais...") }}
+      <div class="sm:col-span-2">
+        {{ ui.interruptor(form.ativo, "Fichas antigas podem ser arquivadas sem perder o histórico.") }}
+      </div>
+    </div>
+  </section>
+
+  {{ ui.acoes_form(
+      "Salvar alterações" if ficha else "Criar ficha e adicionar treinos",
+      url_for('fichas.fichaDetalhes', ficha_id=ficha.id) if ficha else url_for('fichas.listarFichas'),
+      desabilitado=sem_alunos) }}
+</form>
+{% endblock %}

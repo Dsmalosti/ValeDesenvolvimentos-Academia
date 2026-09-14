@@ -1,119 +1,106 @@
-from app.models import Aluno
+from app.models import Aluno, Plano
 from app.services.base_service import BaseService
 from app.exceptions import BusinessError
-from app.helpers.validators import validar_email, validar_cpf
 from app.extensions.database import db
+from app.helpers.date_helper import hoje
+from app.helpers.validators import normalizar_cpf, normalizar_email, normalizar_telefone
 
 
 class AlunoService:
 
     @staticmethod
-    def criar_aluno(dados):
+    def criar_aluno(instrutor_id: int, dados: dict) -> Aluno:
         """
         Regra de negocio para criar alunos
         """
-
-        if not dados.get("plano_id"):
-            raise ValueError("Aluno precisa estar vinculado a um plano")
-        aluno = Aluno(
-            nome=dados["nome"],
-            email=dados["email"],
-            telefone=dados.get("telefone"),
-            data_nascimento=dados.get("data_nascimento"),
-            cpf=dados.get("cpf"),
-            ativo=dados.get("ativo", True),
-            plano_id=dados["plano_id"]
-        )
-
+        aluno = Aluno(instrutor_id=instrutor_id)
+        AlunoService._aplicar(aluno, dados)
         return BaseService.salvar(aluno)
-    
+
     @staticmethod
-    def editar_aluno(aluno_id: int, dados: dict) -> Aluno:
+    def editar_aluno(aluno: Aluno, dados: dict) -> Aluno:
         """
         Regra de negócio para editar um aluno
         """
-
-        aluno = Aluno.query.get(aluno_id)
-
-        if not aluno:
-            raise BusinessError("Aluno não encontrado")
-
-        # ===== Regras de negócio =====
-
-        if "email" in dados:
-            validar_email(dados["email"])
-
-            # garante unicidade
-            email_existente = Aluno.query.filter(
-                Aluno.email == dados["email"],
-                Aluno.id != aluno.id
-            ).first()
-
-            if email_existente:
-                raise BusinessError("E-mail já cadastrado para outro aluno")
-
-            aluno.email = dados["email"]
-
-        if "cpf" in dados:
-            validar_cpf(dados["cpf"])
-            aluno.cpf = dados["cpf"]
-
-        if "nome" in dados:
-            aluno.nome = dados["nome"]
-
-        if "telefone" in dados:
-            aluno.telefone = dados["telefone"]
-
-        if "data_nascimento" in dados:
-            aluno.data_nascimento = dados["data_nascimento"]
-
-        if "ativo" in dados:
-            aluno.ativo = dados["ativo"]
-
-        if "plano_id" in dados:
-            aluno.plano_id = dados["plano_id"]
-
+        AlunoService._aplicar(aluno, dados)
         return BaseService.salvar(aluno)
-    
+
     @staticmethod
-    def excluir_aluno(aluno_id: int):
+    def renovar_plano(aluno: Aluno) -> Aluno:
         """
-        Docstring for excluir_aluno
-
-        :param aluno_id: id do aluno
-        :type aluno_id: int
+        Inicia um novo ciclo do plano. Renovação antecipada não perde os dias restantes.
         """
-        aluno = Aluno.query.get_or_404(aluno_id)
+        if not aluno.plano:
+            raise BusinessError("Este aluno não tem plano para renovar.")
 
-        if not aluno:
-            raise BusinessError("Aluno não encontrado")
+        vencimento = aluno.data_vencimento
+        aluno.data_inicio_plano = max(hoje(), vencimento) if vencimento else hoje()
+        aluno.ativo = True
+        return BaseService.salvar(aluno)
 
+    @staticmethod
+    def excluir_aluno(aluno: Aluno):
         BaseService.deletar(aluno)
 
     @staticmethod
-    def excluir_varios(aluno_ids: list[int]):
+    def excluir_varios(instrutor_id: int, aluno_ids: list[int]) -> int:
         """
-        Exclui vários alunos de uma vez (usado na exclusão em massa do painel)
+        Exclui vários alunos de uma vez, apenas os que pertencem à academia
         """
-        for aluno_id in aluno_ids:
-            AlunoService.excluir_aluno(aluno_id)
+        if not aluno_ids:
+            return 0
+
+        alunos = Aluno.query.filter(
+            Aluno.instrutor_id == instrutor_id,
+            Aluno.id.in_(aluno_ids),
+        ).all()
+        for aluno in alunos:
+            db.session.delete(aluno)
+        BaseService.commit()
+        return len(alunos)
 
     @staticmethod
-    def salvar(aluno):
-        try:
-            db.session.add(aluno)
-            db.session.commit()
-            return aluno
-        except Exception:
-            db.session.rollback()
-            raise BusinessError("Erro ao salvar aluno")
-        
+    def _aplicar(aluno, dados):
+        nome = (dados.get("nome") or "").strip()
+        if not nome:
+            raise BusinessError("Informe o nome do aluno.")
+
+        email = normalizar_email(dados.get("email"))
+        cpf = normalizar_cpf(dados.get("cpf"))
+        telefone = normalizar_telefone(dados.get("telefone"))
+
+        data_nascimento = dados.get("data_nascimento")
+        if data_nascimento and data_nascimento > hoje():
+            raise BusinessError("A data de nascimento não pode estar no futuro.")
+
+        plano = AlunoService._validar_plano(aluno.instrutor_id, dados.get("plano_id"))
+        # valida antes de alterar o objeto para o autoflush não gravar dados inválidos
+        AlunoService._validar_unicidade(aluno, email, cpf)
+
+        aluno.nome = nome
+        aluno.email = email
+        aluno.cpf = cpf
+        aluno.telefone = telefone
+        aluno.data_nascimento = data_nascimento
+        aluno.plano_id = plano.id
+        aluno.data_inicio_plano = dados.get("data_inicio_plano") or aluno.data_inicio_plano or hoje()
+        aluno.ativo = bool(dados.get("ativo", True))
+
     @staticmethod
-    def excluir(aluno):
-        try:
-            db.session.delete(aluno)
-            db.session.commit()
-            return aluno
-        except Exception:
-            db.session.rollback()
-            raise BusinessError("Erro ao excluir aluno")
+    def _validar_plano(instrutor_id, plano_id):
+        plano = db.session.get(Plano, plano_id) if plano_id else None
+        if plano is None or plano.instrutor_id != instrutor_id:
+            raise BusinessError("Selecione um plano válido.")
+        return plano
+
+    @staticmethod
+    def _validar_unicidade(aluno, email, cpf):
+        query = Aluno.query.filter(Aluno.instrutor_id == aluno.instrutor_id)
+        if aluno.id:
+            query = query.filter(Aluno.id != aluno.id)
+
+        with db.session.no_autoflush:
+            if query.filter(Aluno.email == email).first():
+                raise BusinessError("Já existe um aluno com este e-mail.")
+            if cpf and query.filter(Aluno.cpf == cpf).first():
+                raise BusinessError("Já existe um aluno com este CPF.")

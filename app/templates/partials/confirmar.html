@@ -1,0 +1,18 @@
+{% import "macros/ui.html" as ui %}
+<dialog id="dialogo-confirmacao" class="dialogo" aria-labelledby="dialogo-titulo" aria-describedby="dialogo-texto">
+  <form method="dialog" class="p-6">
+    <div class="flex gap-4">
+      <span data-dialogo-icone class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+        {{ ui.icone("alerta") }}
+      </span>
+      <div class="min-w-0">
+        <h2 id="dialogo-titulo" data-dialogo-titulo class="font-display text-lg font-semibold text-navy-900">Tem certeza?</h2>
+        <p id="dialogo-texto" data-dialogo-texto class="mt-1 text-sm text-slate-600"></p>
+      </div>
+    </div>
+    <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <button value="cancelar" class="btn btn-secundario" autofocus>Cancelar</button>
+      <button value="confirmar" data-dialogo-confirmar class="btn btn-perigo">Confirmar</button>
+    </div>
+  </form>
+</dialog>

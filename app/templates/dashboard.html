@@ -1,0 +1,167 @@
+{% extends "layouts/app.html" %}
+
+{% block titulo %}Início{% endblock %}
+
+{% block conteudo %}
+
+{% call ui.cabecalho("Olá, " ~ (current_user.nome or "instrutor"), hoje_data|data_extenso) %}
+  <a href="{{ url_for('alunos.cadastroAluno') }}" class="btn btn-primario sm:hidden">{{ ui.icone("mais", "h-4 w-4") }}Novo aluno</a>
+{% endcall %}
+
+{# ===== Primeiros passos (some quando tudo estiver feito) ===== #}
+{% if onboarding_concluidos < onboarding|length %}
+{% set proximo = onboarding|rejectattr("feito")|first %}
+<section class="cartao mb-6 overflow-hidden" aria-labelledby="titulo-onboarding">
+  <div class="flex flex-col gap-4 bg-gradient-to-r from-navy-900 to-navy-800 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-wider text-amarelo-400">Primeiros passos</p>
+      <h2 id="titulo-onboarding" class="mt-1 font-display text-lg font-semibold text-white">Deixe sua academia pronta em 4 passos</h2>
+    </div>
+    <div class="w-full sm:w-60">
+      <p class="mb-2 text-right text-xs font-medium text-navy-200"><span class="tabular-nums">{{ onboarding_concluidos }} de {{ onboarding|length }}</span> concluídos</p>
+      <div class="h-2 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-label="Progresso da configuração" aria-valuemin="0" aria-valuemax="{{ onboarding|length }}" aria-valuenow="{{ onboarding_concluidos }}">
+        <div class="h-full rounded-full bg-amarelo-400 transition-[width] duration-500 ease-out" style="width: {{ (onboarding_concluidos * 100 / onboarding|length)|int }}%"></div>
+      </div>
+    </div>
+  </div>
+  <ol class="grid divide-y divide-slate-100 md:grid-cols-4 md:divide-x md:divide-y-0">
+    {% for passo in onboarding %}
+    {% set eh_proximo = passo is sameas proximo %}
+    <li class="flex gap-3 p-5 {{ 'bg-amarelo-50/70' if eh_proximo else '' }}">
+      {% if passo.feito %}
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">{{ ui.icone("check", "h-4 w-4") }}<span class="sr-only">Concluído:</span></span>
+      {% else %}
+      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums {{ 'bg-navy-800 text-white' if eh_proximo else 'bg-slate-100 text-slate-500' }}">{{ loop.index }}</span>
+      {% endif %}
+      <div class="min-w-0">
+        <p class="text-sm font-semibold {{ 'text-slate-400 line-through decoration-slate-300' if passo.feito else 'text-slate-900' }}">{{ passo.titulo }}</p>
+        {% if not passo.feito %}
+        <p class="mt-0.5 text-xs text-slate-500">{{ passo.descricao }}</p>
+        {% if eh_proximo %}
+        <a href="{{ url_for(passo.endpoint) }}" class="btn btn-escuro btn-sm mt-3">{{ passo.acao }}{{ ui.icone("seta-direita", "h-3.5 w-3.5") }}</a>
+        {% else %}
+        <a href="{{ url_for(passo.endpoint) }}" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-navy-700 hover:text-navy-900">{{ passo.acao }}{{ ui.icone("seta-direita", "h-3.5 w-3.5") }}</a>
+        {% endif %}
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{# ===== Indicadores ===== #}
+<section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicadores">
+  {{ ui.kpi("Alunos ativos", ativos, "usuarios", "navy", "de " ~ total_alunos ~ " cadastrados", url_for('alunos.listarAlunos')) }}
+  {{ ui.kpi("Receita mensal estimada", receita_mensal|moeda, "carteira", "verde", "planos em dia, base de 30 dias") }}
+  {{ ui.kpi("Vencem em 7 dias", a_vencer|length, "relogio", "ambar", "renove antes de perder o aluno", url_for('alunos.listarAlunos', situacao='a_vencer')) }}
+  {{ ui.kpi("Planos vencidos", vencidos|length, "alerta", "vermelho", "alunos ativos sem renovação", url_for('alunos.listarAlunos', situacao='vencido')) }}
+</section>
+
+<div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+  {# ===== Vencimentos ===== #}
+  <section class="cartao lg:col-span-2" aria-labelledby="titulo-vencimentos">
+    <header class="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+      <div>
+        <h2 id="titulo-vencimentos" class="font-display text-base font-semibold text-navy-900">Vencimentos</h2>
+        <p class="text-xs text-slate-500">Planos vencidos e que vencem nos próximos 7 dias</p>
+      </div>
+      {% if vencidos or a_vencer %}
+      <a href="{{ url_for('alunos.listarAlunos', situacao='vencido' if vencidos else 'a_vencer') }}" class="shrink-0 text-sm font-semibold text-navy-700 hover:text-navy-900">Ver todos</a>
+      {% endif %}
+    </header>
+
+    {% set lista_vencimentos = (vencidos + a_vencer)[:8] %}
+    {% if lista_vencimentos %}
+    <ul class="divide-y divide-slate-100">
+      {% for aluno in lista_vencimentos %}
+      {% set vencido = aluno.situacao == 'vencido' %}
+      <li class="flex items-center gap-3 px-5 py-3.5 sm:px-6">
+        {{ ui.avatar(aluno.nome) }}
+        <div class="min-w-0 flex-1">
+          <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id) }}" class="block truncate text-sm font-semibold text-slate-900 hover:text-navy-700">{{ aluno.nome }}</a>
+          <p class="truncate text-xs text-slate-500">
+            {{ aluno.plano.nome }} · <span class="sm:hidden {{ 'text-red-600' if vencido else 'text-amber-700' }}">{{ 'venceu' if vencido else 'vence' }} {{ aluno.dias_para_vencer|dias_relativos }}</span><span class="hidden sm:inline">{{ aluno.telefone or aluno.email }}</span>
+          </p>
+        </div>
+        <div class="hidden text-right sm:block">
+          <p class="text-sm font-medium {{ 'text-red-600' if vencido else 'text-amber-700' }}">{{ 'Venceu' if vencido else 'Vence' }} {{ aluno.dias_para_vencer|dias_relativos }}</p>
+          <p class="text-xs text-slate-500 tabular-nums">{{ aluno.data_vencimento|data_br }}</p>
+        </div>
+        {{ ui.form_acao(
+            url_for('alunos.renovarPlano', aluno_id=aluno.id),
+            "Renovar o plano " ~ aluno.plano.nome ~ " de " ~ aluno.nome ~ "? O novo ciclo começa " ~ ("hoje." if vencido else "no vencimento atual, sem perder dias."),
+            titulo="Renovar plano", rotulo="Renovar", nome_icone="renovar", tom="neutro",
+            classe="btn btn-secundario btn-sm", ocultos={"proximo": url_for('main.homepage')}) }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="flex flex-col items-center px-6 py-12 text-center">
+      <span class="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">{{ ui.icone("check-circulo", "h-6 w-6") }}</span>
+      <p class="mt-4 text-sm font-semibold text-slate-900">Tudo em dia</p>
+      <p class="mt-1 max-w-xs text-sm text-slate-500">Nenhum plano vencido ou vencendo nos próximos 7 dias.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <div class="space-y-6">
+    {# ===== Aniversários ===== #}
+    <section class="cartao" aria-labelledby="titulo-aniversarios">
+      <header class="flex items-center gap-2 border-b border-slate-100 px-5 py-4">
+        <span class="text-rose-500">{{ ui.icone("bolo", "h-[1.125rem] w-[1.125rem]") }}</span>
+        <h2 id="titulo-aniversarios" class="font-display text-base font-semibold text-navy-900">Aniversários</h2>
+        <span class="ml-auto text-xs text-slate-500">próximos 30 dias</span>
+      </header>
+      {% if proximos_aniversarios %}
+      <ul class="divide-y divide-slate-100">
+        {% for dias, aluno in proximos_aniversarios %}
+        <li class="flex items-center gap-3 px-5 py-3">
+          {{ ui.avatar(aluno.nome, "h-8 w-8 text-[11px]") }}
+          <span class="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{{ aluno.nome }}</span>
+          {% if dias == 0 %}
+          {{ ui.badge("Hoje", "ambar") }}
+          {% else %}
+          <span class="shrink-0 text-xs text-slate-500 tabular-nums">{{ aluno.data_nascimento.strftime("%d/%m") }} · {{ dias|dias_relativos }}</span>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="px-5 py-6 text-sm text-slate-500">Nenhum aniversário nos próximos 30 dias.</p>
+      {% endif %}
+    </section>
+
+    {# ===== Últimos cadastros ===== #}
+    <section class="cartao" aria-labelledby="titulo-recentes">
+      <header class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <h2 id="titulo-recentes" class="font-display text-base font-semibold text-navy-900">Últimos cadastros</h2>
+        <a href="{{ url_for('alunos.listarAlunos') }}" class="text-sm font-semibold text-navy-700 hover:text-navy-900">Ver alunos</a>
+      </header>
+      {% if recentes %}
+      <ul class="divide-y divide-slate-100">
+        {% for aluno in recentes %}
+        <li>
+          <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id) }}" class="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50">
+            {{ ui.avatar(aluno.nome, "h-8 w-8 text-[11px]") }}
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-sm font-medium text-slate-800">{{ aluno.nome }}</span>
+              <span class="block truncate text-xs text-slate-500">{{ aluno.plano.nome if aluno.plano else 'Sem plano' }}</span>
+            </span>
+            {{ ui.badge_situacao(aluno.situacao) }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="px-5 py-6">
+        <p class="text-sm text-slate-500">Os alunos cadastrados aparecem aqui.</p>
+        <a href="{{ url_for('alunos.cadastroAluno') }}" class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-navy-700 hover:text-navy-900">Cadastrar aluno{{ ui.icone("seta-direita", "h-4 w-4") }}</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+
+</div>
+{% endblock %}
