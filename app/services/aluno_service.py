@@ -8,7 +8,7 @@ from app.extensions.database import db
 class AlunoService:
 
     @staticmethod
-    def criar_aluno(dados):
+    def criar_aluno(dados, instrutor_id):
         """
         Regra de negocio para criar alunos
         """
@@ -22,18 +22,26 @@ class AlunoService:
             data_nascimento=dados.get("data_nascimento"),
             cpf=dados.get("cpf"),
             ativo=dados.get("ativo", True),
-            plano_id=dados["plano_id"]
+            plano_id=dados["plano_id"],
+            instrutor_id=instrutor_id
         )
 
         return BaseService.salvar(aluno)
-    
+
     @staticmethod
-    def editar_aluno(aluno_id: int, dados: dict) -> Aluno:
+    def listar_alunos(instrutor_id: int):
+        """
+        Lista somente os alunos do instrutor logado
+        """
+        return Aluno.query.filter_by(instrutor_id=instrutor_id).all()
+
+    @staticmethod
+    def editar_aluno(aluno_id: int, dados: dict, instrutor_id: int) -> Aluno:
         """
         Regra de negócio para editar um aluno
         """
 
-        aluno = Aluno.query.get(aluno_id)
+        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
 
         if not aluno:
             raise BusinessError("Aluno não encontrado")
@@ -74,16 +82,16 @@ class AlunoService:
             aluno.plano_id = dados["plano_id"]
 
         return BaseService.salvar(aluno)
-    
+
     @staticmethod
-    def excluir_aluno(aluno_id: int):
+    def excluir_aluno(aluno_id: int, instrutor_id: int):
         """
         Docstring for excluir_aluno
-        
+
         :param aluno_id: id do aluno
         :type aluno_id: int
         """
-        aluno = Aluno.query.get_or_404(aluno_id)
+        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
 
         if not aluno:
             raise BusinessError("Aluno não encontrado")
@@ -99,7 +107,7 @@ class AlunoService:
         except Exception:
             db.session.rollback()
             raise BusinessError("Erro ao salvar aluno")
-        
+
     @staticmethod
     def excluir(aluno):
         try:

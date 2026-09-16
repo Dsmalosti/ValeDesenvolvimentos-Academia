@@ -13,12 +13,12 @@ alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos', template_
 @alunos_blueprint.route('/cadastro/', methods=['GET', 'POST'])
 @login_required
 def cadastroAluno():
-    
+
     form = AlunoForm()
 
     if form.validate_on_submit():
         try:
-            AlunoService.criar_aluno(form.data)
+            AlunoService.criar_aluno(form.data, current_user.id)
 
             flash("Aluno cadastrado com sucesso!", "success")
             return redirect(url_for("main.homepage"))
@@ -36,7 +36,7 @@ def cadastroAluno():
 @alunos_blueprint.route('/listar/')
 @login_required
 def listarAlunos():
-    alunos = Aluno.query.all()
+    alunos = AlunoService.listar_alunos(current_user.id)
 
     return render_template('aluno-lista.html', alunos=alunos)
 
@@ -44,7 +44,9 @@ def listarAlunos():
 @alunos_blueprint.route('/editar/<int:aluno_id>', methods=['GET', 'POST'])
 @login_required
 def editarAluno(aluno_id):
-    aluno = Aluno.query.get_or_404(aluno_id)
+    # filtra por instrutor_id também aqui, pra ninguém abrir/editar
+    # aluno de outra academia só trocando o id na URL
+    aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=current_user.id).first_or_404()
     form = AlunoForm(obj=aluno)  # 👈 pré-preenche o form
 
     if form.validate_on_submit():
@@ -58,7 +60,7 @@ def editarAluno(aluno_id):
         }
 
         try:
-            AlunoService.editar_aluno(aluno_id, dados)
+            AlunoService.editar_aluno(aluno_id, dados, current_user.id)
             flash("Aluno atualizado com sucesso", "success")
             return redirect(url_for("alunos.listarAlunos"))
 
@@ -76,7 +78,7 @@ def editarAluno(aluno_id):
 @login_required
 def excluirAluno(aluno_id):
     try:
-        AlunoService.excluir_aluno(aluno_id)
+        AlunoService.excluir_aluno(aluno_id, current_user.id)
         flash("Aluno excluído com sucesso", "success")
     except BusinessError as e:
         flash(str(e), "error")

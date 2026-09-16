@@ -5,7 +5,7 @@ from app.exceptions import BusinessError
 class PlanoService:
 
     @staticmethod
-    def criar_plano(dados):
+    def criar_plano(dados, instrutor_id):
         print("CRIANDO PLANO:", dados)
 
         """
@@ -16,20 +16,28 @@ class PlanoService:
             valor=dados["valor"],
             duracao_dias=dados["duracao_dias"],
             descricao=dados["descricao"],
-            ativo=dados.get("ativo", True)
+            ativo=dados.get("ativo", True),
+            instrutor_id=instrutor_id
         )
 
         return BaseService.salvar(plano)
-    
+
     @staticmethod
-    def editar_plano(plano_id: int, dados: dict) -> Plano:
+    def listar_planos(instrutor_id: int):
+        """
+        Lista somente os planos do instrutor logado
+        """
+        return Plano.query.filter_by(instrutor_id=instrutor_id).all()
+
+    @staticmethod
+    def editar_plano(plano_id: int, dados: dict, instrutor_id: int) -> Plano:
         '''Regra de negocio para ediitar um plano'''
-        
-        plano = Plano.query.get_or_404(plano_id)
+
+        plano = Plano.query.filter_by(id=plano_id, instrutor_id=instrutor_id).first()
 
         if not plano:
-            raise BusinessError("Aluno não encontrado")
-        
+            raise BusinessError("Plano não encontrado")
+
         if "nome" in dados:
             plano.nome = dados["nome"]
 
@@ -44,22 +52,20 @@ class PlanoService:
 
         if "ativo" in dados:
             plano.ativo = dados["ativo"]
-        
+
         return BaseService.salvar(plano)
-    
+
     @staticmethod
-    def excluir_plano(plano_id: int):
+    def excluir_plano(plano_id: int, instrutor_id: int):
         """
         Docstring for excluir_plano
-        
+
         :param plano_id: Description
         :type plano_id: int
         """
-        plano = Plano.query.get_or_404(plano_id)
+        plano = Plano.query.filter_by(id=plano_id, instrutor_id=instrutor_id).first()
 
         if not plano:
             raise BusinessError("Plano não encontrado")
-        
-        BaseService.deletar(plano)
 
-    
+        BaseService.deletar(plano)

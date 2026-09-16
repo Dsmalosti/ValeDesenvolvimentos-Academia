@@ -12,7 +12,7 @@ planos_blueprint = Blueprint('planos', __name__, url_prefix='/planos', template_
 @planos_blueprint.route('/criar/', methods=['GET', 'POST'])
 @login_required
 def criarPlano():
-    
+
 
     form = PlanoForm()
     print("FORM DATA:", form.data)
@@ -28,21 +28,20 @@ def criarPlano():
         }
         print("DADOS:", dados)
         try:
-            PlanoService.criar_plano(dados)
+            PlanoService.criar_plano(dados, current_user.id)
             return redirect(url_for("planos.listarPlanos"))
         except BusinessError as e:
             flash(str(e), "danger")
         except Exception:
             flash("Erro inesperado ao cadastrar aluno", "danger")
-        
+
     return render_template('plano_form.html', form=form)
 
 # Rota listar plano
 @planos_blueprint.route('/listar/')
 @login_required
 def listarPlanos():
-    planos = Plano.query.all()
-    
+    planos = PlanoService.listar_planos(current_user.id)
 
     return render_template('plano-lista.html', planos=planos)
 
@@ -50,7 +49,8 @@ def listarPlanos():
 @planos_blueprint.route('/editar/<int:plano_id>/', methods=['GET', 'POST'])
 @login_required
 def editarPlano(plano_id):
-    plano = Plano.query.get_or_404(plano_id)
+    # filtra por instrutor_id também aqui, pelo mesmo motivo do aluno
+    plano = Plano.query.filter_by(id=plano_id, instrutor_id=current_user.id).first_or_404()
     form = PlanoForm(obj=plano)
 
     if form.validate_on_submit():
@@ -63,12 +63,12 @@ def editarPlano(plano_id):
         }
 
         try:
-            PlanoService.editar_plano(plano_id,dados)
+            PlanoService.editar_plano(plano_id, dados, current_user.id)
             flash('Plano atualizado com sucesso!')
             return redirect(url_for('planos.listarPlanos'))
         except BusinessError as e:
             flash(str(e), "error")
-    
+
     return render_template('plano_form.html', form=form, titulo="Editar Aluno")
 
 # Rota excluir plano
@@ -76,14 +76,9 @@ def editarPlano(plano_id):
 @login_required
 def excluirPlano(plano_id):
     try:
-        PlanoService.excluir_plano(plano_id)
+        PlanoService.excluir_plano(plano_id, current_user.id)
         flash('Plano excluído com sucesso!', 'success')
     except BusinessError as e:
         flash(str(e), "error")
-        
+
     return redirect(url_for('planos.listarPlanos'))
-
-
-    
-
-
