@@ -12,9 +12,17 @@
             <span>{{ aluno.nome }}</span>
             <span>{{ aluno.email }}</span>
             <span>{{ aluno.cpf }}</span>
+            <span>{{ "Ativo" if aluno.ativo else "Inativo" }}</span>
             <div class="acoes">
                 <a href="{{ url_for('alunos.editarAluno', aluno_id=aluno.id)}}" class="btn btn-primary">Editar</a>
                 <input type="checkbox" class="checkbox-plano" name="selected" value="{{ aluno.id }}">
+                <form action="{{ url_for('alunos.alternarStatusAluno', aluno_id=aluno.id) }}" method="POST"
+                    style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-secondary">
+                        {{ "Desativar" if aluno.ativo else "Ativar" }}
+                    </button>
+                </form>
                 <form action="{{ url_for('alunos.excluirAluno', aluno_id=aluno.id) }}" method="POST"
                     style="display:inline;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

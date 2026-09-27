@@ -117,3 +117,17 @@ class AlunoService:
         except Exception:
             db.session.rollback()
             raise BusinessError("Erro ao excluir aluno")
+
+    @staticmethod
+    def alternar_status(aluno_id: int, instrutor_id: int) -> Aluno:
+        """
+        Ativa ou desativa um aluno (inverte o status atual)
+        """
+        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
+
+        if not aluno:
+            raise BusinessError("Aluno não encontrado")
+
+        aluno.ativo = not aluno.ativo
+
+        return BaseService.salvar(aluno)

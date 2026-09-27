@@ -84,3 +84,16 @@ def excluirAluno(aluno_id):
         flash(str(e), "error")
 
     return redirect(url_for("alunos.listarAlunos"))
+
+# Rota para ativar/desativar aluno
+@alunos_blueprint.route('/status/<int:aluno_id>', methods=['POST'])
+@login_required
+def alternarStatusAluno(aluno_id):
+    try:
+        aluno = AlunoService.alternar_status(aluno_id, current_user.id)
+        status = "ativado" if aluno.ativo else "desativado"
+        flash(f"Aluno {status} com sucesso", "success")
+    except BusinessError as e:
+        flash(str(e), "error")
+
+    return redirect(url_for("alunos.listarAlunos"))
