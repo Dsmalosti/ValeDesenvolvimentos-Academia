@@ -10,23 +10,23 @@ class InstrutorService:
     def criar_instrutor(dados):
         """
         Docstring for criar_instrutor
-        
+
         :param dados: Description
         """
         instrutor = User(
             nome=dados["nome"],
             sobrenome=dados["sobrenome"],
             email=dados["email"],
-            senha=dados["senha"]
+            senha=bcrypt.generate_password_hash(dados["senha"]).decode("utf-8")
         )
 
         return BaseService.salvar(instrutor)
-    
+
     @staticmethod
     def editar_instrutor(instrutor_id: int, dados: dict) -> User:
         """
         Docstring for editar_instrutor
-        
+
         :param instrutor_id: Description
         :type instrutor_id: int
         :param dados: Description
@@ -38,7 +38,7 @@ class InstrutorService:
 
         if not instrutor:
             raise BusinessError("Instrutor não encontrado")
-        
+
         if "nome" in dados:
             instrutor.nome = dados["nome"]
 
@@ -53,14 +53,14 @@ class InstrutorService:
             instrutor.senha = bcrypt.generate_password_hash(
                 dados["senha"]
             ).decode("utf-8")
-        
+
         return BaseService.salvar(instrutor)
-    
+
     @staticmethod
     def excluir_instrutor(instrutor_id: int):
         """
         Docstring for excluir_instrutor
-        
+
         :param instrutor_id: Description
         :type instrutor_id: int
         """
@@ -68,5 +68,5 @@ class InstrutorService:
 
         if not instrutor:
             raise BusinessError("Instrutor não encontrado!")
-        
+
         return BaseService.deletar(instrutor)

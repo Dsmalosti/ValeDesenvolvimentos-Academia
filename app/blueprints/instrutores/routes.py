@@ -18,26 +18,22 @@ def cadastroInstrutor():
     form = UserForm()
     form.senha.validators = [DataRequired()]
     if form.validate_on_submit():
-        user = form.save()
         dados = {
             "nome": form.nome.data,
             "sobrenome": form.sobrenome.data,
-            "email":form.email.data,
+            "email": form.email.data,
             "senha": form.senha.data
         }
 
         try:
-            InstrutorService.criar_plano(dados)
-            return redirect(url_for("planos.listarPlanos"))
+            user = InstrutorService.criar_instrutor(dados)
+            login_user(user, remember=True)
+            return redirect(url_for('main.homepage'))
         except BusinessError as e:
             flash(str(e), "danger")
         except Exception:
-            flash("Erro inesperado ao cadastrar aluno", "danger")
+            flash("Erro inesperado ao cadastrar instrutor", "danger")
 
-        if current_user.is_authenticated:
-            return redirect(url_for('main.homepage'))
-        login_user(user, remember=True)
-        return redirect(url_for('main.homepage'))
     return render_template('cadastro-instrutor.html', form=form)
 
 # Rota listar
@@ -57,27 +53,21 @@ def editarInstrutor(instrutor_id):
     form.senha.validators = [Optional()]  # remove a obrigatoriedade da senha na edição
 
     if form.validate_on_submit():
-        instrutor.nome = form.nome.data
-        instrutor.sobrenome = form.sobrenome.data
-        instrutor.email = form.email.data
+        dados = {
+            "nome": form.nome.data,
+            "sobrenome": form.sobrenome.data,
+            "email": form.email.data,
+        }
+        if form.senha.data:
+            dados["senha"] = form.senha.data
 
-        if form.validate_on_submit():
+        try:
+            InstrutorService.editar_instrutor(instrutor_id, dados)
+            flash('Instrutor atualizado com sucesso!')
+            return redirect(url_for('instrutores.listarInstrutores'))
+        except BusinessError as e:
+            flash(str(e), "error")
 
-            user = form.save()
-            dados = {
-                "nome": form.nome.data,
-                "sobrenome": form.sobrenome.data,
-                "email":form.email.data,
-                "senha": form.senha.data
-            }
-
-            try:
-                InstrutorService.editar_plano(instrutor_id,dados)
-                flash('Instrutor atualizado com sucesso!')
-                return redirect(url_for('instrutores.listarInstrutores'))
-            except BusinessError as e:
-                flash(str(e), "error")
-    
     return render_template('cadastro-instrutor.html', form=form)
 
 # Rota excluir
@@ -105,10 +95,10 @@ def login():
             login_user(instrutor)
             flash("Login realizado com sucesso", "success")
             return redirect(url_for('main.homepage'))
-        
+
         except BusinessError as e:
             flash(str(e), "danger")
-    
+
     return render_template('tela-login.html', form=form)
 
 # Rota paraa deslogar
@@ -122,28 +112,12 @@ def logout():
 @instrutores_blueprint.route('/painel/')
 @login_required
 def painelAdm():
-    # 🔹 Buscar apenas alunos ativos
-    alunos_ativos = Aluno.query.filter_by(ativo='ativo').all()
-    #Testar sem alunos
-    #alunos_ativos=[]
+    alunos_ativos = Aluno.query.filter_by(instrutor_id=current_user.id, ativo=True).all()
 
-    # 🔹 Buscar planos ativos ou com data de fim futura (ajuste conforme seu model)
-    #planos_ativos = Plano.query.filter((Plano.status == 'ativo') | (Plano.data_fim >= date.today())).all()
-
-    # 🔹 Buscar fichas ativas (se existir status)
-    #fichas_ativas = FichaTreino.query.filter_by(status='ativo').all()
-
-    # 🔹 Contadores para as notificações
     total_alunos = len(alunos_ativos)
-    #total_planos = len(planos_ativos)
-    #total_fichas = len(fichas_ativas)
 
     return render_template(
         'painel-administrativo.html',
         alunos=alunos_ativos,
-        #planos=planos_ativos,
-        #fichas=fichas_ativas,
         total_alunos=total_alunos,
-        #total_planos=total_planos,
-        #total_fichas=total_fichas
     )
