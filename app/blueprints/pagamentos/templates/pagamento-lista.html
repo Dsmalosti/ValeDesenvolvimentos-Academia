@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2 class="Titulo">Pagamentos — {{ aluno.nome }}</h2>
+
+<div class="container">
+    <a href="{{ url_for('pagamentos.registrarPagamento', aluno_id=aluno.id) }}" class="btn btn-primary mb-3">
+        Registrar novo pagamento
+    </a>
+
+    <ul>
+        {% if pagamentos %}
+        {% for pagamento in pagamentos %}
+        <li>
+            <span>R$ {{ "%.2f"|format(pagamento.valor) }}</span>
+            <span>Pago em: {{ pagamento.data_pagamento.strftime('%d/%m/%Y') }}</span>
+            <span>Vence em: {{ pagamento.data_vencimento.strftime('%d/%m/%Y') }}</span>
+            <span>{{ pagamento.forma_pagamento }}</span>
+        </li>
+        {% endfor %}
+        {% else %}
+        <li><span>Nenhum pagamento registrado ainda</span></li>
+        {% endif %}
+    </ul>
+</div>
+
+{% endblock %}

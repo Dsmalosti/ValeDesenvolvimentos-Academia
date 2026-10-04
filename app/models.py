@@ -136,6 +136,24 @@ class TreinoExercicio(db.Model):
         return f"<TreinoExercicio {self.exercicio.nome}>"
 
 
+class Pagamento(db.Model):
+    __tablename__ = 'pagamentos'
+    id = db.Column(db.Integer, primary_key=True)
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=False)
+    valor = db.Column(db.Numeric(10, 2), nullable=False)
+    data_pagamento = db.Column(db.Date, nullable=False)
+    data_vencimento = db.Column(db.Date, nullable=False)
+    forma_pagamento = db.Column(db.String(20), nullable=True)
+    observacao = db.Column(db.Text, nullable=True)
+
+    aluno = db.relationship('Aluno', backref='pagamentos', lazy=True)
+    instrutor = db.relationship('User', backref='pagamentos', lazy=True)
+
+    def __repr__(self):
+        return f'<Pagamento {self.aluno_id} - {self.data_pagamento}>'
+
+
 
 
 

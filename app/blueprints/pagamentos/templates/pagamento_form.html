@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Registrar Pagamento — {{ aluno.nome }}</h2>
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ form.valor.label }} {{ form.valor(class="form-control") }}
+            {% for erro in form.valor.errors %}
+                <div class="text-danger">{{ erro }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.data_pagamento.label }} {{ form.data_pagamento(class="form-control") }}
+            {% for erro in form.data_pagamento.errors %}
+                <div class="text-danger">{{ erro }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.forma_pagamento.label(class="form-label") }}
+            {{ form.forma_pagamento(class="form-select") }}
+            {% for erro in form.forma_pagamento.errors %}
+                <div class="text-danger">{{ erro }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="mb-3">
+            {{ form.observacao.label }} {{ form.observacao(class="form-control") }}
+            {% for erro in form.observacao.errors %}
+                <div class="text-danger">{{ erro }}</div>
+            {% endfor %}
+        </div>
+
+        {{ form.BtnSubmit(class="btn btn-primary") }}
+        <a href="{{ url_for('pagamentos.listarPagamentosAluno', aluno_id=aluno.id) }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+{% endblock %}
