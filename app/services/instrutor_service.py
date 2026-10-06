@@ -16,7 +16,7 @@ class InstrutorService:
         instrutor = User(
             nome=dados["nome"],
             sobrenome=dados["sobrenome"],
-            email=dados["email"],
+            email=dados["email"].strip().lower(),  # [back-01-auth-login] e-mail sempre minúsculo
             senha=bcrypt.generate_password_hash(dados["senha"]).decode("utf-8")
         )
 
@@ -46,7 +46,7 @@ class InstrutorService:
             instrutor.sobrenome = dados["sobrenome"]
 
         if "email" in dados:
-            instrutor.email = dados["email"]
+            instrutor.email = dados["email"].strip().lower()  # [back-01-auth-login]
 
          # Se a senha foi preenchida, altera
         if dados.get("senha"):
