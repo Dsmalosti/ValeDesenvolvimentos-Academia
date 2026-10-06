@@ -43,6 +43,7 @@ def create_app():
     from app.blueprints.planos.routes import planos_blueprint
     from app.blueprints.exercicios.routes import exercicios_blueprint
     from app.blueprints.fichas.routes import fichas_blueprint
+    from app.blueprints.pagamentos.routes import pagamentos_blueprint
 
 
     app.register_blueprint(main_blueprint)
@@ -51,6 +52,7 @@ def create_app():
     app.register_blueprint(planos_blueprint)
     app.register_blueprint(exercicios_blueprint)
     app.register_blueprint(fichas_blueprint)
+    app.register_blueprint(pagamentos_blueprint)
 
     # Models (necessário para migrations)
     from app import models

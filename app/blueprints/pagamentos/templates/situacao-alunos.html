@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2 class="Titulo">Situação dos Alunos</h2>
+
+<div class="container">
+    <ul>
+        {% if status_alunos %}
+        {% for aluno, status in status_alunos %}
+        <li>
+            <span>{{ aluno.nome }}</span>
+            <span>
+                {% if status == 'em_dia' %}
+                    <span class="text-success">Em dia</span>
+                {% elif status == 'vencido' %}
+                    <span class="text-danger">Vencido</span>
+                {% else %}
+                    <span class="text-muted">Sem pagamento registrado</span>
+                {% endif %}
+            </span>
+            <a href="{{ url_for('pagamentos.listarPagamentosAluno', aluno_id=aluno.id) }}" class="btn btn-sm btn-primary">
+                Ver pagamentos
+            </a>
+            <a href="{{ url_for('pagamentos.registrarPagamento', aluno_id=aluno.id) }}" class="btn btn-sm btn-success">
+                Registrar pagamento
+            </a>
+        </li>
+        {% endfor %}
+        {% else %}
+        <li><span>Nenhum aluno cadastrado</span></li>
+        {% endif %}
+    </ul>
+</div>
+
+{% endblock %}
