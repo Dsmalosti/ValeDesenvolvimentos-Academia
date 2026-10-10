@@ -107,18 +107,18 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-05-cobranca
 
-- **Sai de:** `back-08-planos` · **PR:** a abrir → `back-08-planos` · **Data:** 10/10/2026
+- **Sai de:** `back-08-planos` · **PR:** [#21](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/21) → `back-08-planos` · **Data:** 10/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `cobranca/receber.html`, `alunos/renovar.html` e `alunos/pagamentos.html`.
 - **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
 - **Observações:** sozinha não muda nada para quem usa. O `receber.html` não tem caminho para PIX manual (está no roadmap, em achados).
 
 ## back-09-cobranca (em andamento: só a proposta)
 
-- **Sai de:** `front-05-cobranca` · **PR:** a abrir → `front-05-cobranca` · **Data:** 10/10/2026
+- **Sai de:** `front-05-cobranca` · **PR:** [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` · **Data:** 10/10/2026
 - **O que tem:** `docs/mudancas/back-09-cobranca.md` com a proposta das tabelas `cobrancas` (nova) e `pagamentos` (a atual, em outro formato), as regras que saem delas, os passos da migration e 6 perguntas para o Diogo, cada uma com recomendação.
 - **O que NÃO tem:** código, modelo ou migration. O Diogo pediu para ver o esquema antes.
 - **Para retomar:** com as respostas do Diogo, escrever modelo + migration `b09…` (testar num Postgres temporário com pagamentos antigos dentro), o serviço de cobrança, as rotas `cobrancas.*`, `alunos.renovar` e `alunos.pagamentos`, trocar a leitura de vencimento do `situacao_service.py` e do `painel_service.py` para as cobranças pagas, e voltar o fim do cadastro de aluno para a tela de receber.
 
 ## Onde parou (10/10/2026)
 
-Alunos e planos prontos (PRs #17 a #20). A **cobrança está esperando o Diogo**: a `back-09-cobranca` tem só a proposta de esquema, com 6 perguntas. Não escrever modelo nem migration antes da resposta. Enquanto isso, o que não depende da cobrança pode andar: a próxima da fila que não usa pagamentos é `front-08-config` + `back-12-config` (dados da academia, horário, metas); frequência e relatórios dependem de decisões ou da cobrança. Faltam abrir os PRs de `front-05-cobranca` e `back-09-cobranca`. Do Adauto: ajustar o front para PIX manual, D12, D13, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
+Alunos e planos prontos (PRs #17 a #20). A **cobrança está esperando o Diogo**: a `back-09-cobranca` tem só a proposta de esquema, com 6 perguntas. Não escrever modelo nem migration antes da resposta. Enquanto isso, o que não depende da cobrança pode andar: a próxima da fila que não usa pagamentos é `front-08-config` + `back-12-config` (dados da academia, horário, metas); frequência e relatórios dependem de decisões ou da cobrança. Os PRs da cobrança são #21 (templates) e #22 (proposta; as 6 perguntas estão na descrição). Do Adauto: ajustar o front para PIX manual, D12, D13, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
