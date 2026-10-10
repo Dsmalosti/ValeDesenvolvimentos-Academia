@@ -72,12 +72,12 @@
   <div class="kpi-grid">
     {{ kpi(k.ativos, 'Alunos ativos', 'users', 'green', '+' ~ k.ativos_delta ~ ' no mês', href=url_for('alunos.lista', status='ativos')) }}
     {{ kpi(k.inativos, 'Alunos inativos', 'user-x', 'slate', href=url_for('alunos.lista', status='inativo')) }}
-    {{ kpi(brl(k.faturamento, 0), 'Faturamento estimado (mês)' ~ (' · ' ~ k.fat_meta_pct ~ '% da meta' if k.fat_meta_pct is not none else ''), 'dollar', 'yellow', '+' ~ k.fat_delta ~ '%', href=url_for('relatorios.admin')) }}
+    {{ kpi(brl(k.faturamento, 0), 'Faturamento estimado (mês)' ~ (' · ' ~ k.fat_meta_pct ~ '% da meta' if k.fat_meta_pct is not none else ''), 'dollar', 'yellow', (('+' if k.fat_delta >= 0 else '') ~ k.fat_delta ~ '%') if k.fat_delta is not none else none, 'red' if (k.fat_delta or 0) < 0 else 'green', href=url_for('relatorios.admin')) }}{# [back-04-painel] sem mês anterior para comparar, o selo some; quando o faturamento caiu, o selo fica vermelho e sem o '+' #}
     {{ kpi(brl(k.vencimentos_valor, 0), 'Vencimentos no mês · ' ~ k.vencimentos ~ ' alunos', 'calendar', 'blue', abre='dlg-vencem') }}
     {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência real · ' ~ k.inad_qtd ~ ' alunos', 'alert', 'red', 'atenção', 'red', href=url_for('alunos.lista', status='pendente')) }}
     {{ kpi(brl(k.ticket), 'Ticket médio por aluno', 'trend', 'teal', href=url_for('relatorios.admin')) }}
-    {% if academia.checkin_ativo %}{{ kpi(k.ausentes, 'Ausentes há mais de 15 dias', 'user-x', 'orange', abre='dlg-ausentes') }}{% else %}<button type="button" class="card kpi" data-open="dlg-avaliacoes-hoje"><div class="kpi__top"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">2</div><div class="kpi__lbl">Avaliações de hoje</div></div></button>{% endif %}
-    {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', '+' ~ k.novas_delta, abre='dlg-novas') }}
+    {% if academia.checkin_ativo %}{{ kpi(k.ausentes, 'Ausentes há mais de 15 dias', 'user-x', 'orange', abre='dlg-ausentes') }}{% elif alertas.avaliacoes_hoje_exemplo %}{# [back-04-painel] este card tem número e nomes FIXOS de exemplo; fica escondido até existir o módulo de avaliações #}<button type="button" class="card kpi" data-open="dlg-avaliacoes-hoje"><div class="kpi__top"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">2</div><div class="kpi__lbl">Avaliações de hoje</div></div></button>{% endif %}
+    {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', ('+' if k.novas_delta >= 0 else '') ~ k.novas_delta, abre='dlg-novas') }}{# [back-04-painel] variação negativa não leva o '+' #}
   </div>
 </section>
 
@@ -100,8 +100,8 @@
 <div class="painel-grid">
   <section class="card card--pad" aria-labelledby="h-serie">
     <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
-      <div><h2 class="ctitle" id="h-serie" style="font-size:16px">Alunos ativos por mês</h2><div class="csub">{{ serie.periodo }} · <span class="nowrap-frase">meta {{ serie.meta }} marcada em amarelo</span></div></div>
-      <div class="row-flex gap-3"><span class="chip chip--green d-only">+{{ k.ano_delta }}% no ano</span><a class="fw-7 row-flex gap-1" style="font-size:13px;white-space:nowrap" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos {{ icon('chevron-right', 16) }}</a></div>
+      <div><h2 class="ctitle" id="h-serie" style="font-size:16px">Alunos ativos por mês</h2><div class="csub">{{ serie.periodo }}{% if serie.meta %} · <span class="nowrap-frase">meta {{ serie.meta }} marcada em amarelo</span>{% endif %}{# [back-04-painel] sem meta cadastrada, a frase some #}</div></div>
+      <div class="row-flex gap-3">{% if k.ano_delta is not none %}<span class="chip chip--green d-only">{{ '+' if k.ano_delta >= 0 }}{{ k.ano_delta }}% no ano</span>{% endif %}{# [back-04-painel] sem base para comparar, o selo some #}<a class="fw-7 row-flex gap-1" style="font-size:13px;white-space:nowrap" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos {{ icon('chevron-right', 16) }}</a></div>
     </div>
     {# link: clicar no gráfico (ou tocar duas vezes no mesmo mês, no celular) leva aos alunos ativos; o balão mostra o % da meta #}
     <div class="chart" style="margin-top:12px" data-chart="linha" data-json='{{ {"labels": serie.labels, "valores": serie.valores, "meta": serie.meta, "unidade": "alunos", "titulo": "Alunos ativos por mês", "metaPct": true, "link": url_for("alunos.lista", status="ativos"), "linkRotulo": "ver alunos ativos"}|tojson|forceescape }}'></div>
@@ -154,6 +154,7 @@
   </div>
 </section>
 
+{% if alertas.avaliacoes_hoje_exemplo %}{# [back-04-painel] popup com nomes FIXOS de exemplo: escondido, junto com o card que o abre #}
 <dialog class="vt-dialog" id="dlg-avaliacoes-hoje" aria-labelledby="dlg-avh-t">
   <span class="vt-dialog__grip"></span>
   <div class="vt-dialog__head">
@@ -173,6 +174,7 @@
     <a class="btn btn-primary btn-block" href="{{ url_for('avaliacoes.agenda') }}">Ver agenda completa</a>
   </div>
 </dialog>
+{% endif %}
 {% endblock %}
 
 {% block dialogs %}

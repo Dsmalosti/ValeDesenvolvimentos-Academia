@@ -11,7 +11,7 @@ import pytest
 
 from app.models import Aluno, Ficha, Plano, Treino, User
 from tests.conftest import (campo, contar, criar_aluno, criar_ficha, criar_plano, criar_treino,
-                            criar_usuario, logar)
+                            criar_usuario, logar, numero_do_card)
 
 # Páginas que existem para quem NÃO está logado. Qualquer outra rota tem que exigir login.
 ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_conta",
@@ -152,8 +152,7 @@ def test_painel_conta_so_os_alunos_da_propria_conta(cliente, contas):
 
     html = cliente.get("/").get_data(as_text=True)
 
-    ativos = re.search(r"Alunos\s+ativos.*?<[^>]+>\s*(\d+)\s*<", html, re.S | re.I)
-    assert ativos and int(ativos.group(1)) == 1  # A tem 1 aluno ativo; B tem 2
+    assert numero_do_card(html, 'Alunos ativos') == '1'  # A tem 1 aluno ativo; B tem 2
 
 
 def _rotas(app):
@@ -182,7 +181,7 @@ def test_nenhuma_rota_get_apaga_ou_altera_dados(app):
     outro site ou o carregamento antecipado de links do front novo dispararia a ação sozinho.
     """
     # Pendência conhecida: o logout ANTIGO ainda é por GET. Sai junto com o cabeçalho antigo
-    # (back-06-layout). O logout novo, /sair, já é só POST.
+    # (back-04-painel). O logout novo, /sair, já é só POST.
     pendencias_conhecidas = {"instrutores.logout"}
 
     perigosas = [f"{endpoint} {url}" for endpoint, url, metodos in _rotas(app)

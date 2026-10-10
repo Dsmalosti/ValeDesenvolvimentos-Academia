@@ -16,7 +16,8 @@ token CSRF ficam guardados no `g`), e um teste com duas contas daria resultado f
 import os
 import sys
 import tempfile
-from datetime import date
+import re
+from datetime import date, datetime
 
 sys.dont_write_bytecode = True  # o repositório versiona .pyc; não gerar novos ao testar
 
@@ -30,7 +31,7 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Exercicio, Ficha, Plano, Treino, User  # noqa: E402
+from app.models import Aluno, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -82,9 +83,17 @@ def criar_plano(dono_id, nome="Mensal"):
     return _salvar(Plano(nome=nome, valor=100, duracao_dias=30, descricao="", ativo=True, instrutor_id=dono_id))
 
 
-def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True):
-    return _salvar(Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo,
-                         data_nascimento=date(1990, 1, 1), plano_id=plano_id, instrutor_id=dono_id))
+def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=None, nascimento=date(1990, 1, 1)):
+    aluno = Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo,
+                  data_nascimento=nascimento, plano_id=plano_id, instrutor_id=dono_id)
+    if cadastrado_em:  # um `date`; sem isso o banco usa o momento atual
+        aluno.data_cadastro = datetime(cadastrado_em.year, cadastrado_em.month, cadastrado_em.day)
+    return _salvar(aluno)
+
+
+def criar_pagamento(dono_id, aluno_id, valor, pago_em, vence_em):
+    return _salvar(Pagamento(aluno_id=aluno_id, instrutor_id=dono_id, valor=valor, forma_pagamento="pix",
+                             data_pagamento=pago_em, data_vencimento=vence_em))
 
 
 def criar_exercicio(nome="Supino"):
@@ -110,3 +119,10 @@ def campo(modelo, registro_id, nome_do_campo):
     with _APP.app_context():
         registro = db.session.get(modelo, registro_id)
         return getattr(registro, nome_do_campo) if registro else None
+
+
+def numero_do_card(html, rotulo):
+    """Lê do painel novo o valor do card de indicador que tem esse rótulo. Ex.: numero_do_card(html, 'Alunos ativos')."""
+    achado = re.search(r'kpi__val[^>]*>\s*([^<]*?)\s*</div>\s*<div class="kpi__lbl">\s*' + re.escape(rotulo), html)
+    assert achado, f'não achei o card "{rotulo}" no painel'
+    return achado.group(1)

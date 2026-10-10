@@ -1,0 +1,17 @@
+{#
+  [back-04-painel] Página TEMPORÁRIA para as seções do front novo que ainda não têm backend
+  (ver app/blueprints/pendentes.py). Não veio do vale-tec-front: foi feita só com os
+  componentes dele (macro `vazio`), para o menu não levar a uma tela de erro.
+  Sai junto com o pendentes.py, quando todas as telas existirem.
+  Contexto: titulo_tela (str)
+#}
+{% extends 'base.html' %}
+{% from '_macros/ui.html' import vazio %}
+{% set pagina_titulo = titulo_tela %}
+{% set pagina_sub = 'Tela ainda não ligada ao sistema' %}
+{% set m_voltar = true %}
+{% block content %}
+<section class="card card--pad">
+  {{ vazio('Em construção', 'A tela "' ~ titulo_tela ~ '" já está desenhada, mas ainda não foi ligada ao sistema. Ela entra numa das próximas etapas.', 'clipboard', 'Voltar ao painel', url_for('painel.index')) }}
+</section>
+{% endblock %}
