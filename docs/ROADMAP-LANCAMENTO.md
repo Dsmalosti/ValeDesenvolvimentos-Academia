@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase A quase fechada: feito até a `back-06-contas-e-papeis` (conta separada do usuário, papéis, exercício com dono). Todas as autorizações foram dadas. A próxima é a tela de **alunos** (`front-03-alunos` + `back-07-alunos`), sem nada travando. Faltam só decisões de conta externa (hospedagem, domínio, e-mail). |
+| **Estado** | Fase B começou: a tela de **alunos** está pronta (`front-03-alunos` + `back-07-alunos`), com migration de 4 colunas. A próxima é **planos** (`front-04-planos` + `back-08-planos`), sem nada travando. Faltam só decisões de conta externa (hospedagem, domínio, e-mail). |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -32,6 +32,8 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `back-04-painel` | O painel novo funcionando com os dados do banco; pontes para as telas antigas; páginas de erro novas | [#14](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/14) → `front-02-painel` | Aguardando revisão do Diogo |
 | [x] | `back-05-repo-e-config` | `.pyc` e `database.db` fora do git; `requirements.txt` limpo e `requirements-dev.txt`; `DATABASE_URL` como nome único; `SECRET_KEY` sem valor padrão | [#15](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/15) → `back-04-painel` | Aguardando revisão do Diogo |
 | [x] | `back-06-contas-e-papeis` | Tabela `contas`; `conta_id` em alunos, planos, pagamentos e exercícios; papéis com bloqueio no servidor; e-mail e CPF únicos por academia; cadastro aberto fechado; `flask criar-conta`. **Tem migration.** | [#16](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/16) → `back-05-repo-e-config` | Aguardando revisão do Diogo |
+| [x] | `front-03-alunos` | Templates das telas de alunos do front novo (lista, perfil, cadastro, edição, busca), cópia fiel do Drive | PR a abrir → `back-06-contas-e-papeis` | Enviada; falta abrir o PR |
+| [x] | `back-07-alunos` | As telas de alunos funcionando com o banco: lista com filtros, cadastro e edição validados no servidor, perfil, busca ao vivo, exportar, desativar. **Tem migration** (4 colunas em `alunos`). | PR a abrir → `front-03-alunos` | Enviada; falta abrir o PR |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -54,7 +56,7 @@ Cada tela são duas branches: a `front-NN` (templates) e a `back-NN` que sai del
 
 | | Branches | O que o cliente passa a fazer | Tarefas | Pronto quando | Trava |
 |---|---|---|---|---|---|
-| [ ] | `front-03-alunos` + `back-07-alunos` | Cadastrar, buscar, editar e inativar aluno; ver a página do aluno; exportar a lista. Datas em `dd/mm/aaaa` (hoje todo cadastro falharia na validação). | 4.1, 4.3, 4.4 | Fluxo completo de cadastro → edição → inativação no celular; busca sem recarregar a página. | A1 (dada); T3; foto do aluno fica para depois do lançamento |
+| [x] | `front-03-alunos` + `back-07-alunos` | Cadastrar, buscar, editar e inativar aluno; ver a página do aluno; exportar a lista. Datas em `dd/mm/aaaa` (hoje todo cadastro falharia na validação). | 4.1, 4.3, 4.4 | Feito. Limites em `docs/mudancas/back-07-alunos.md`: reativar aluno ainda é pela tela antiga; o botão "Bloquear" só avisa; depois do cadastro vai para o perfil, e não para o recebimento. | A1 (dada); T3; foto do aluno fica para depois do lançamento |
 | [ ] | `front-04-planos` + `back-08-planos` | Criar, editar, pausar e reativar planos. Valor digitado como `R$ 1.234,56`. | 4.1, 4.3, 5.4 | Plano pausado some do cadastro de aluno e continua nos alunos que já o têm. | A1 (dada) |
 | [ ] | `front-05-cobranca` + `back-09-cobranca` | Receber a mensalidade: matrícula, renovação (recalcula vencimento e valor), confirmação em PIX, débito, crédito ou dinheiro, diária avulsa, histórico de pagamentos do aluno. No lançamento o PIX é **manual** (a recepção confere e confirma). | 5.2 | Matricular → cobrar → confirmar nas 4 formas → valor certo no painel. Cada pagamento guarda quem confirmou e como. | A1 (dada); reconciliar com a tabela `pagamentos` que o Diogo já criou; D3 |
 | [ ] | `front-06-frequencia` + `back-10-frequencia` | Registrar a entrada do aluno em um toque; ver quem sumiu há mais de 15 dias; exportar. | 5.3 | Aluno sem nenhuma entrada aparece como "sem dado", não como "0 acessos". Ligar e desligar o check-in persiste. | A1 (dada) |
@@ -172,8 +174,12 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | Na migration da `back-06`, dois usuários antigos que eram da mesma academia viram duas contas | bancos locais | Juntar com um `UPDATE` no `conta_id`, se for o caso |
 | O front tem botões de **demonstração**, que só mostram um aviso e não fazem nada: "WhatsApp aberto para…", "Mensagens de parabéns enviadas", "Lembretes de renovação enviados" | `painel/index.html`, `_notificacao.html` | Cada um vira ação de verdade na branch do módulo (mensagens, cobrança) |
 | O card "Avaliações de hoje" do painel tem número e nomes fixos de exemplo no template. Está escondido | `painel/index.html` | Volta com dado de verdade na branch de avaliações |
-| O gráfico "Alunos ativos por mês" é uma aproximação: o banco não guarda quando um aluno foi inativado, então quem saiu não aparece nos meses passados | `painel_service.py` | Precisa de histórico no banco (A1); decidir na `back-07-alunos` |
+| O gráfico "Alunos ativos por mês" é uma aproximação: o banco não guarda quando um aluno foi inativado, então quem saiu não aparece nos meses passados | `painel_service.py` | Precisa de uma coluna com a data da inativação. Não entrou na `back-07-alunos` para não misturar assuntos; vai na `back-11`, de relatórios, que é quem mais depende desse histórico |
 | O template do painel no repositório tem 6 ajustes que o do Drive não tem (lista em `docs/mudancas/back-04-painel.md`). O Adauto precisa levar para o Drive, senão a próxima cópia desfaz | `painel/index.html` | Adauto |
+| `/fichas/editar/<id>` dá erro 500: o template `treino_form.html` usa um campo que o formulário de ficha não tem. Já era assim antes; apareceu agora porque a varredura de rotas passou a rodar com dados | tela antiga de fichas | `back-14-treinos`, que troca a tela. Se o Diogo quiser corrigir antes, é pequeno |
+| No front novo não há botão para **reativar** um aluno desativado. Hoje só pela tela antiga (`/alunos/listar/`) | `alunos/detalhe.html` | Decisão do Adauto: se quiser o botão, entra no front e numa branch pequena de backend |
+| O campo "Observações" do aluno sugere "restrição médica": é dado de saúde, sensível pela LGPD | `alunos/_campos.html` | `back-19-lgpd` e a política de privacidade |
+| O servidor não limita o tamanho do que é enviado num formulário (`MAX_CONTENT_LENGTH`). O cadastro de aluno no celular tem campo de foto, que o servidor ignora | `config.py` | `back-18-seguranca` |
 
 ## Registro de atualizações
 
@@ -189,3 +195,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | Respostas do Diogo: sim para todas as autorizações (A1 a A6); tabela `contas` separada; aluno continua com `ativo`; fechar o cadastro aberto; cobrança com tabelas novas e esquema mostrado antes; revisão um por um; Postgres local e nenhum dado de produção; PIX manual. Hospedagem, domínio e e-mail seguem em aberto. `back-05-repo-e-config` enviada. |
 | 10/10/2026 | `back-06-contas-e-papeis` enviada: tabela `contas`, papéis, exercício com dono, cadastro aberto fechado. Achado novo: as migrations antigas não rodam do zero no Postgres. |
 | 10/10/2026 | PRs abertos: #13 (`front-02`), #14 (`back-04`), #15 (`back-05`) e #16 (`back-06`). O banco local do Adauto recebeu a migration da `back-06`. |
+| 10/10/2026 | `front-03-alunos` e `back-07-alunos` enviadas: as telas de alunos do front novo funcionando com o banco. Primeira tela da Fase B. Achados novos: `/fichas/editar/<id>` com erro 500 (antigo), falta botão de reativar aluno, observações como dado sensível, limite de tamanho de envio. |

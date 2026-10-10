@@ -83,6 +83,20 @@ def _ponte(destino):
     return ir
 
 
+def _ficha_do_aluno(id):
+    """
+    [back-07-alunos] Botão "Visualizar ficha" do perfil do aluno (treinos.ficha_aluno, /alunos/<id>/ficha).
+    A tela nova de ficha ainda não existe; leva à ficha ativa mais recente do aluno na tela antiga
+    ou, se ele não tiver nenhuma, à lista de fichas. A consulta já é só dentro da conta.
+    """
+    from app.helpers.conta import fichas_da_conta
+    from app.models import Ficha
+    ficha = fichas_da_conta().filter(Ficha.aluno_id == id).order_by(Ficha.data_criacao.desc()).first()
+    if ficha:
+        return redirect(url_for('fichas.fichaDetalhes', ficha_id=ficha.id))
+    return redirect(url_for('fichas.listarFichas'))
+
+
 def blueprints_pendentes():
     """Um blueprint por seção, com os endpoints de PENDENTES e PONTES. Registrados no create_app()."""
     blueprints = {}
@@ -92,4 +106,5 @@ def blueprints_pendentes():
     for nome_bp, funcao, endereco, destino in PONTES:
         bp = blueprints.setdefault(nome_bp, Blueprint(nome_bp, __name__ + '_' + nome_bp))
         bp.add_url_rule(endereco, funcao, _ponte(destino), methods=['GET'])
+    blueprints['treinos'].add_url_rule('/alunos/<int:id>/ficha', 'ficha_aluno', login_required(_ficha_do_aluno), methods=['GET'])
     return list(blueprints.values())

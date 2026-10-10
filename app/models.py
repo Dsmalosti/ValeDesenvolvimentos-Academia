@@ -75,6 +75,12 @@ class Aluno(db.Model):
     data_nascimento = db.Column(db.Date, nullable=True)
     cpf = db.Column(db.String(14), nullable=True)
     ativo = db.Column(db.Boolean, default=True)
+    # [back-07-alunos] colunas que o formulário do front novo envia e o banco não tinha onde guardar.
+    # O nome de cada uma é igual ao `name` do campo no formulário (regra do contrato front <-> back).
+    data_inicio = db.Column(db.Date, nullable=True)              # quando o aluno começa (pode ser futuro)
+    dia_vencimento = db.Column(db.Integer, nullable=True)        # dia do mês em que a mensalidade vence, de 1 a 28
+    forma_pagamento = db.Column(db.String(20), nullable=True)    # pix | debito | credito | dinheiro (a preferida do aluno)
+    observacoes = db.Column(db.Text, nullable=True)              # restrição médica, objetivo, indicação...
     # chave extrangeira para plano
     plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=True)
     # chave estrangeira para o instrutor (academia) dono deste aluno

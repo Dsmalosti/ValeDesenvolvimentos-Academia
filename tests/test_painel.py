@@ -141,11 +141,8 @@ def test_login_leva_para_o_painel_novo(cliente):
 
 
 @pytest.mark.parametrize("origem, destino", [
-    ("/alunos", "/alunos/listar/"),
-    ("/alunos/novo", "/alunos/cadastro/"),
-    ("/alunos/buscar", "/alunos/listar/"),
-    ("/alunos/7", "/alunos/editar/7"),
-    ("/alunos/7/renovar", "/pagamentos/registrar/7"),
+    ("/alunos/7/renovar", "/pagamentos/registrar/7"),      # as pontes de lista, cadastro, busca e perfil viraram telas de verdade na back-07
+    ("/alunos/7/pagamentos", "/pagamentos/listar/7"),
     ("/planos", "/planos/listar/"),
     ("/planos/novo", "/planos/criar/"),
     ("/exercicios", "/exercicios/listar/"),

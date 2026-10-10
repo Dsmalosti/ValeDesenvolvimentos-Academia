@@ -73,6 +73,22 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** não há como existir instrutor ou recepção até o convite de equipe (`back-13`); o instrutor ainda não tem painel; as migrations ANTIGAS não rodam do zero num Postgres vazio (problema anterior, a resolver antes do deploy). O banco local do Adauto recebeu esta migration em 10/10/2026, com a autorização dele.
 - **Doc:** `docs/mudancas/back-06-contas-e-papeis.md`
 
+## front-03-alunos
+
+- **Sai de:** `back-06-contas-e-papeis` · **PR:** a abrir → `back-06-contas-e-papeis` · **Data:** 10/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `alunos/lista.html`, `detalhe.html`, `novo.html`, `editar.html`, `buscar.html`, `_form.html`, `_campos.html` e `_resultados.html`.
+- **Testes:** os 8 arquivos conferidos byte a byte com o Drive; `pytest` sem mudança.
+- **Observações:** sozinha não muda nada para quem usa: nenhuma rota aponta para esses templates antes da `back-07-alunos`.
+
+## back-07-alunos
+
+- **Sai de:** `front-03-alunos` · **PR:** a abrir → `front-03-alunos` · **Data:** 10/10/2026
+- **O que mudou:** o menu "Alunos" abre as telas novas: lista com busca, filtros e paginação; cadastro e edição validados no servidor (datas em `dd/mm/aaaa`, CPF com dígitos conferidos, único por academia); perfil; busca ao vivo; exportar CSV; desativar (não apaga) e excluir (só o dono). A regra de "ativo, pendente ou inativo" saiu do painel para `situacao_service.py`, usada pelos dois. Quatro colunas novas em `alunos`.
+- **Migration:** `b07a1f2e3d40_colunas_novas_do_aluno.py`: só acrescenta `data_inicio`, `dia_vencimento`, `forma_pagamento` e `observacoes`, vazias. **Depois do pull, rodar `flask db upgrade`.**
+- **Testes:** `pytest` 155 de 155 (47 novos em `tests/test_alunos.py`); migration num Postgres temporário, 11 checagens; navegador: alunos 30 de 30, painel 70 de 70, login 60 de 60; varredura de todas as rotas GET como dono, recepção e instrutor, sem nenhuma rota pior que na branch anterior.
+- **Observações:** as telas antigas de alunos continuam no ar (as outras telas antigas apontam para elas). Reativar aluno ainda é pela tela antiga. A foto do aluno não é gravada. O botão "Bloquear" só avisa. Depois de cadastrar, vai para o perfil e não para o recebimento (isso volta na cobrança).
+- **Doc:** `docs/mudancas/back-07-alunos.md`
+
 ## Onde parou (10/10/2026)
 
-Fase A fechada, a não ser pelo layout das demais telas, que entra tela a tela. A próxima é **alunos**: `front-03-alunos` (templates do Drive: lista, detalhe, novo, editar, buscar e os parciais) e `back-07-alunos` (rotas com os nomes do front no lugar das pontes temporárias, colunas novas do aluno com migration, datas em `dd/mm/aaaa`, inativar em vez de excluir). Todas as autorizações do Diogo estão dadas (roadmap, seção de autorizações); para a cobrança (`back-09`) ele pediu para ver o esquema no PR antes. Do Adauto e do Diogo faltam hospedagem, domínio e provedor de e-mail (D4, D5, D6); do Adauto, D12 e D13.
+A tela de alunos está pronta e enviada (`front-03-alunos` e `back-07-alunos`); **faltam os dois PRs** e rodar a migration `b07a1f2e3d40` no banco local de quem for testar. A próxima é **planos**: `front-04-planos` (templates do Drive) e `back-08-planos` (criar, editar, pausar e reativar; valor digitado como `R$ 1.234,56`; plano pausado some do cadastro de aluno). Todas as autorizações do Diogo estão dadas; para a cobrança (`back-09`) ele pediu para ver o esquema no PR antes. Do Adauto e do Diogo faltam hospedagem, domínio e provedor de e-mail (D4, D5, D6); do Adauto, D12, D13 e decidir se quer botão de reativar aluno no front.
