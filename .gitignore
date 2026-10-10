@@ -2,5 +2,11 @@
 
 .env
 
-   __pycache__/
-   *.pyc
+# [back-02-limpeza] estas duas linhas tinham espaços na frente e por isso o git não as aplicava
+__pycache__/
+*.pyc
+
+# [back-02-limpeza] banco local, cache de teste e configuração local do Claude Code
+instance/
+.pytest_cache/
+.claude/launch.json

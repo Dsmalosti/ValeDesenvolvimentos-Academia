@@ -15,8 +15,8 @@ def criarPlano():
 
 
     form = PlanoForm()
-    print("FORM DATA:", form.data)
-    print("FORM ERRORS:", form.errors)
+    # [back-02-limpeza] antes: dois print() com form.data e form.errors, que jogavam os dados
+    # do formulário no log do servidor.
 
     if form.validate_on_submit():
         dados = {
@@ -26,7 +26,7 @@ def criarPlano():
             "descricao": form.descricao.data,
             "ativo": form.ativo.data
         }
-        print("DADOS:", dados)
+        # [back-02-limpeza] antes: print("DADOS:", dados)
         try:
             PlanoService.criar_plano(dados, current_user.id)
             return redirect(url_for("planos.listarPlanos"))
