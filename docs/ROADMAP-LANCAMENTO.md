@@ -27,7 +27,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `back-01-auth-login` | Login e logout de verdade (tarefas 1.1 a 1.5) | [#9](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/9) → `front-01` | Aguardando revisão do Diogo |
 | [x] | `back-02-limpeza` | Defeitos que quebravam telas, `print()` com dados, `.gitignore`, primeiros testes automáticos | [#10](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/10) → `back-01-auth-login` | Aguardando revisão do Diogo |
 | [x] | `back-03-isolamento` | Uma academia não enxerga a outra; login obrigatório em tudo; nenhum GET apaga dados | [#11](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/11) → `back-02-limpeza` | Aguardando revisão do Diogo |
-| [x] | `docs-01-decisoes-e-termos` | Decisões do Adauto no roadmap, rascunhos dos termos de uso e da política de privacidade, teste de navegador do login (Playwright) | a abrir → `back-03-isolamento` | Push feito; falta abrir o PR |
+| [x] | `docs-01-decisoes-e-termos` | Decisões do Adauto no roadmap, rascunhos dos termos de uso e da política de privacidade, teste de navegador do login (Playwright) | [#12](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/12) → `back-03-isolamento` | Aguardando revisão do Diogo |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -138,7 +138,7 @@ Decisões de negócio ou de conta externa. As quatro primeiras o Adauto quer dec
 | # | Decisão | O que trava | Sugestão |
 |---|---|---|---|
 | T1 | Tabela `contas` separada, ou `conta_id` apontando para o dono? | `back-05` e tudo depois | Tabela `contas`: é onde ficam os dados da academia |
-| T2 | O Diogo revisa branch por branch, na ordem, ou em lotes? PR empilhado só anda se o anterior for aprovado. Hoje há 4 PRs na fila. | O ritmo de todo o roadmap | Combinar um dia fixo de revisão |
+| T2 | O Diogo revisa branch por branch, na ordem, ou em lotes? PR empilhado só anda se o anterior for aprovado. Hoje há 5 PRs na fila. | O ritmo de todo o roadmap | Combinar um dia fixo de revisão |
 | T3 | Aluno: `ativo` sim/não, ou `status` (ativo, pausado, cancelado)? | `back-08` e o relatório de cancelamento | `status`, se o motivo de cancelamento for entrar nos relatórios |
 | T4 | Respondida pela D9: o cadastro fica aberto ao público, mas pela tela nova "Criar conta". Falta só combinar com o Diogo **quando** o `/instrutores/cadastro/` antigo sai do ar. | `back-14` | Tirar a rota antiga na mesma branch em que a tela nova entrar |
 
@@ -171,3 +171,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | `back-03-isolamento` enviada. Entraram os achados sobre exercício sem dono e registros antigos sem dono. |
 | 10/10/2026 | PRs abertos: #9 (`back-01`), #10 (`back-02`) e #11 (`back-03`). |
 | 10/10/2026 | O Adauto respondeu D1, D2, D7, D8, D9, D10 e D11 e autorizou A7 e A8. Consequências: Personal, fichas, avaliação, mensagens e a tela "Criar conta" são obrigatórios para o lançamento. Banco local alinhado e Playwright instalado. Entraram os rascunhos em `docs/legal/` e as decisões D12 e D13. |
+| 10/10/2026 | PR #12 aberto (`docs-01`). |
