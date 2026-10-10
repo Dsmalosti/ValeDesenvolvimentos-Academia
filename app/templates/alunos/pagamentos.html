@@ -1,0 +1,36 @@
+{#
+  GET /alunos/<id>/pagamentos (alunos.pagamentos)
+  origem: 'webhook' = o banco confirmou sozinho (ícone raio) | 'manual' = alguém da recepção marcou (ícone lápis).
+  A regra do design: TODA confirmação mostra de onde veio.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import brl %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Pagamentos' %}
+{% set pagina_sub = aluno.nome %}
+{% set m_voltar = url_for('alunos.detalhe', id=aluno.id) %}
+{% set m_sub = aluno.nome %}
+{% set corpo_classe = 'page--narrow' %}
+{% set sem_tabbar = true %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('alunos.lista') }}">Alunos</a>{{ icon('chevron-right', 14) }}<a href="{{ url_for('alunos.detalhe', id=aluno.id) }}">{{ aluno.nome }}</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Pagamentos</span></nav>{% endblock %}
+{% block content %}
+<div class="stat-grid" style="grid-template-columns:1fr 1fr">
+  <div class="card stat"><div class="stat__val num" style="font-size:22px">{{ brl(total_ano) }}</div><div class="stat__lbl">Total em 2026</div></div>
+  <div class="card stat"><div class="stat__val ok">{{ pagamentos|length }}</div><div class="stat__lbl">Pagamentos</div></div>
+</div>
+<section class="card card--pad" aria-labelledby="h-todos">
+  <h2 class="ctitle" id="h-todos" style="font-size:16px">Todos os pagamentos</h2>
+  <div class="csub" style="margin-bottom:6px">O ícone diz se o banco confirmou ou se foi alguém da recepção.</div>
+  <ul class="mlist">
+    {% for p in pagamentos %}
+    <li class="mrow" style="align-items:center">
+      <span class="tile tile--sm {{ 'tone-blue' if p.origem == 'webhook' else 'tone-slate' }}" title="{{ 'Confirmado pelo banco' if p.origem == 'webhook' else 'Confirmado manualmente' }}">{{ icon('bolt' if p.origem == 'webhook' else 'edit', 18) }}</span>
+      <div class="mrow__main"><div class="mrow__title" style="font-size:14.5px">{{ p.data }}</div><div class="mrow__sub">{{ p.forma }} · {{ 'Confirmado pelo banco' if p.origem == 'webhook' else p.quem ~ ' confirmou' }}</div></div>
+      <b class="tab-num">{{ brl(p.valor) }}</b>
+    </li>
+    {% else %}<li class="faint" style="padding:14px 0">Nenhum pagamento registrado ainda.</li>{% endfor %}
+  </ul>
+</section>
+<a class="btn btn-ghost btn-block" href="{{ url_for('alunos.pagamentos', id=aluno.id, formato='csv') }}">{{ icon('download', 18) }}Exportar extrato</a>
+{% endblock %}
