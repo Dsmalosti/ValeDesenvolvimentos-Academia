@@ -80,6 +80,10 @@ def create_app():
     registrar_contexto(app)
     registrar_paginas_de_erro(app)
 
+    # [back-06-contas-e-papeis] comando `flask criar-conta` (o cadastro aberto pela internet foi fechado)
+    from app.cli import registrar_comandos
+    registrar_comandos(app)
+
     # Models (necessário para migrations)
     from app import models
 

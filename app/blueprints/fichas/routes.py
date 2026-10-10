@@ -3,7 +3,7 @@ from flask import Blueprint,render_template, url_for, request, redirect, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from app.blueprints.fichas.form import TreinoForm, FichaForm, TreinoExercicioForm
 from app.models import Treino, Aluno, Ficha, Exercicio, TreinoExercicio
-from app.helpers.conta import da_conta, exigir_login_em, fichas_da_conta, treinos_da_conta
+from app.helpers.conta import da_conta, exercicios_visiveis, exigir_login_em, fichas_da_conta, treinos_da_conta
 
 fichas_blueprint = Blueprint('fichas', __name__, url_prefix='/fichas', template_folder='templates')
 exigir_login_em(fichas_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
@@ -150,7 +150,8 @@ def adicionarExercicio(treino_id):
     form = TreinoExercicioForm()
 
     form.exercicio_id.choices = [
-        (ex.id, ex.nome) for ex in Exercicio.query.order_by(Exercicio.nome).all()
+        # [back-06-contas-e-papeis] antes: Exercicio.query (todos). Agora o catálogo padrão e os da própria conta.
+        (ex.id, ex.nome) for ex in exercicios_visiveis().order_by(Exercicio.nome).all()
     ]
 
     if form.validate_on_submit():

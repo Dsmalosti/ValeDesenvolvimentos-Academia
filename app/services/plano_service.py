@@ -1,6 +1,7 @@
 from app.models import Plano
 from app.services.base_service import BaseService
 from app.exceptions import BusinessError
+from app.helpers.conta import conta_id, da_conta
 
 class PlanoService:
 
@@ -17,23 +18,25 @@ class PlanoService:
             duracao_dias=dados["duracao_dias"],
             descricao=dados["descricao"],
             ativo=dados.get("ativo", True),
-            instrutor_id=instrutor_id
+            instrutor_id=instrutor_id,   # [back-06-contas-e-papeis] agora é só "quem cadastrou"
+            conta_id=conta_id(),         # [back-06-contas-e-papeis] a academia dona do plano
         )
 
         return BaseService.salvar(plano)
 
     @staticmethod
-    def listar_planos(instrutor_id: int):
+    def listar_planos():
         """
-        Lista somente os planos do instrutor logado
+        Lista somente os planos da conta (academia) de quem está logado.
+        [back-06-contas-e-papeis] antes: filtrava por instrutor_id, recebido por parâmetro.
         """
-        return Plano.query.filter_by(instrutor_id=instrutor_id).all()
+        return da_conta(Plano).all()
 
     @staticmethod
-    def editar_plano(plano_id: int, dados: dict, instrutor_id: int) -> Plano:
+    def editar_plano(plano_id: int, dados: dict) -> Plano:
         '''Regra de negocio para ediitar um plano'''
 
-        plano = Plano.query.filter_by(id=plano_id, instrutor_id=instrutor_id).first()
+        plano = da_conta(Plano).filter_by(id=plano_id).first()  # [back-06-contas-e-papeis] antes: instrutor_id=instrutor_id
 
         if not plano:
             raise BusinessError("Plano não encontrado")
@@ -56,14 +59,14 @@ class PlanoService:
         return BaseService.salvar(plano)
 
     @staticmethod
-    def excluir_plano(plano_id: int, instrutor_id: int):
+    def excluir_plano(plano_id: int):
         """
         Docstring for excluir_plano
 
         :param plano_id: Description
         :type plano_id: int
         """
-        plano = Plano.query.filter_by(id=plano_id, instrutor_id=instrutor_id).first()
+        plano = da_conta(Plano).filter_by(id=plano_id).first()  # [back-06-contas-e-papeis] antes: instrutor_id=instrutor_id
 
         if not plano:
             raise BusinessError("Plano não encontrado")
