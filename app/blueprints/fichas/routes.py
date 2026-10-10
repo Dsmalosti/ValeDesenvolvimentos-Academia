@@ -44,7 +44,8 @@ def listarFichas():
     return render_template('ficha-lista.html', fichas=fichas)
 
 # Rota editar
-@fichas_blueprint.route('/editar/<int:ficha_id>', methods=['Get', 'POST'])
+# [back-02-limpeza] antes: methods=['Get', 'POST']. Funcionava porque o Flask converte para maiúsculas.
+@fichas_blueprint.route('/editar/<int:ficha_id>', methods=['GET', 'POST'])
 @login_required
 def editarFicha(ficha_id):
     ficha = Ficha.query.get_or_404(ficha_id)
@@ -63,7 +64,8 @@ def editarFicha(ficha_id):
     return render_template('treino_form.html', form=form)
 
 # Rota excluir
-@fichas_blueprint.route('/excuir/<int:ficha_id>', methods=['POST'])
+# [back-02-limpeza] antes: '/excuir/<int:ficha_id>' (erro de digitação). O template usa url_for, então segue funcionando.
+@fichas_blueprint.route('/excluir/<int:ficha_id>', methods=['POST'])
 @login_required
 def excluirFicha(ficha_id):
     ficha = Ficha.query.get_or_404(ficha_id)
