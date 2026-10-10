@@ -1,0 +1,46 @@
+{# Gaveta do menu (mobile): o que não cabe nas 4 abas.
+   Variante Personal (academia.modelo == 'personal', Figma 24 personal): a 4ª aba é Agenda, então Fichas de treino volta pra cá;
+   sem check-in e sem equipe. #}
+{% from '_macros/icons.html' import icon %}
+{% if academia.modelo == 'personal' %}
+{% set _itens = [
+  ('administrativo','relatorios.admin','trend','blue','Administrativo','Faturamento, horas vendidas e fechamento'),
+  ('treinos','treinos.biblioteca','clipboard','teal','Fichas de treino','Modelos e fichas dos alunos'),
+  ('mensagens','mensagens.index','chat','green','Mensagens','Lembretes, aniversários e cobranças de hoje'),
+  ('avaliacoes','avaliacoes.agenda','calendar-plus','orange','Avaliações físicas','Agenda e resultados'),
+  ('exercicios','exercicios.lista','dumbbell','slate','Exercícios','Catálogo com vídeo por grupo'),
+  ('config','config.index','settings','slate','Configurações','Perfil, locais e recebimento')] %}
+{% else %}
+{% set _itens = [
+  ('administrativo','relatorios.admin','trend','blue','Administrativo','Faturamento, churn, fechamento e exportação'),
+  ('frequencia','frequencia.index','chart','teal','Check-in','Frequência e entradas do dia'),
+  ('mensagens','mensagens.index','chat','green','Mensagens','Lembretes, aniversários e cobranças de hoje'),
+  ('avaliacoes','avaliacoes.agenda','calendar-plus','orange','Avaliações físicas','Agenda e resultados'),
+  ('exercicios','exercicios.lista','dumbbell','slate','Exercícios','Catálogo com vídeo por grupo'),
+  ('config','config.index','settings','slate','Configurações','Perfil, equipe e horário' if usuario.perfil == 'instrutor' else 'Academia, equipe e recebimento')] %}
+{% endif %}
+<dialog class="vt-drawer" id="gaveta" aria-label="Menu">
+  <div class="vt-drawer__head">
+    <span class="m-avatar" style="border-radius:12px;width:44px;height:44px">{{ icon('crown', 22) }}</span>
+    <div class="grow"><b>Vale Tec</b><small>{{ usuario.nome }} · {{ usuario.papel }}</small></div>
+    <button type="button" class="m-btn" data-close aria-label="Fechar menu">{{ icon('close', 20) }}</button>
+  </div>
+  <nav class="vt-drawer__body" aria-label="Mais opções">
+    {% for chave, endpoint, ico, tom, titulo, sub in _itens %}
+    {% if not (chave == 'administrativo' and usuario.perfil == 'instrutor') and not (chave == 'frequencia' and not academia.checkin_ativo) %}{# instrutor não vê o Administrativo · Check-in só aparece com o serviço ligado #}
+    <a class="dlink" href="{{ url_for(endpoint) }}"{% if nav_ativo == chave %} aria-current="page"{% endif %}>
+      <span class="tile tone-{{ tom }}">{{ icon(ico, 22) }}</span>
+      <span><b>{{ titulo }}</b><small>{{ sub }}</small></span>
+      <span class="chev">{{ icon('chevron-right', 18) }}</span>
+    </a>
+    {% endif %}
+    {% endfor %}
+    <div class="grow"></div>
+    <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <button type="submit" class="dlink" style="width:100%;text-align:left;cursor:pointer;font:inherit">
+        <span class="tile tone-red">{{ icon('logout', 22) }}</span><span><b>Sair</b></span>
+      </button>
+    </form>
+  </nav>
+</dialog>

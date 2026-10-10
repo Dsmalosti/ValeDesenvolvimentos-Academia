@@ -1,0 +1,19 @@
+{# Base das páginas de erro. Filhos definem: codigo, titulo, texto, icone. Sem dados sensíveis na tela (nunca mostrar stack trace). #}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block hero %}
+<span class="auth__logo">{{ icon('crown', 28) }}</span>
+<h1>Vale Tec</h1>
+<p>Gestão de academia</p>
+{% endblock %}
+{% block content %}
+<span class="tile tile--lg tone-{{ tom or 'blue' }}" style="margin-bottom:14px">{{ icon(icone, 24) }}</span>
+<div class="faint fs-13 fw-7" style="letter-spacing:.06em">ERRO {{ codigo }}</div>
+<h2>{{ titulo }}</h2>
+<p class="lead">{{ texto }}</p>
+<div class="stack gap-3">
+  <a class="btn btn-primary btn-lg btn-block" href="{{ url_for('painel.index') }}">{{ icon('home', 18) }}Ir para o painel</a>
+  <button type="button" class="btn btn-ghost btn-block" data-voltar>Voltar para a página anterior</button>
+</div>
+{% endblock %}
