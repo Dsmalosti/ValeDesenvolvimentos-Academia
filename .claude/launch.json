@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vale-tec-local",
+      "runtimeExecutable": "C:\\Users\\Adauto Netto\\Documents\\GitHub\\ValeDesenvolvimentos-Academia\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["-B", "-m", "flask", "run", "--port", "5000"],
+      "port": 5000
+    }
+  ]
+}
