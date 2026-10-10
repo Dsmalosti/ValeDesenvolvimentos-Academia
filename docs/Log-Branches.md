@@ -56,6 +56,14 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** `academia` ("Minha academia") e o papel do usuário são provisórios até existir a tabela de contas. O template `painel/index.html` do repositório tem 6 ajustes que o do Drive não tem (lista no doc). O front tem botões de demonstração que não fazem nada de verdade.
 - **Doc:** `docs/mudancas/back-04-painel.md`
 
+## back-05-repo-e-config
+
+- **Sai de:** `back-04-painel` · **PR:** a abrir → `back-04-painel` · **Data:** 10/10/2026
+- **O que mudou:** 102 `.pyc` e o `instance/database.db` saíram do git (continuam no disco); `mysql-connector==2.2.9` saiu do `requirements.txt` e entrou o `requirements-dev.txt`; `DATABASE_URL` é o nome único da variável do banco (o antigo `DATABASE_URI` ainda funciona, com aviso no log); `SECRET_KEY` sem valor padrão no `config.py`.
+- **Testes:** `pytest` 55 de 55 (6 novos em `tests/test_config.py`); `pip install -r requirements.txt` e `-r requirements-dev.txt` num ambiente virtual novo, em Python 3.13, sem erro.
+- **Observações:** cada pessoa precisa renomear `DATABASE_URI` para `DATABASE_URL` no próprio `.env`. Quem trocar para uma branch antiga volta a ver os `.pyc` versionados.
+- **Doc:** `docs/mudancas/back-05-repo-e-config.md`
+
 ## Onde parou (10/10/2026)
 
-O painel novo está no ar nas branches; as outras telas ainda são as antigas. A próxima tela é **alunos** (`front-03-alunos` + `back-07-alunos`), que precisa da autorização **A1** (migrations) para as colunas novas e do `back-06-contas-e-papeis` para o nome da academia e os papéis. A `back-05-repo-e-config` espera A2, A3 e A4. As perguntas A1 a A6 e T1 a T4 foram enviadas ao Diogo em 10/10 e estão sem resposta. Do Adauto faltam D3 a D6, D12 e D13: veja a seção "O que está parado esperando o Adauto" do `docs/ROADMAP-LANCAMENTO.md`.
+O Diogo respondeu tudo em 10/10: todas as autorizações foram dadas, e as respostas estão na seção "O que está parado esperando o Adauto" do `docs/ROADMAP-LANCAMENTO.md`. A próxima branch é a **`back-06-contas-e-papeis`** (tabela `contas`, `conta_id` nas tabelas de negócio, coluna `papel`, e-mail e CPF únicos por conta, exercício com dono, fechar o cadastro aberto). Não há nada travando ela. Depois vem alunos (`front-03-alunos` + `back-07-alunos`). Do Adauto e do Diogo faltam só hospedagem, domínio e provedor de e-mail (D4, D5, D6), e do Adauto D12 e D13.

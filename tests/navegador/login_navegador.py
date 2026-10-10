@@ -26,7 +26,7 @@ os.chdir(RAIZ)
 
 # Banco descartável: definido ANTES de importar o app (o load_dotenv não sobrescreve).
 _PASTA = tempfile.mkdtemp(prefix="vt-navegador-")
-os.environ["DATABASE_URI"] = "sqlite:///" + os.path.join(_PASTA, "navegador.db").replace("\\", "/")
+os.environ["DATABASE_URL"] = os.environ["DATABASE_URI"] = "sqlite:///" + os.path.join(_PASTA, "navegador.db").replace("\\", "/")
 os.environ["SECRET_KEY"] = "chave-so-de-teste"
 os.environ["FLASK_CONFIG"] = "testing"
 

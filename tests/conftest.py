@@ -4,7 +4,7 @@ Configuração dos testes automáticos (pytest).
 Como rodar, na raiz do projeto:
     .venv/Scripts/python.exe -B -m pytest -p no:cacheprovider tests -q
 
-Os testes NUNCA usam o banco de verdade. Este arquivo define DATABASE_URI apontando para um
+Os testes NUNCA usam o banco de verdade. Este arquivo define DATABASE_URL (e o nome antigo, DATABASE_URI) apontando para um
 SQLite descartável ANTES de importar o app; o load_dotenv do projeto não sobrescreve variável
 que já existe, então o banco do .env fica intocado. Cada teste começa com as tabelas vazias.
 
@@ -22,7 +22,7 @@ from datetime import date, datetime
 sys.dont_write_bytecode = True  # o repositório versiona .pyc; não gerar novos ao testar
 
 _PASTA = tempfile.mkdtemp(prefix="vt-testes-")
-os.environ["DATABASE_URI"] = "sqlite:///" + os.path.join(_PASTA, "testes.db").replace("\\", "/")
+os.environ["DATABASE_URL"] = os.environ["DATABASE_URI"] = "sqlite:///" + os.path.join(_PASTA, "testes.db").replace("\\", "/")
 os.environ["SECRET_KEY"] = "chave-so-de-teste"
 os.environ["FLASK_CONFIG"] = "testing"
 

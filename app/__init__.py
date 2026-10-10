@@ -1,4 +1,5 @@
 from flask import Flask
+import logging
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -19,11 +20,20 @@ def create_app():
     app.config.from_object(config_map[config_name])
 
     # Variáveis sensíveis
-    database_uri = os.getenv("DATABASE_URI")
+    # [back-05-repo-e-config] antes: os.getenv("DATABASE_URI"), enquanto o ProductionConfig lia
+    # "DATABASE_URL". Com dois nomes, o app não subia numa hospedagem que só cria DATABASE_URL
+    # (o padrão da maioria). Agora o nome oficial é DATABASE_URL. O nome antigo ainda é aceito,
+    # com aviso no log, só para ninguém ficar com o ambiente quebrado de um dia para o outro;
+    # sai de vez na branch de produção.
+    database_uri = os.getenv("DATABASE_URL")
+    if not database_uri and os.getenv("DATABASE_URI"):
+        database_uri = os.getenv("DATABASE_URI")
+        logging.getLogger(__name__).warning(
+            "A variável DATABASE_URI mudou de nome para DATABASE_URL. Renomeie no seu .env.")
     secret_key = os.getenv("SECRET_KEY")
 
     if not database_uri:
-        raise RuntimeError("DATABASE_URI não encontrada no .env")
+        raise RuntimeError("DATABASE_URL não encontrada no .env")
     if not secret_key:
         raise RuntimeError("SECRET_KEY não encontrada no .env")
 

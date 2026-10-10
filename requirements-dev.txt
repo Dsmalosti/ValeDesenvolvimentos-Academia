@@ -1,0 +1,9 @@
+# Ferramentas de desenvolvimento e teste. NÃO vão para o servidor de produção.
+#   pip install -r requirements-dev.txt
+-r requirements.txt
+pytest==8.4.2
+
+# Os testes de navegador (tests/navegador/) usam o Playwright, que baixa um Chromium de uns
+# 150 MB. Por isso ele fica de fora daqui; quem for rodar esses testes instala à parte:
+#   pip install playwright==1.63.0
+#   python -m playwright install chromium
