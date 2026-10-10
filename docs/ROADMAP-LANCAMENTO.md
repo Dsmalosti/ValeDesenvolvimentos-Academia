@@ -24,9 +24,9 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | Branch | O que entrega | PR | Estado |
 |---|---|---|---|---|
 | [x] | `front-01` | Tela de login nova, correção de popups do iPhone, `CLAUDE.md` e skills | [#8](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/8) → `main` | Aguardando revisão do Diogo |
-| [x] | `back-01-auth-login` | Login e logout de verdade (tarefas 1.1 a 1.5) | a abrir → `front-01` | Push feito; falta abrir o PR |
-| [x] | `back-02-limpeza` | Defeitos que quebravam telas, `print()` com dados, `.gitignore`, primeiros testes automáticos | a abrir → `back-01-auth-login` | Push feito; falta abrir o PR |
-| [x] | `back-03-isolamento` | Uma academia não enxerga a outra; login obrigatório em tudo; nenhum GET apaga dados | a abrir → `back-02-limpeza` | Push feito; falta abrir o PR |
+| [x] | `back-01-auth-login` | Login e logout de verdade (tarefas 1.1 a 1.5) | [#9](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/9) → `front-01` | Aguardando revisão do Diogo |
+| [x] | `back-02-limpeza` | Defeitos que quebravam telas, `print()` com dados, `.gitignore`, primeiros testes automáticos | [#10](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/10) → `back-01-auth-login` | Aguardando revisão do Diogo |
+| [x] | `back-03-isolamento` | Uma academia não enxerga a outra; login obrigatório em tudo; nenhum GET apaga dados | [#11](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/11) → `back-02-limpeza` | Aguardando revisão do Diogo |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -161,3 +161,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | Criado na Etapa 0. `front-01` (PR #8) e `back-01-auth-login` enviadas. |
 | 10/10/2026 | OK do Adauto para seguir com o que não depende de decisão. `back-02-limpeza` enviada. A limpeza que depende de autorização virou a `back-04-repo-e-config`, e as branches seguintes foram renumeradas. Entrou a seção "O que está parado esperando o Adauto". |
 | 10/10/2026 | `back-03-isolamento` enviada. Entraram os achados sobre exercício sem dono e registros antigos sem dono. |
+| 10/10/2026 | PRs abertos: #9 (`back-01`), #10 (`back-02`) e #11 (`back-03`). |
