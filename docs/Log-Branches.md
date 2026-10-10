@@ -34,6 +34,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** exercício continua sendo catálogo único (precisa de coluna nova); e-mail e CPF de aluno continuam únicos no banco inteiro. Vão para a `back-05`. Antes do deploy, conferir se há aluno ou plano sem dono no banco.
 - **Doc:** `docs/mudancas/back-03-isolamento.md`
 
+## docs-01-decisoes-e-termos
+
+- **Sai de:** `back-03-isolamento` · **PR:** a abrir → `back-03-isolamento` · **Data:** 10/10/2026
+- **O que mudou:** nenhuma linha de backend ou de front. Entram as respostas do Adauto às decisões de negócio no roadmap; os rascunhos `docs/legal/Termos-de-Uso.md` e `Politica-de-Privacidade.md`, com o `LEIA-ME.md` do que ele precisa conferir; e `tests/navegador/login_navegador.py`, o teste da tela de login com Playwright.
+- **Testes:** `pytest` 30 de 30; teste de navegador 60 de 60 (celular de 360 e 390 px com toque, desktop de 1440 px, claro e escuro, e uso só pelo teclado).
+- **Observações:** os textos legais são rascunho e não estão publicados; a tabela do `LEIA-ME.md` mostra quais promessas o sistema ainda não cumpre. O Playwright foi instalado só no ambiente do Adauto (não está no `requirements.txt`). O banco local do Adauto foi alinhado e ganhou a tabela `pagamentos`; ele ainda tem colunas a mais, vindas de uma branch antiga (`exercicio.instrutor_id`, `ficha.instrutor_id`, `alunos.data_inicio_plano`), que podem conflitar com a migration da `back-05`.
+
 ## Onde parou (10/10/2026)
 
-A próxima branch é a `back-04-repo-e-config`, e ela **não começa** sem as autorizações A2, A3 e A4 do roadmap. A `back-05` depende da A1 (migrations), da T1 e da D1. Nada mais pode ser feito sem resposta do Adauto: veja a seção "O que está parado esperando o Adauto" do `docs/ROADMAP-LANCAMENTO.md`.
+A próxima branch é a `back-04-repo-e-config`, e ela **não começa** sem as autorizações A2, A3 e A4 do roadmap. A `back-05` depende da A1 (migrations) e da T1. As perguntas A1 a A6 e T1 a T4 foram enviadas ao Diogo; as decisões de negócio D1, D2 e D7 a D11 já estão respondidas. Faltam D3 a D6 (PIX, hospedagem, domínio, e-mail), D12 e D13: veja a seção "O que está parado esperando o Adauto" do `docs/ROADMAP-LANCAMENTO.md`.
