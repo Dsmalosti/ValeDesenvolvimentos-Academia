@@ -1,0 +1,64 @@
+{# Layout das telas sem login (entrar, esqueci a senha). #}
+{% from '_macros/icons.html' import icon %}
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B3456">
+  <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
+  <title>{% block titulo %}Entrar{% endblock %} · Vale Tec</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/favicon-180.png') }}">
+  {# instalar como app (Adicionar à tela inicial): abre em tela cheia, sem a barra do navegador #}
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Vale Tec">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.custom.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ajustes-iphone.css') }}">{# [correcao-iphone 08/10] popups no iPhone #}
+  {# tema claro/escuro: no <head>, sem defer — marca o <html> antes do 1º quadro (sem piscar branco) #}
+  <script src="{{ url_for('static', filename='js/tema.js') }}"></script>
+</head>
+<body>
+  <div class="auth">
+    {# desktop: painel de marca à esquerda #}
+    <aside class="auth__aside" aria-hidden="false">
+      <div class="auth__brand"><span class="tile" style="background:var(--yellow);color:var(--navy);width:40px;height:40px">{{ icon('crown', 22) }}</span>Vale Tec</div>
+      <div>
+        <h1>Sua academia sob controle, sem planilha e sem esquecimento.</h1>
+        <ul class="auth__checks">
+          <li><span class="tile">{{ icon('check', 16) }}</span>Financeiro, frequência e cobrança no mesmo lugar</li>
+          <li><span class="tile">{{ icon('check', 16) }}</span>Alerta de aluno em risco antes dele cancelar</li>
+          <li><span class="tile">{{ icon('check', 16) }}</span>Funciona sem catraca, sem equipamento nenhum</li>
+        </ul>
+      </div>
+      <div class="auth__stats" aria-label="Exemplo do painel">
+        <div><b>234</b><small>alunos ativos</small></div>
+        <div><b style="color:var(--yellow)">R$ 32.480</b><small>faturamento do mês</small></div>
+        <div><b>87</b><small>entradas hoje</small></div>
+      </div>
+    </aside>
+    {# mobile: faixa de marca no topo #}
+    {# <header> (e não <div>): a faixa de marca do celular fica num "marco" de página pro leitor de tela (axe: region) #}
+    <header class="auth__hero on-navy">
+      {% block hero %}
+      <span class="auth__logo">{{ icon('crown', 28) }}</span>
+      <h1>Sua academia<br>na palma da mão</h1>
+      <p>Entre para ver o resumo de hoje</p>
+      {% endblock %}
+    </header>
+    <main class="auth__panel" id="conteudo">
+      <div class="auth__form">{% block content %}{% endblock %}</div>
+    </main>
+  </div>
+  {% block dialogs %}{% endblock %}
+  {% include '_notificacao.html' %}
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/ajustes-iphone.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/digital.js') }}" defer></script>
+</body>
+</html>

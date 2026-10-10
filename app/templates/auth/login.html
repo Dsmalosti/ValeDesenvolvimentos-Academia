@@ -1,0 +1,96 @@
+{#
+  POST /login  (auth.login)   campos: identificador, senha, lembrar, perfil
+  Contexto: erro (str|None), identificador (str) e perfil (recepcao|instrutor|personal|None) para repovoar após falha.
+  Fluxo: ao abrir a tela aparece o popup #dlg-perfil ("Como você vai entrar?"); a pessoa escolhe Recepção,
+  Instrutor ou Personal trainer, o popup some e o formulário mostra "Entrando como …" (com "Trocar"). Se o servidor
+  devolver "perfil" (ex.: senha errada), o popup não reaparece.
+  Entrar com digital (passkey): botão abaixo do formulário, ver static/js/digital.js (rotas /login/digital/*).
+  "perfil" só indica o tipo de acesso escolhido (recepcao|instrutor|personal); o backend decide a permissão real.
+  personal = variante Personal Trainer (conta própria, sem recepção/equipe): o sistema abre com Agenda e Pacotes.
+#}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% block titulo %}Entrar{% endblock %}
+{% set perfis = {'recepcao': 'Recepção', 'instrutor': 'Instrutor', 'personal': 'Personal trainer'} %}
+{% block content %}
+<h2>Entrar</h2>
+<p class="lead">Acesse o painel da sua academia</p>
+
+{% if erro %}<div class="note note--red" role="alert" style="margin-bottom:16px">{{ icon('alert', 20) }}<span><strong>Não deu para entrar</strong>{{ erro }}</span></div>{% endif %}
+
+<form method="post" action="{{ url_for('auth.login') }}" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <input type="hidden" id="h-perfil" name="perfil" value="{{ perfil or '' }}">
+  <div class="perfil-chip" data-perfil-chip{% if perfil not in perfis %} hidden{% endif %}>
+    <span class="tile tile--sm tone-blue">{{ icon('user-check', 18) }}</span>
+    <span class="grow">Entrando como <b data-perfil-nome>{{ perfis[perfil] if perfil in perfis else '' }}</b></span>
+    <button type="button" class="btn btn-link" data-open="dlg-perfil">Trocar</button>
+  </div>
+  <div class="stack gap-4">
+    <div class="field-group">
+      <label class="label" for="f-identificador">E-mail ou usuário</label>
+      <input class="input" id="f-identificador" name="identificador" type="text" autocomplete="username" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="seu@email.com" value="{{ identificador or '' }}" required data-msg-required="Digite seu e-mail ou usuário.">
+    </div>
+    <div class="field-group">
+      <label class="label" for="f-senha">Senha</label>
+      <div class="field-icon">
+        <input class="input" id="f-senha" name="senha" type="password" autocomplete="current-password" placeholder="Sua senha" style="padding-left:14px;padding-right:52px" required data-msg-required="Digite sua senha.">
+        <button type="button" class="iconbtn iconbtn--soft field-action" data-toggle-senha="f-senha" aria-label="Mostrar senha" aria-pressed="false" style="border:0;background:none">{{ icon('eye', 20) }}</button>
+      </div>
+    </div>
+    <div class="row-flex" style="justify-content:space-between">
+      <label class="check"><input type="checkbox" name="lembrar" value="1" checked><span class="check__box">{{ icon('check', 14) }}</span>Lembrar de mim</label>
+      <a class="fw-7" style="font-size:13px" href="{{ url_for('auth.esqueci_senha') }}">Esqueci a senha</a>
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>Entrar no painel</button>
+  </div>
+</form>
+{# Entrar com digital (passkey): só aparece se o aparelho tiver leitor de digital/rosto (static/js/digital.js tira o hidden).
+   Não precisa de e-mail nem de perfil: a chave guardada no aparelho já diz qual é a conta. #}
+<div class="login-digital" data-digital-entrar hidden>
+  <div class="login-ou" aria-hidden="true"><span>ou</span></div>
+  <button type="button" class="btn btn-ghost btn-lg btn-block">{{ icon('digital', 22) }}Entrar com digital</button>
+</div>
+<p class="ta-c" style="margin-top:20px;font-size:14px">Ainda não tem conta? <a class="fw-7" href="{{ url_for('auth.criar_conta') }}">Criar conta</a></p>
+{# Aba de contas de teste: só aparece no servidor de desenvolvimento (_dev/app.py injeta contas_teste). No backend real a variável não existe e a aba some. #}
+{% if contas_teste is defined %}
+<details class="dev-contas" style="position:fixed;right:16px;bottom:16px;z-index:50;max-width:min(340px,calc(100vw - 32px))">
+  <summary style="list-style:none;cursor:pointer;background:var(--navy,#0B3456);color:#fff;font-weight:700;font-size:13px;padding:10px 16px;border-radius:999px;box-shadow:0 6px 20px rgba(11,52,86,.28);display:inline-flex;align-items:center;gap:8px;float:right">{{ icon('user-check', 16) }}Contas de teste</summary>
+  <div class="card card--pad" style="clear:both;margin-top:10px;box-shadow:0 10px 30px rgba(11,52,86,.22)">
+    <div class="fw-7" style="font-size:13px;margin-bottom:8px">Ambiente de desenvolvimento</div>
+    {% for c in contas_teste %}
+    <div style="padding:8px 0;{{ 'border-top:1px solid var(--border);' if not loop.first }}font-size:13px">
+      <b>{{ perfis[c.perfil] }}</b>
+      <div>E-mail: <code>{{ c.identificador }}</code></div>
+      <div>Senha: <code>{{ c.senha }}</code></div>
+    </div>
+    {% endfor %}
+    <div class="faint fs-12" style="margin-top:6px">No popup, escolha o mesmo perfil da conta.</div>
+  </div>
+</details>
+{% endif %}
+<div class="auth__foot">Vale Tec · 2026</div>
+{% endblock %}
+
+{% block dialogs %}
+{# Popup de perfil: obrigatório (sem X, sem fechar no fundo/Esc até escolher). data-perfil-inicial abre sozinho quando ainda não há perfil. #}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-perfil" aria-labelledby="t-perfil" data-obrigatorio data-no-backdrop-close{% if perfil not in perfis %} data-abrir-auto{% endif %}>
+  <div class="vt-dialog__grip" aria-hidden="true"></div>
+  <div class="vt-dialog__head">
+    <div><h2 class="vt-dialog__title" id="t-perfil">Como você vai entrar?</h2><div class="vt-dialog__sub">Escolha o seu acesso para continuar</div></div>
+  </div>
+  <div class="vt-dialog__body">
+    <div class="opcoes" data-opcoes data-alvo="h-perfil" style="--cols:1" role="group" aria-label="Tipo de acesso">
+      <button type="button" class="opcao opcao--linha" data-valor="recepcao" aria-pressed="{{ 'true' if perfil == 'recepcao' else 'false' }}">
+        <span class="tile tone-blue">{{ icon('users', 22) }}</span><span class="grow">Recepção<small>Alunos, cobranças e caixa do dia</small></span>{{ icon('chevron-right', 18) }}
+      </button>
+      <button type="button" class="opcao opcao--linha" data-valor="instrutor" aria-pressed="{{ 'true' if perfil == 'instrutor' else 'false' }}">
+        <span class="tile tone-blue">{{ icon('dumbbell', 22) }}</span><span class="grow">Instrutor<small>Treinos, fichas e avaliações</small></span>{{ icon('chevron-right', 18) }}
+      </button>
+      <button type="button" class="opcao opcao--linha" data-valor="personal" aria-pressed="{{ 'true' if perfil == 'personal' else 'false' }}">
+        <span class="tile tone-blue">{{ icon('calendar', 22) }}</span><span class="grow">Personal trainer<small>Agenda, pacotes e alunos</small></span>{{ icon('chevron-right', 18) }}
+      </button>
+    </div>
+  </div>
+</dialog>
+{% endblock %}

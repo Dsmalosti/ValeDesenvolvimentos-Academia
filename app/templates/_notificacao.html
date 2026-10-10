@@ -1,0 +1,101 @@
+{#
+  Notificações do sistema:
+   1) #toasts        região aria-live para feedback (salvou, erro, copiado)
+   2) #flash-data    mensagens do Flask (get_flashed_messages) viram toasts via app.js
+   3) 1 popup do painel com abas (avaliação do dia, alunos em risco, aniversariantes, plano sem
+      renovação), aberto uma vez por sessão. Só renderiza se a página passar `popups=True`.
+      Antes eram 4 popups em fila (um abria quando o outro fechava); ficaram abas de um só
+      popup pra não parecer que "não fecha" quando na verdade é o próximo da fila abrindo.
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, dialog_head %}
+<div class="toasts" id="toasts" role="region" aria-label="Avisos" aria-live="polite"></div>
+{% set _msgs = get_flashed_messages(with_categories=true) if get_flashed_messages is defined else [] %}
+<script id="flash-data" type="application/json">{{ _msgs|tojson }}</script>
+
+{% if popups and alertas %}
+{% macro pop_item(nome, linha, tom) -%}
+<li class="pop-item">
+  {{ avatar(nome, 'sm', tom) }}
+  <div class="grow"><b class="truncate" style="display:block">{{ nome }}</b><span class="pop-item__linha tone-txt-{{ tom }}">{{ linha }}</span></div>
+  <button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="Mensagem de WhatsApp aberta para {{ nome.split()[0] }}." aria-label="Chamar {{ nome }} no WhatsApp">{{ icon('chat', 20) }}</button>
+</li>
+{%- endmacro %}
+
+{% set _rotulos = {'avaliacao': 'Avaliação', 'risco': 'Em risco', 'aniversario': 'Aniversário', 'renovacao': 'Renovação'} %}
+{% set _abas = [] %}
+{% if alertas.avaliacao_hoje %}{% set _ = _abas.append('avaliacao') %}{% endif %}
+{% if alertas.risco %}{% set _ = _abas.append('risco') %}{% endif %}
+{% set _ = _abas.append('aniversario') %}
+{% set _ = _abas.append('renovacao') %}
+
+<dialog class="vt-dialog vt-dialog--wide" id="pop-avisos" data-popup aria-labelledby="pop-avisos-t">
+  <span class="vt-dialog__grip"></span>
+  <div class="vt-dialog__head">
+    <div><h2 class="vt-dialog__title" id="pop-avisos-t">Avisos de hoje</h2><div class="vt-dialog__sub">{{ _abas|length }} tipo{{ 's' if _abas|length != 1 }} de aviso pra recepção ver</div></div>
+    <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
+  </div>
+
+  {% if _abas|length > 1 %}
+  {# role=tablist/tab/tabpanel: o leitor de tela anuncia "aba 2 de 4, selecionada" (aria-selected só vale com role=tab) #}
+  <div class="seg" role="tablist" data-tabs aria-label="Tipo de aviso" style="padding:0 20px 10px;flex-wrap:wrap;flex-shrink:0">
+    {% for a in _abas %}
+    <button type="button" class="seg__btn" role="tab" id="tab-{{ a }}" aria-controls="pnl-{{ a }}" aria-selected="{{ 'true' if loop.first else 'false' }}" tabindex="{{ 0 if loop.first else -1 }}">{{ _rotulos[a] }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if 'avaliacao' in _abas %}{% set av = alertas.avaliacao_hoje %}
+  <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-avaliacao" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'avaliacao' %} hidden{% endif %}>
+    <div class="vt-dialog__body">
+      <div class="card card--pad" style="box-shadow:none;background:var(--field)">
+        <div class="row-flex gap-3">{{ avatar(av.nome, 'lg') }}<div><b style="font-size:16px">{{ av.nome }}</b><div class="faint fs-13">{{ av.tipo }}</div></div></div>
+        <hr class="divider" style="margin:14px 0">
+        <div class="row-flex" style="justify-content:space-between"><div><span class="sectitle" style="font-size:11px">Quando</span><div class="fw-7">Hoje, {{ av.hora }}</div></div><div><span class="sectitle" style="font-size:11px">Avaliador</span><div class="fw-7">{{ av.avaliador }}</div></div></div>
+      </div>
+      <div class="note note--green" style="margin-top:12px"><span><strong>Aviso já enviado.</strong>{{ av.aviso }}</span></div>
+    </div>
+    <div class="vt-dialog__foot">
+      <div class="row-flex gap-2"><a class="btn btn-ghost grow" href="https://wa.me/55{{ av.telefone }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Chamar</a><a class="btn btn-ghost grow" href="{{ url_for('avaliacoes.agendar', aluno=av.aluno_id, remarcar=av.agenda_id) }}">{{ icon('calendar', 18) }}Remarcar</a></div>
+      <a class="btn btn-primary btn-block" href="{{ url_for('avaliacoes.registrar', id=av.aluno_id, ag=av.agenda_id) }}">Começar a avaliação</a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if 'risco' in _abas %}
+  <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-risco" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'risco' %} hidden{% endif %}>
+    <div class="vt-dialog__body">
+      <div class="faint fs-13" style="margin-bottom:8px">{{ alertas.risco|length }} aluno{{ 's' if alertas.risco|length != 1 }} {{ 'sem frequência ou ' if academia.checkin_ativo }}com pagamento atrasado</div>
+      <ul class="pop-list">{% for a in alertas.risco %}{{ pop_item(a.nome, a.motivo, a.tom) }}{% endfor %}</ul>
+    </div>
+    <div class="vt-dialog__foot">
+      <a class="btn btn-primary btn-block" href="{{ url_for('alunos.lista', status='risco') }}">Ver todos os alunos em risco</a>
+      <button type="button" class="btn btn-block btn-link-soft" data-close>Lembrar depois</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-aniversario" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'aniversario' %} hidden{% endif %}>
+    <div class="vt-dialog__body">
+      <div class="faint fs-13" style="margin-bottom:8px">{{ alertas.aniversarios|length }} aluno{{ 's' if alertas.aniversarios|length != 1 }} fazem aniversário hoje. Que tal parabenizar?</div>
+      <ul class="pop-list">{% for a in alertas.aniversarios %}{{ pop_item(a.nome, a.motivo, 'yellow') }}{% endfor %}</ul>
+      <div class="note note--blue" style="margin-top:12px"><span>Mensagem sugerida: "Parabéns, [nome]! A equipe da Vale Tec deseja um dia ótimo. Aproveite 10% de desconto na próxima renovação até sexta."</span></div>
+    </div>
+    <div class="vt-dialog__foot">
+      <button type="button" class="btn btn-primary btn-block" data-toast="Mensagens de parabéns enviadas." data-close>Enviar mensagem para todos</button>
+      <button type="button" class="btn btn-block btn-link-soft" data-close>Fechar</button>
+    </div>
+  </div>
+
+  <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-renovacao" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'renovacao' %} hidden{% endif %}>
+    <div class="vt-dialog__body">
+      <div class="faint fs-13" style="margin-bottom:8px">{{ alertas.renovacao|length }} aluno{{ 's' if alertas.renovacao|length != 1 }} est{{ 'á' if alertas.renovacao|length == 1 else 'ão' }} há mais de 5 dias com o plano vencido</div>
+      <ul class="pop-list">{% for a in alertas.renovacao %}{{ pop_item(a.nome, a.motivo, a.tom) }}{% endfor %}</ul>
+    </div>
+    <div class="vt-dialog__foot">
+      <button type="button" class="btn btn-primary btn-block" data-toast="Lembretes de renovação enviados." data-close>Enviar lembrete de renovação</button>
+      <button type="button" class="btn btn-block btn-link-soft" data-close>Ver depois</button>
+    </div>
+  </div>
+</dialog>
+{% endif %}
