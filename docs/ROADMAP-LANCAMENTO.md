@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase B em andamento: as telas de **alunos** (`front-03` + `back-07`) e de **planos** (`front-04` + `back-08`) estão prontas, cada uma com uma migration pequena. A próxima é a **cobrança** (`front-05-cobranca` + `back-09-cobranca`): o Diogo pediu para ver o esquema das tabelas antes. Faltam decisões de conta externa (hospedagem, domínio, e-mail). |
+| **Estado** | Fase B em andamento: **alunos** e **planos** prontos (PRs #17 a #20). A **cobrança** está parada de propósito: a `back-09-cobranca` foi enviada só com a **proposta de esquema** (`docs/mudancas/back-09-cobranca.md`) e espera o OK do Diogo às 6 perguntas antes de qualquer código. Faltam também decisões de conta externa (hospedagem, domínio, e-mail). |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -36,6 +36,8 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `back-07-alunos` | As telas de alunos funcionando com o banco: lista com filtros, cadastro e edição validados no servidor, perfil, busca ao vivo, exportar, desativar. **Tem migration** (4 colunas em `alunos`). | [#18](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/18) → `front-03-alunos` | Aguardando revisão do Diogo |
 | [x] | `front-04-planos` | Templates das telas de planos do front novo (lista e formulário), cópia fiel do Drive | [#19](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/19) → `back-07-alunos` | Aguardando revisão do Diogo |
 | [x] | `back-08-planos` | As telas de planos funcionando com o banco: cartões com alunos e faturamento de cada plano, criar e editar com valor em `1.234,56`, pausar e reativar. **Tem migration** (1 coluna em `planos`). | [#20](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/20) → `front-04-planos` | Aguardando revisão do Diogo |
+| [x] | `front-05-cobranca` | Templates da cobrança do front novo (receber, renovar, extrato do aluno), cópia fiel do Drive | [#21](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/21) → `back-08-planos` | Aguardando revisão do Diogo |
+| [ ] | `back-09-cobranca` | **Por enquanto só a proposta de esquema** das tabelas `cobrancas` e `pagamentos`, para o Diogo aprovar. O código vem depois do OK. | [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` | **Aguardando resposta do Diogo** (6 perguntas no doc e na descrição do PR) |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -185,6 +187,7 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | O cartão de plano mostra "1 alunos": o template não tem singular | `planos/lista.html` (front) | Ajuste do Adauto no front (Drive); depois é só copiar de novo |
 | O faturamento por plano (painel e tela de planos) conta o pagamento para o plano em que o aluno está **hoje**. Se ele trocou de plano no mês, o valor aparece no plano novo | `painel_service.py` | `back-09-cobranca`: o pagamento passa a guardar o plano |
 | Nas telas novas, nome de plano não pode repetir na academia. Regra nossa, que o front de exemplo não tinha | `plano_tela_service.py` | Decisão do Adauto: manter ou tirar |
+| **Não dá para registrar PIX no lançamento com o template atual:** `cobranca/receber.html` desliga a opção PIX quando o PIX automático não está ligado, e o PIX do lançamento é manual (D3) | `cobranca/receber.html` (front) | Ajuste do Adauto no front (Drive): opção PIX habilitada com "Você confirma". O backend já vai aceitar `forma=pix` manual |
 
 ## Registro de atualizações
 
@@ -203,3 +206,5 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | `front-03-alunos` e `back-07-alunos` enviadas: as telas de alunos do front novo funcionando com o banco. Primeira tela da Fase B. Achados novos: `/fichas/editar/<id>` com erro 500 (antigo), falta botão de reativar aluno, observações como dado sensível, limite de tamanho de envio. |
 | 10/10/2026 | `front-04-planos` e `back-08-planos` enviadas: as telas de planos do front novo funcionando com o banco, com a coluna `avaliacoes_incluidas`. Faltam abrir os PRs de `front-03`, `back-07`, `front-04` e `back-08`. |
 | 10/10/2026 | PRs abertos: #17 (`front-03`), #18 (`back-07`), #19 (`front-04`) e #20 (`back-08`). O banco local do Adauto recebeu as migrations `b07a1f2e3d40` e `b08c3d4e5f60`, com backup antes. |
+| 10/10/2026 | `front-05-cobranca` enviada (templates). `back-09-cobranca` enviada só com a proposta de esquema da cobrança, para o Diogo aprovar antes do código. Achado: o template de receber não permite PIX manual. |
+| 10/10/2026 | PRs abertos: #21 (`front-05`) e #22 (`back-09`, só a proposta de esquema da cobrança). |
