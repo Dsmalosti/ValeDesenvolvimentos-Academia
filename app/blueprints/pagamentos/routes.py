@@ -5,8 +5,10 @@ from app.blueprints.pagamentos.form import PagamentoForm
 from app.services.pagamento_service import PagamentoService
 from app.models import Aluno
 from app.exceptions import BusinessError
+from app.helpers.conta import exigir_login_em
 
 pagamentos_blueprint = Blueprint('pagamentos', __name__, url_prefix='/pagamentos', template_folder='templates')
+exigir_login_em(pagamentos_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
 
 
 # Rota pra registrar um pagamento novo de um aluno específico
