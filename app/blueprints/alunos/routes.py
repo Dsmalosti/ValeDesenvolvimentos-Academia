@@ -99,3 +99,43 @@ def alternarStatusAluno(aluno_id):
         flash(str(e), "error")
 
     return redirect(url_for("alunos.listarAlunos"))
+
+
+# ---------------------------------------------------------------------------
+# [back-04-painel] PONTES TEMPORÁRIAS para o front novo.
+# O menu e o painel novos chamam url_for('alunos.lista'), 'alunos.novo' etc. (nomes do
+# contrato do front). As telas novas de alunos ainda não foram ligadas, então por enquanto
+# esses endpoints só levam para a tela antiga equivalente. Cada ponte vira a tela de
+# verdade na branch de alunos; nenhuma delas mexe em dado.
+# ---------------------------------------------------------------------------
+@alunos_blueprint.route('')
+def lista():
+    return redirect(url_for('alunos.listarAlunos'))
+
+
+@alunos_blueprint.route('/novo')
+def novo():
+    return redirect(url_for('alunos.cadastroAluno'))
+
+
+@alunos_blueprint.route('/buscar')
+def buscar():
+    return redirect(url_for('alunos.listarAlunos'))
+
+
+@alunos_blueprint.route('/<int:id>')
+def detalhe(id):
+    # a tela antiga não tem "perfil do aluno"; a mais próxima é a de editar (que já confere a conta)
+    return redirect(url_for('alunos.editarAluno', aluno_id=id))
+
+
+@alunos_blueprint.route('/<int:id>/renovar')
+def renovar(id):
+    # renovar matrícula, na tela antiga, é registrar um pagamento (que já confere a conta)
+    return redirect(url_for('pagamentos.registrarPagamento', aluno_id=id))
+
+
+@alunos_blueprint.route('/acesso/busca')
+def acesso_busca():
+    # busca do popup "Bloquear ou liberar acesso": devolve só um pedaço de HTML para o popup
+    return '<p class="faint" style="margin:0">A busca para bloquear acesso ainda não está disponível.</p>'

@@ -7,7 +7,7 @@
 | **Data** | 10/10/2026 |
 | **Feito por** | Adauto (com o Claude) — **revisão: Diogo** |
 | **Tarefas da lista "Tarefas do backend — Diogo"** | 2.1, 2.2, 2.4 e a parte do `.gitignore` da 2.5 |
-| **Fica de fora** | O resto da 2.5 (tirar `.pyc` e `database.db` do git), 1.7 (`requirements.txt`), 2.3 (variável do banco) e 3.8 (`SECRET_KEY` padrão). Todos dependem de autorização (regra 4 do `CLAUDE.md`) e foram para a `back-04-repo-e-config`. |
+| **Fica de fora** | O resto da 2.5 (tirar `.pyc` e `database.db` do git), 1.7 (`requirements.txt`), 2.3 (variável do banco) e 3.8 (`SECRET_KEY` padrão). Todos dependem de autorização (regra 4 do `CLAUDE.md`) e foram para a `back-05-repo-e-config`. |
 
 ## Resumo
 
@@ -62,7 +62,7 @@ Toda linha alterada no backend tem o comentário `[back-02-limpeza]` dizendo com
 - **Antes:** as linhas `__pycache__/` e `*.pyc` tinham três espaços na frente. O git lê esses espaços como parte do nome, então as regras nunca valeram.
 - **Depois:** linhas sem os espaços, mais `instance/`, `.pytest_cache/` e `.claude/launch.json` (configuração local do Claude Code).
 - **O que isso resolve:** `.pyc` **novo** deixa de aparecer no `git status`.
-- **O que isso NÃO resolve:** os 100 `.pyc` e o `instance/database.db` que **já estão versionados** continuam versionados. O `.gitignore` não vale para arquivo que o git já acompanha. Tirá-los é a `back-04`, que depende de autorização.
+- **O que isso NÃO resolve:** os 100 `.pyc` e o `instance/database.db` que **já estão versionados** continuam versionados. O `.gitignore` não vale para arquivo que o git já acompanha. Tirá-los é a `back-05`, que depende de autorização.
 
 ## Testes automáticos (novo)
 
@@ -99,7 +99,7 @@ O `-B` e o `-p no:cacheprovider` evitam criar `.pyc` e pasta de cache.
 | Item | Situação nesta branch |
 |---|---|
 | Logs sem dado pessoal (§9) | Melhorou: saíram os `print()` com dados de formulário; o log novo não leva valores. |
-| Segredos (§6) | `git log --all -- .env` vem vazio: o `.env` nunca foi commitado. `SECRET_KEY` com valor padrão no `config.py` continua (tarefa 3.8, na `back-04`). |
+| Segredos (§6) | `git log --all -- .env` vem vazio: o `.env` nunca foi commitado. `SECRET_KEY` com valor padrão no `config.py` continua (tarefa 3.8, na `back-05`). |
 | Isolamento entre contas (§1) | Não tratado aqui: é a `back-03`. |
 
 ## Como revisar

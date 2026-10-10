@@ -1,25 +1,16 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, redirect, url_for
 from flask_login import login_required
-from app.services.dashboard_service import obter_dados_dashboard
 from app.helpers.conta import exigir_login_em
 
 main_blueprint = Blueprint('main', __name__)
 exigir_login_em(main_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
 
-@main_blueprint.route('/')
+# [back-04-painel] antes: esta rota ficava em '/' e mostrava a tela inicial antiga
+# (templates/index.html, com obter_dados_dashboard()). Agora '/' é o painel novo
+# (painel.index). O endpoint `main.homepage` continua existindo, num endereço próprio,
+# porque as telas antigas ainda o usam em links e redirects; ele só leva ao painel novo.
+# Sai quando a última tela antiga for trocada.
+@main_blueprint.route('/inicio-antigo/')
 @login_required
 def homepage():
-    dados = obter_dados_dashboard()
-
-    return render_template(
-        'index.html',
-        ativos=dados["ativos"],
-        aniversariantes=dados["aniversariantes"]
-    )
-
-
-
-
-
-
-
+    return redirect(url_for('painel.index'))

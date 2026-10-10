@@ -84,3 +84,16 @@ def excluirPlano(plano_id):
         flash(str(e), "error")
 
     return redirect(url_for('planos.listarPlanos'))
+
+
+# ---------------------------------------------------------------------------
+# [back-04-painel] PONTES TEMPORÁRIAS para o front novo (veja a explicação em alunos/routes.py).
+# ---------------------------------------------------------------------------
+@planos_blueprint.route('')
+def lista():
+    return redirect(url_for('planos.listarPlanos'))
+
+
+@planos_blueprint.route('/novo')
+def novo():
+    return redirect(url_for('planos.criarPlano'))

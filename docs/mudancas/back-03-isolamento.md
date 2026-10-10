@@ -7,7 +7,7 @@
 | **Data** | 10/10/2026 |
 | **Feito por** | Adauto (com o Claude) — **revisão: Diogo** |
 | **Tarefas da lista "Tarefas do backend — Diogo"** | 3.1 (o que dá para fazer sem migration), 3.3 e 3.4 |
-| **Fica de fora** | Exercício com dono, e-mail e CPF únicos por academia, `instrutor_id` obrigatório e a tabela `contas`. Todos pedem migration e estão na `back-05-contas-e-papeis`. |
+| **Fica de fora** | Exercício com dono, e-mail e CPF únicos por academia, `instrutor_id` obrigatório e a tabela `contas`. Todos pedem migration e estão na `back-06-contas-e-papeis`. |
 
 ## Resumo
 
@@ -47,7 +47,7 @@ Toda linha alterada no backend tem o comentário `[back-03-isolamento]` dizendo 
   - `fichas_da_conta()` e `treinos_da_conta()`: a ficha e o treino não têm dono direto, então o filtro passa pelo aluno (join).
 - **Por quê:** com o filtro num lugar só, ninguém esquece. E quando a tabela `contas` chegar (tarefa 3.2), muda **uma função** (`conta_id()`), não todas as rotas.
 - **404, não 403:** quando o registro é de outra conta, a resposta é "não existe". O 403 confirmaria para um curioso que aquele id existe em outra academia.
-- **Não mexi nas rotas de alunos, planos e pagamentos que já filtravam** com `current_user.id`. Estão corretas; passam para o helper na `back-05`, junto com a troca para `conta_id`.
+- **Não mexi nas rotas de alunos, planos e pagamentos que já filtravam** com `current_user.id`. Estão corretas; passam para o helper na `back-06`, junto com a troca para `conta_id`.
 
 ### 2. Usuários (`instrutores`): o pior item
 
@@ -85,10 +85,10 @@ Toda linha alterada no backend tem o comentário `[back-03-isolamento]` dizendo 
 
 | Pendência | Risco hoje | Vai em |
 |---|---|---|
-| **Exercício não tem dono.** A tabela não tem a coluna. | É um catálogo único: qualquer academia logada vê, edita e apaga os exercícios que as outras usam. Não vaza dado pessoal, mas uma academia pode estragar o catálogo de todas. | `back-05` |
-| **E-mail e CPF de aluno são únicos no banco inteiro.** | Um aluno de duas academias trava o cadastro, e a mensagem de erro revela que ele existe em outra. | `back-05` |
-| **`instrutor_id` aceita vazio** em `alunos` e `planos`. | Um registro sem dono fica invisível para todo mundo. | `back-05` |
-| **Logout antigo por GET** (`/instrutores/sair/`). | Qualquer site desloga o usuário. Não altera dado. | `back-06`, com a saída do cabeçalho antigo |
+| **Exercício não tem dono.** A tabela não tem a coluna. | É um catálogo único: qualquer academia logada vê, edita e apaga os exercícios que as outras usam. Não vaza dado pessoal, mas uma academia pode estragar o catálogo de todas. | `back-06` |
+| **E-mail e CPF de aluno são únicos no banco inteiro.** | Um aluno de duas academias trava o cadastro, e a mensagem de erro revela que ele existe em outra. | `back-06` |
+| **`instrutor_id` aceita vazio** em `alunos` e `planos`. | Um registro sem dono fica invisível para todo mundo. | `back-06` |
+| **Logout antigo por GET** (`/instrutores/sair/`). | Qualquer site desloga o usuário. Não altera dado. | `back-04`, com a saída do cabeçalho antigo |
 | **Cadastro aberto** (`/instrutores/cadastro/`). | Qualquer pessoa cria uma conta de academia. É como o sistema funciona hoje; vira decisão (T4 do roadmap). | decisão |
 
 ## Atenção, Diogo: registros antigos sem dono
@@ -124,8 +124,8 @@ Se vier diferente de zero, é preciso atribuir um dono a esses registros antes d
 |---|---|
 | §1 Isolamento entre contas | Fechado para alunos, planos, pagamentos, fichas, treinos, usuários e painel, com teste. **Aberto** para exercícios e para a unicidade de e-mail e CPF (precisam de migration). |
 | §1 "Nunca `Model.query.get(id)` vindo da URL" | Sobram `Exercicio.query.get_or_404` (pendência acima) e `User.query.get_or_404` em `editarInstrutor`, este protegido pela checagem `instrutor_id == conta_id()` na linha anterior. |
-| §2 Papéis | Não existe ainda (`back-05`). Hoje todo usuário é dono da própria conta. |
-| §3 Autenticação | Login obrigatório em todas as rotas não públicas, com teste que percorre o app inteiro. Limite de tentativas continua faltando (`back-19`). |
+| §2 Papéis | Não existe ainda (`back-06`). Hoje todo usuário é dono da própria conta. |
+| §3 Autenticação | Login obrigatório em todas as rotas não públicas, com teste que percorre o app inteiro. Limite de tentativas continua faltando (`back-18`). |
 | §4 CSRF | `CSRFProtect` global já existia; nenhuma rota que altera dado aceita GET, com exceção do logout antigo. |
 
 ## Como revisar

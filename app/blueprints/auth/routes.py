@@ -44,7 +44,8 @@ def _destino_seguro(proximo):
 def login():
     # Quem já está logado não precisa ver a tela de login.
     if current_user.is_authenticated:
-        return redirect(url_for('main.homepage'))
+        # [back-04-painel] antes: 'main.homepage' (tela inicial antiga)
+        return redirect(url_for('painel.index'))
 
     if request.method == 'POST':
         # Os nomes dos campos são os `name` do formulário em templates/auth/login.html.
@@ -78,7 +79,8 @@ def login():
         # cookie de sessão antes do login não herda a sessão logada).
         session.clear()
         login_user(usuario, remember=lembrar)
-        return redirect(proximo or url_for('main.homepage'))
+        # [back-04-painel] antes: 'main.homepage' (tela inicial antiga)
+        return redirect(proximo or url_for('painel.index'))
 
     # GET: o Flask-Login manda quem não está logado para /login?next=/pagina-que-pediu, mas o
     # form do template posta em url_for('auth.login'), sem o ?next=. Sem guardar o destino aqui,
