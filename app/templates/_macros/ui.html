@@ -1,0 +1,145 @@
+{#
+  Macros de UI reutilizáveis. Regra: HTML repetido em 2+ telas vira macro aqui.
+  Importar:  {% from '_macros/ui.html' import avatar, chip_status, campo %}
+#}
+{% from '_macros/icons.html' import icon %}
+
+{# iniciais: "Camila Duarte" -> "CD" #}
+{% macro iniciais(nome) -%}
+{%- set p = (nome or '?').split() -%}{{ (p[0][0] ~ (p[-1][0] if p|length > 1 else ''))|upper }}
+{%- endmacro %}
+
+{# cor do avatar estável por nome (mesmo aluno, mesma cor em toda tela) #}
+{% macro avatar(nome, tamanho='', tom=None) -%}
+{%- set tons = ['blue','teal','yellow','red','orange','slate'] -%}
+{%- set t = tom or tons[((nome or 'x')|length) % 6] -%}
+<span class="avatar {{ 'avatar--' ~ tamanho if tamanho }} tone-{{ t }}" aria-hidden="true">{{ iniciais(nome) }}</span>
+{%- endmacro %}
+
+{# status do aluno: ativo | pendente | inativo #}
+{% macro chip_status(status) -%}
+{%- set m = {'ativo':('green','Ativo'),'pendente':('yellow','Pendente'),'inativo':('red','Inativo'),'pago':('green','Pago'),'atrasado':('red','Em atraso'),'aberto':('yellow','Em aberto')} -%}
+{%- set c = m.get(status, ('slate', status|capitalize)) -%}
+<span class="chip chip--{{ c[0] }}">{{ c[1] }}</span>
+{%- endmacro %}
+
+{# formata dinheiro pt-BR: 32480.5 -> R$ 32.480,50 #}
+{% macro brl(v, casas=2) -%}
+{%- set s = ('%.' ~ casas ~ 'f')|format(v or 0) -%}
+{%- set partes = s.split('.') -%}
+R$ {{ partes[0]|reverse|batch(3)|map('join')|join('.')|reverse }}{% if casas %},{{ partes[1] }}{% endif %}
+{%- endmacro %}
+
+{# Campo de formulário. name == coluna do banco (regra do design system). #}
+{% macro campo(name, label, valor='', tipo='text', placeholder='', mask=None, obrigatorio=False, erro=None, icone=None, ajuda=None, autocomplete=None, inputmode=None, extra='') -%}
+<div class="field-group">
+  <label class="label" for="f-{{ name }}">{{ label }}{% if obrigatorio %} <span class="faint" aria-hidden="true">*</span>{% endif %}</label>
+  {% if icone %}<div class="field-icon">{{ icon(icone, 18) }}{% endif %}
+  <input class="input{{ ' is-invalid' if erro }}" id="f-{{ name }}" name="{{ name }}" type="{{ tipo }}" value="{{ valor if valor is not none else '' }}"
+    placeholder="{{ placeholder }}"{% if mask %} data-mask="{{ mask }}"{% endif %}{% if obrigatorio %} required{% endif %}
+    {% if autocomplete %} autocomplete="{{ autocomplete }}"{% endif %}{% if inputmode %} inputmode="{{ inputmode }}"{% endif %}{% if tipo == 'email' or inputmode == 'email' %} autocapitalize="none" autocorrect="off" spellcheck="false"{% endif %}
+    {% if erro %} aria-invalid="true" aria-describedby="f-{{ name }}-erro"{% endif %} {{ extra|safe }}>
+  {% if icone %}</div>{% endif %}
+  {% if erro %}<div class="field-error" id="f-{{ name }}-erro" data-server>{{ erro }}</div>
+  {% elif ajuda %}<div class="field-hint">{{ ajuda }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{# <select> no padrão do design. opcoes = [(valor, texto, {data-attrs})] #}
+{% macro seletor(name, label, opcoes, atual=None, obrigatorio=False, erro=None, extra='', vazio='Selecione') -%}
+<div class="field-group">
+  <label class="label" for="f-{{ name }}">{{ label }}</label>
+  <div class="select">
+    <select class="input{{ ' is-invalid' if erro }}" id="f-{{ name }}" name="{{ name }}"{% if obrigatorio %} required{% endif %} {{ extra|safe }}>
+      {% if vazio %}<option value="">{{ vazio }}</option>{% endif %}
+      {% for o in opcoes %}<option value="{{ o[0] }}"{% if o|length > 2 %}{% for k, v in o[2].items() %} data-{{ k }}="{{ v }}"{% endfor %}{% endif %}{% if atual|string == o[0]|string %} selected{% endif %}>{{ o[1] }}</option>{% endfor %}
+    </select>
+    {{ icon('chevron-down', 18) }}
+  </div>
+  {% if erro %}<div class="field-error" data-server>{{ erro }}</div>{% endif %}
+</div>
+{%- endmacro %}
+
+{# Grupo de escolha única (.opcao). Grava em <input type=hidden name=...> #}
+{% macro opcoes(name, itens, atual=None, colunas=2, rotulo=None) -%}
+<div class="field-group">
+  {% if rotulo %}<span class="label" id="lb-{{ name }}">{{ rotulo }}</span>{% endif %}
+  <div class="opcoes" data-opcoes data-alvo="h-{{ name }}" style="--cols:{{ colunas }}" role="group"{% if rotulo %} aria-labelledby="lb-{{ name }}"{% endif %}>
+    {% for it in itens %}<button type="button" class="opcao" data-valor="{{ it[0] }}" aria-pressed="{{ 'true' if atual|string == it[0]|string else 'false' }}">{{ it[1] }}{% if it|length > 2 %}<span class="opcao-sub">{{ it[2] }}</span>{% endif %}</button>{% endfor %}
+  </div>
+  <input type="hidden" id="h-{{ name }}" name="{{ name }}" value="{{ atual if atual is not none else '' }}">
+</div>
+{%- endmacro %}
+
+{# Card de indicador (painel). href = leva para outra tela; abre = id do <dialog> que o card abre (popup). Sem os dois, card estático. #}
+{% macro kpi(valor, rotulo, icone, tom, selo=None, selo_tom='green', valor_tom='', href=None, abre=None) -%}
+{% if abre %}
+<button type="button" class="card kpi" data-open="{{ abre }}">
+{% else %}
+<{{ 'a' if href else 'div' }} class="card kpi"{% if href %} href="{{ href }}"{% endif %}>
+{% endif %}
+  <div class="kpi__top">
+    <span class="tile tone-{{ tom }}">{{ icon(icone, 20) }}</span>
+    {% if selo %}<span class="chip chip--{{ selo_tom }} d-only">{{ selo }}</span>{% endif %}
+  </div>
+  <div>
+    <div class="kpi__val {{ valor_tom }}{{ ' kpi__val--fit' if (valor|string)|length > 8 }}">{{ valor }}</div>
+    <div class="kpi__lbl">{{ rotulo }}</div>
+  </div>
+</{{ 'button' if abre else ('a' if href else 'div') }}>
+{%- endmacro %}
+
+{# Estado vazio #}
+{% macro vazio(titulo, texto, icone='search', acao_texto=None, acao_href=None) -%}
+<div class="empty" data-vazio-bloco>
+  <span class="tile tone-slate">{{ icon(icone, 22) }}</span>
+  <h3>{{ titulo }}</h3>
+  <p>{{ texto }}</p>
+  {% if acao_texto %}<a class="btn btn-primary" href="{{ acao_href }}">{{ acao_texto }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{# Paginação (desktop). pag = {atual, total, url(n)} — o url vem do Flask #}
+{% macro paginador(atual, total, base) -%}
+<nav class="pager" aria-label="Paginação">
+  <a href="{{ base }}{{ atual - 1 }}" aria-label="Página anterior"{% if atual <= 1 %} aria-disabled="true"{% endif %}>{{ icon('chevron-left', 16) }}</a>
+  {% for n in range(1, total + 1) %}<a href="{{ base }}{{ n }}"{% if n == atual %} aria-current="page"{% endif %}>{{ n }}</a>{% endfor %}
+  <a href="{{ base }}{{ atual + 1 }}" aria-label="Próxima página"{% if atual >= total %} aria-disabled="true"{% endif %}>{{ icon('chevron-right', 16) }}</a>
+</nav>
+{%- endmacro %}
+
+{# Cabeçalho de dialog padrão #}
+{% macro dialog_head(titulo, sub=None, icone=None, tom='blue') -%}
+<div class="vt-dialog__head">
+  <div class="row-flex gap-3" style="align-items:flex-start">
+    {% if icone %}<span class="tile tone-{{ tom }}">{{ icon(icone, 22) }}</span>{% endif %}
+    <div><h2 class="vt-dialog__title">{{ titulo }}</h2>{% if sub %}<div class="vt-dialog__sub">{{ sub }}</div>{% endif %}</div>
+  </div>
+  <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
+</div>
+{%- endmacro %}
+
+{# Barra empilhada com legenda (relatórios, admin, recebimento).
+   itens = [{nome, pct, cor('blue'|'yellow-chart'|'teal'|...), texto('R$ 17.480')}] — a soma dos pct deve dar 100 #}
+{% macro stackbar(itens, rotulo='Composição', legenda=True) -%}
+<div class="stackbar" role="img" aria-label="{{ rotulo }}: {% for i in itens %}{{ i.nome }} {{ i.pct }}%{{ ', ' if not loop.last }}{% endfor %}">
+  {% for i in itens %}<span data-dica="{{ i.nome }} · {{ i.pct }}%{{ ' · ' ~ i.texto if i.texto }}" style="flex:{{ i.pct }};background:var(--{{ i.cor }}){{ ';color:var(--' ~ i.txt ~ ')' if i.txt }}">{% if i.pct >= 8 %}{{ i.pct }}%{% endif %}</span>{% endfor %}
+</div>
+{% if legenda %}<ul class="stack-legend">
+  {% for i in itens %}<li><i style="background:var(--{{ i.cor }})"></i>{{ i.nome }}{% if i.texto %} <b>{{ i.texto }}</b>{% endif %}</li>{% endfor %}
+</ul>{% endif %}
+{%- endmacro %}
+
+{# Ícone de origem do pagamento: raio = o banco confirmou (webhook); lápis = lançado à mão #}
+{% macro origem(o) -%}
+{%- if o == 'webhook' -%}<span class="origem origem--auto" title="O banco confirmou (PIX automático)">{{ icon('bolt', 14) }}<span class="visually-hidden">Confirmado pelo banco</span></span>
+{%- elif o == 'manual' -%}<span class="origem" title="Lançado pela recepção">{{ icon('edit', 14) }}<span class="visually-hidden">Lançado pela recepção</span></span>{%- endif -%}
+{%- endmacro %}
+
+{# Medidor de faixa (ponto de equilíbrio, NPS). zonas = [(largura_pct, cor_css)], marcador em % (0-100) #}
+{% macro gauge(marcador, zonas, min_txt, max_txt, rotulo) -%}
+<div class="gauge" role="img" aria-label="{{ rotulo }}">
+  <div class="gauge__track">{% for z in zonas %}<span style="flex:{{ z[0] }};background:var(--{{ z[1] }})"></span>{% endfor %}<i class="gauge__mark" style="left:{{ marcador }}%"></i></div>
+  <div class="gauge__ends"><span>{{ min_txt }}</span><span>{{ max_txt }}</span></div>
+</div>
+{%- endmacro %}
