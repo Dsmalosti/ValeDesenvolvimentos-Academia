@@ -36,7 +36,7 @@ from werkzeug.serving import make_server  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import User  # noqa: E402
+from app.models import Conta, User  # noqa: E402
 
 EMAIL_ATIVO, SENHA = "ana@valetec.com", "Senha-de-teste-123"
 
@@ -48,9 +48,12 @@ def montar_app():
     with app.app_context():
         db.create_all()
         senha = bcrypt.generate_password_hash(SENHA).decode("utf-8")
+        conta = Conta(nome="Academia de teste")
+        db.session.add(conta)
+        db.session.flush()
         db.session.add_all([
-            User(nome="Ana", sobrenome="Recepção", email=EMAIL_ATIVO, senha=senha, ativo=True),
-            User(nome="Bruno", sobrenome="Inativo", email="bruno@valetec.com", senha=senha, ativo=False),
+            User(nome="Ana", sobrenome="Recepção", email=EMAIL_ATIVO, senha=senha, ativo=True, conta_id=conta.id),
+            User(nome="Bruno", sobrenome="Inativo", email="bruno@valetec.com", senha=senha, ativo=False, conta_id=conta.id),
         ])
         db.session.commit()
     return app
@@ -108,7 +111,10 @@ with sync_playwright() as p:
         checa(f"[{nome}] chip mostra Recepção e o campo escondido recebe o perfil",
               pg.inner_text("[data-perfil-nome]") == "Recepção" and pg.input_value("#h-perfil") == "recepcao")
         acionar('[data-perfil-chip] [data-open="dlg-perfil"]')
-        pg.wait_for_timeout(400)
+        try:   # espera o popup abrir de verdade; com tempo fixo o teste falhava de vez em quando
+            pg.wait_for_selector("#dlg-perfil[open]", timeout=3000)
+        except Exception:
+            pass
         checa(f'[{nome}] "Trocar" reabre o popup', pg.locator("#dlg-perfil[open]").count() == 1)
         acionar('#dlg-perfil [data-valor="instrutor"]')
         pg.wait_for_timeout(500)

@@ -64,6 +64,15 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** cada pessoa precisa renomear `DATABASE_URI` para `DATABASE_URL` no próprio `.env`. Quem trocar para uma branch antiga volta a ver os `.pyc` versionados.
 - **Doc:** `docs/mudancas/back-05-repo-e-config.md`
 
+## back-06-contas-e-papeis
+
+- **Sai de:** `back-05-repo-e-config` · **PR:** a abrir → `back-05-repo-e-config` · **Data:** 10/10/2026
+- **O que mudou:** modelo `Conta` (a academia) separado do usuário; `conta_id` e `papel` em `instrutores`; `conta_id` em alunos, planos, pagamentos e exercícios, e o filtro de conta passa a usar essa coluna; permissão por papel no servidor (`papel_requerido`); e-mail e CPF de aluno únicos por academia; exercício com dono (os antigos viram catálogo padrão); `/instrutores/cadastro/` fechado e comando `flask criar-conta`; nome da academia e papel vindos do banco.
+- **Migration:** `b06c0a1e2f30_contas_e_papeis.py`, escrita à mão, move dados. **Depois do pull, o app só sobe depois de `flask db upgrade`.**
+- **Testes:** `pytest` 111 de 111 (56 novos em `tests/test_contas.py`); migration testada num Postgres temporário, 25 checagens, incluindo `flask db check` sem diferença, downgrade e upgrade de novo; navegador: painel 66 de 66, login 60 de 60.
+- **Observações:** não há como existir instrutor ou recepção até o convite de equipe (`back-13`); o instrutor ainda não tem painel; as migrations ANTIGAS não rodam do zero num Postgres vazio (problema anterior, a resolver antes do deploy). O banco local do Adauto ainda não foi migrado: ele precisa autorizar, ou a pasta fica numa branch anterior.
+- **Doc:** `docs/mudancas/back-06-contas-e-papeis.md`
+
 ## Onde parou (10/10/2026)
 
-O Diogo respondeu tudo em 10/10: todas as autorizações foram dadas, e as respostas estão na seção "O que está parado esperando o Adauto" do `docs/ROADMAP-LANCAMENTO.md`. A próxima branch é a **`back-06-contas-e-papeis`** (tabela `contas`, `conta_id` nas tabelas de negócio, coluna `papel`, e-mail e CPF únicos por conta, exercício com dono, fechar o cadastro aberto). Não há nada travando ela. Depois vem alunos (`front-03-alunos` + `back-07-alunos`). Do Adauto e do Diogo faltam só hospedagem, domínio e provedor de e-mail (D4, D5, D6), e do Adauto D12 e D13.
+Fase A fechada, a não ser pelo layout das demais telas, que entra tela a tela. A próxima é **alunos**: `front-03-alunos` (templates do Drive: lista, detalhe, novo, editar, buscar e os parciais) e `back-07-alunos` (rotas com os nomes do front no lugar das pontes temporárias, colunas novas do aluno com migration, datas em `dd/mm/aaaa`, inativar em vez de excluir). Todas as autorizações do Diogo estão dadas (roadmap, seção de autorizações); para a cobrança (`back-09`) ele pediu para ver o esquema no PR antes. Do Adauto e do Diogo faltam hospedagem, domínio e provedor de e-mail (D4, D5, D6); do Adauto, D12 e D13.

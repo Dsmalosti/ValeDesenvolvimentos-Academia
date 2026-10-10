@@ -3,6 +3,7 @@ from app.services.base_service import BaseService
 from app.exceptions import BusinessError
 from app.helpers.validators import validar_email, validar_cpf
 from app.extensions.database import db
+from app.helpers.conta import conta_id, da_conta
 
 
 class AlunoService:
@@ -23,25 +24,27 @@ class AlunoService:
             cpf=dados.get("cpf"),
             ativo=dados.get("ativo", True),
             plano_id=dados["plano_id"],
-            instrutor_id=instrutor_id
+            instrutor_id=instrutor_id,   # [back-06-contas-e-papeis] agora é só "quem cadastrou"
+            conta_id=conta_id(),         # [back-06-contas-e-papeis] a academia dona do aluno
         )
 
         return BaseService.salvar(aluno)
 
     @staticmethod
-    def listar_alunos(instrutor_id: int):
+    def listar_alunos():
         """
-        Lista somente os alunos do instrutor logado
+        Lista somente os alunos da conta (academia) de quem está logado.
+        [back-06-contas-e-papeis] antes: filtrava por instrutor_id, recebido por parâmetro.
         """
-        return Aluno.query.filter_by(instrutor_id=instrutor_id).all()
+        return da_conta(Aluno).all()
 
     @staticmethod
-    def editar_aluno(aluno_id: int, dados: dict, instrutor_id: int) -> Aluno:
+    def editar_aluno(aluno_id: int, dados: dict) -> Aluno:
         """
         Regra de negócio para editar um aluno
         """
 
-        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
+        aluno = da_conta(Aluno).filter_by(id=aluno_id).first()  # [back-06-contas-e-papeis] antes: instrutor_id=instrutor_id
 
         if not aluno:
             raise BusinessError("Aluno não encontrado")
@@ -52,7 +55,9 @@ class AlunoService:
             validar_email(dados["email"])
 
             # garante unicidade
-            email_existente = Aluno.query.filter(
+            # [back-06-contas-e-papeis] antes: Aluno.query, que olhava todas as academias e, pela mensagem de erro,
+            # revelava que o e-mail existia em outra. Agora a checagem é só dentro da conta.
+            email_existente = da_conta(Aluno).filter(
                 Aluno.email == dados["email"],
                 Aluno.id != aluno.id
             ).first()
@@ -84,14 +89,14 @@ class AlunoService:
         return BaseService.salvar(aluno)
 
     @staticmethod
-    def excluir_aluno(aluno_id: int, instrutor_id: int):
+    def excluir_aluno(aluno_id: int):
         """
         Docstring for excluir_aluno
 
         :param aluno_id: id do aluno
         :type aluno_id: int
         """
-        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
+        aluno = da_conta(Aluno).filter_by(id=aluno_id).first()  # [back-06-contas-e-papeis] antes: instrutor_id=instrutor_id
 
         if not aluno:
             raise BusinessError("Aluno não encontrado")
@@ -119,11 +124,11 @@ class AlunoService:
             raise BusinessError("Erro ao excluir aluno")
 
     @staticmethod
-    def alternar_status(aluno_id: int, instrutor_id: int) -> Aluno:
+    def alternar_status(aluno_id: int) -> Aluno:
         """
         Ativa ou desativa um aluno (inverte o status atual)
         """
-        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
+        aluno = da_conta(Aluno).filter_by(id=aluno_id).first()  # [back-06-contas-e-papeis] antes: instrutor_id=instrutor_id
 
         if not aluno:
             raise BusinessError("Aluno não encontrado")

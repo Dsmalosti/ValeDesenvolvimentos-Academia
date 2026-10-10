@@ -5,17 +5,19 @@ from app.blueprints.pagamentos.form import PagamentoForm
 from app.services.pagamento_service import PagamentoService
 from app.models import Aluno
 from app.exceptions import BusinessError
-from app.helpers.conta import exigir_login_em
+from app.helpers.conta import DONO_E_RECEPCAO, da_conta, exigir_papel_em
 
 pagamentos_blueprint = Blueprint('pagamentos', __name__, url_prefix='/pagamentos', template_folder='templates')
-exigir_login_em(pagamentos_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
+# [back-06-contas-e-papeis] antes: exigir_login_em(...), que só pedia login. O financeiro inteiro agora também exige
+# o papel: instrutor recebe 403 em qualquer rota daqui, inclusive nas que forem criadas depois.
+exigir_papel_em(pagamentos_blueprint, *DONO_E_RECEPCAO)
 
 
 # Rota pra registrar um pagamento novo de um aluno específico
 @pagamentos_blueprint.route('/registrar/<int:aluno_id>', methods=['GET', 'POST'])
 @login_required
 def registrarPagamento(aluno_id):
-    aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=current_user.id).first_or_404()
+    aluno = da_conta(Aluno).filter_by(id=aluno_id).first_or_404()  # [back-06-contas-e-papeis] antes: instrutor_id=current_user.id
     form = PagamentoForm()
 
     if form.validate_on_submit():
@@ -40,8 +42,8 @@ def registrarPagamento(aluno_id):
 @pagamentos_blueprint.route('/listar/<int:aluno_id>')
 @login_required
 def listarPagamentosAluno(aluno_id):
-    aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=current_user.id).first_or_404()
-    pagamentos = PagamentoService.listar_pagamentos_aluno(aluno_id, current_user.id)
+    aluno = da_conta(Aluno).filter_by(id=aluno_id).first_or_404()  # [back-06-contas-e-papeis] antes: instrutor_id=current_user.id
+    pagamentos = PagamentoService.listar_pagamentos_aluno(aluno_id)
 
     return render_template("pagamento-lista.html", pagamentos=pagamentos, aluno=aluno)
 
@@ -50,6 +52,6 @@ def listarPagamentosAluno(aluno_id):
 @pagamentos_blueprint.route('/situacao/')
 @login_required
 def situacaoAlunos():
-    status_alunos = PagamentoService.listar_status_alunos(current_user.id)
+    status_alunos = PagamentoService.listar_status_alunos()
 
     return render_template("situacao-alunos.html", status_alunos=status_alunos)

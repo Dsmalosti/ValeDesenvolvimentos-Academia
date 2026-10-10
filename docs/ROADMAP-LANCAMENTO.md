@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase A em andamento. O Diogo respondeu tudo em 10/10/2026: **todas as autorizações foram dadas** (migrations, `.pyc`, requirements, configuração, dependências). Feito até a `back-05-repo-e-config`. A próxima é a `back-06-contas-e-papeis`, sem nada travando. Faltam só decisões de conta externa (hospedagem, domínio, e-mail). |
+| **Estado** | Fase A quase fechada: feito até a `back-06-contas-e-papeis` (conta separada do usuário, papéis, exercício com dono). Todas as autorizações foram dadas. A próxima é a tela de **alunos** (`front-03-alunos` + `back-07-alunos`), sem nada travando. Faltam só decisões de conta externa (hospedagem, domínio, e-mail). |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -31,6 +31,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `front-02-painel` | Layout das telas logadas e painel do front novo (só templates); o `base.html` antigo virou `base_antigo.html` | a abrir → `docs-01-decisoes-e-termos` | Push feito; falta abrir o PR |
 | [x] | `back-04-painel` | O painel novo funcionando com os dados do banco; pontes para as telas antigas; páginas de erro novas | a abrir → `front-02-painel` | Push feito; falta abrir o PR |
 | [x] | `back-05-repo-e-config` | `.pyc` e `database.db` fora do git; `requirements.txt` limpo e `requirements-dev.txt`; `DATABASE_URL` como nome único; `SECRET_KEY` sem valor padrão | a abrir → `back-04-painel` | Push feito; falta abrir o PR |
+| [x] | `back-06-contas-e-papeis` | Tabela `contas`; `conta_id` em alunos, planos, pagamentos e exercícios; papéis com bloqueio no servidor; e-mail e CPF únicos por academia; cadastro aberto fechado; `flask criar-conta`. **Tem migration.** | a abrir → `back-05-repo-e-config` | Push feito; falta abrir o PR |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -45,7 +46,7 @@ Nenhuma tela logada do front novo entra antes disto. São as tarefas das etapas 
 | [x] | `front-02-painel` | O layout das telas logadas (`base.html` novo, cabeçalho, menu, rodapé, páginas de erro) e os templates do painel, copiados fiéis do Drive. O `base.html` antigo foi renomeado para `base_antigo.html` e as 19 telas antigas passaram a herdar dele. | — | Feito. Sozinha não muda nada para quem usa. | — |
 | [x] | `back-04-painel` | Depois do login abre o **painel novo**, com os números calculados do banco (alunos, planos e pagamentos) e só da conta logada. `usuario` e `academia` em todo template. As seções sem backend respondem "em construção"; alunos, planos, exercícios e fichas levam às telas antigas por pontes temporárias. Páginas de erro 403/404/500 do front. | 5.1 (parte), 4.2, parte da 3.7 | Feito, com os limites anotados em `docs/mudancas/back-04-painel.md`: `academia` e o papel do usuário são provisórios até a `back-06`. | — |
 | [x] | `back-05-repo-e-config` | Tira do git os 102 `.pyc` e o `instance/database.db`. Tira o `mysql-connector` antigo do `requirements.txt` e cria o `requirements-dev.txt` com o `pytest`. `DATABASE_URL` vira o nome único da variável do banco (o nome antigo ainda é aceito, com aviso). `SECRET_KEY` sem valor padrão. | 2.5, 1.7, 2.3, 3.8 | Feito. `pip install` conferido num ambiente novo; o app recusa subir sem banco ou sem chave. | — |
-| [ ] | `back-06-contas-e-papeis` | Separa **conta** (a academia) de **usuário** (dono, recepção, instrutor). Coluna `papel` e bloqueio no servidor das telas de dono. E-mail e CPF de aluno únicos por academia. Exercício com dono. `instrutor_id` obrigatório. | 3.2, 3.5, 3.6 | Dois usuários da mesma conta veem os mesmos alunos; o instrutor recebe 403 em relatórios e configurações. | A1 (dada); T1 |
+| [x] | `back-06-contas-e-papeis` | Separa **conta** (a academia) de **usuário** (dono, recepção, instrutor). Coluna `papel` e bloqueio no servidor do que cada papel não pode. E-mail e CPF de aluno únicos por academia. Exercício com dono (os antigos viram catálogo padrão). `conta_id` obrigatório. Cadastro aberto fechado; conta nova por `flask criar-conta`. | 3.2, 3.5, 3.6 | Feito. Migration testada em Postgres (25 checagens, incluindo `flask db check`). O painel do instrutor fica para a branch do painel dele. | — |
 
 ## Fase B — Telas, na ordem de uso do cliente
 
@@ -142,7 +143,7 @@ Decisões de negócio ou de conta externa. As quatro primeiras o Adauto quer dec
 | # | Resposta | O que isso muda no plano |
 |---|---|---|
 | T1 | **Tabela `contas` separada**, com `conta_id` em `instrutores`. | A `back-06` cria a tabela e leva `conta_id` também para alunos, planos, pagamentos e exercícios, que é o que faz a equipe de uma academia ver os mesmos dados. |
-| T2 | Revisão dos PRs **um por um, na ordem**. Não indicou dia fixo. | A fila anda no ritmo dele. Hoje há 8 branches esperando. |
+| T2 | Revisão dos PRs **um por um, na ordem**. Não indicou dia fixo. | A fila anda no ritmo dele. Hoje há 9 branches esperando. |
 | T3 | Aluno continua com **`ativo` sim/não**. | Não há status "pausado" ou "cancelado", nem relatório de motivo de cancelamento. As telas do front que mostram esses estados usam só ativo e inativo. |
 | T4 | **Fechar já** o `/instrutores/cadastro/` aberto. | A `back-06` fecha a rota. Até a tela nova "Criar conta" existir (`back-13`), conta nova só por comando no servidor. O Adauto quer auto-cadastro no lançamento (D9): as duas coisas combinam, o que muda é a ordem. |
 | T5 | Cobrança: **tabelas novas** `cobrancas` e `pagamentos` do Esquema-Backend, migrando os dados da tabela atual. **Mostrar o esquema no PR antes.** | A `back-09-cobranca` abre primeiro só com o esquema proposto (modelo e migration), para o Diogo aprovar antes de o resto ser escrito. |
@@ -164,13 +165,14 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | O logout antigo (`/instrutores/sair/`) é por GET: qualquer site consegue deslogar o usuário | `main` | Continua enquanto houver tela antiga, que é quem mostra esse link. O sair do layout novo já é por POST |
 | O popup de perfil do login fechou com Esc, antes do primeiro toque, no navegador embutido do Claude. No Chromium do Playwright isso **não** se repete (4 cenários). Fica como observação; o backend já aceita o perfil vazio | front | Some com a remoção do popup (`back-18`) |
 | Erro "Transition was skipped" no console ao sair da tela de login para uma tela do layout antigo | front (transição entre páginas) | Esperado enquanto houver tela antiga: ao ir de uma tela nova para uma antiga, o navegador cancela a animação e avisa no console. Some quando todas forem novas |
-| A checagem de e-mail repetido ao editar aluno olha todas as academias e, pela mensagem, revela que o e-mail existe em outra | `aluno_service.py` | `back-06` (tarefa 3.5) |
-| O exercício não tem dono: é um catálogo único que qualquer academia logada edita e apaga | `models.py` | `back-06` |
-| Aluno ou plano antigo sem dono (`instrutor_id` vazio) fica invisível, e as fichas dele também. Conferir no banco de produção antes do deploy | banco | `back-06` e Fase D |
+| **As migrations antigas não rodam do zero num Postgres vazio**: `flask db upgrade` num banco novo falha numa migration anterior, ao mudar o tipo de `treino.repeticoes`. Sem resolver isso não há como criar o banco de produção | `migrations/versions/` | `back-20-producao`. Vale avisar o Diogo desde já |
+| O instrutor ainda não tem painel: vê "em construção" em vez dos números da academia. O template `painel/instrutor.html` do front não foi ligado | `painel/routes.py` | Junto com a `back-13-equipe`, que é quando instrutor passa a existir |
+| Os exercícios que já existiam viraram catálogo padrão e ninguém consegue editá-los pela tela. A tela antiga ainda mostra os botões (o clique dá 404) | `exercicios/` | `back-14-treinos`: a tela nova distingue catálogo de exercício próprio |
+| Ainda não há tela para trocar o nome da academia: fica o que a migration gravou ("Academia de *Nome*") | `contas.nome` | `back-12-config` |
+| Na migration da `back-06`, dois usuários antigos que eram da mesma academia viram duas contas | bancos locais | Juntar com um `UPDATE` no `conta_id`, se for o caso |
 | O front tem botões de **demonstração**, que só mostram um aviso e não fazem nada: "WhatsApp aberto para…", "Mensagens de parabéns enviadas", "Lembretes de renovação enviados" | `painel/index.html`, `_notificacao.html` | Cada um vira ação de verdade na branch do módulo (mensagens, cobrança) |
 | O card "Avaliações de hoje" do painel tem número e nomes fixos de exemplo no template. Está escondido | `painel/index.html` | Volta com dado de verdade na branch de avaliações |
 | O gráfico "Alunos ativos por mês" é uma aproximação: o banco não guarda quando um aluno foi inativado, então quem saiu não aparece nos meses passados | `painel_service.py` | Precisa de histórico no banco (A1); decidir na `back-07-alunos` |
-| Nome da academia aparece como "Minha academia" e todo usuário é tratado como dono | `helpers/contexto.py` | `back-06-contas-e-papeis` |
 | O template do painel no repositório tem 6 ajustes que o do Drive não tem (lista em `docs/mudancas/back-04-painel.md`). O Adauto precisa levar para o Drive, senão a próxima cópia desfaz | `painel/index.html` | Adauto |
 
 ## Registro de atualizações
@@ -185,3 +187,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | PR #12 aberto (`docs-01`). |
 | 10/10/2026 | O Adauto pediu o front novo numa branch para testar no código real. Entraram `front-02-painel` e `back-04-painel` (layout e painel juntos), na frente das branches que esperam autorização. As branches futuras foram renumeradas de novo: repo-e-config virou `back-05`, contas-e-papeis `back-06`, alunos `front-03` + `back-07`, e assim por diante. |
 | 10/10/2026 | Respostas do Diogo: sim para todas as autorizações (A1 a A6); tabela `contas` separada; aluno continua com `ativo`; fechar o cadastro aberto; cobrança com tabelas novas e esquema mostrado antes; revisão um por um; Postgres local e nenhum dado de produção; PIX manual. Hospedagem, domínio e e-mail seguem em aberto. `back-05-repo-e-config` enviada. |
+| 10/10/2026 | `back-06-contas-e-papeis` enviada: tabela `contas`, papéis, exercício com dono, cadastro aberto fechado. Achado novo: as migrations antigas não rodam do zero no Postgres. |

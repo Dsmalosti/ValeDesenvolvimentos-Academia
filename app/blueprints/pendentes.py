@@ -13,8 +13,10 @@ A página responde com status 200: é uma página válida, que só avisa que a t
 foi ligada. (Com 501 o navegador registraria um erro no console a cada clique no menu.)
 Para saber o que falta, a lista é a PENDENTES abaixo.
 """
-from flask import Blueprint, flash, redirect, render_template, url_for
-from flask_login import login_required
+from flask import Blueprint, abort, flash, redirect, render_template, url_for
+from flask_login import current_user, login_required
+
+from app.models import PAPEL_INSTRUTOR
 
 
 def tela_em_construcao(titulo):
@@ -39,11 +41,22 @@ PENDENTES = [
 ]
 
 
-def _visao(nome_da_tela, metodos):
+# [back-06-contas-e-papeis] Seções de dinheiro e de dono: o instrutor recebe 403 desde já, mesmo com a tela ainda
+# "em construção". Assim, quando a tela de verdade entrar no lugar, a regra já está testada.
+SO_DONO_E_RECEPCAO = {'relatorios', 'cobrancas'}
+
+
+def _barra_instrutor(nome_bp):
+    if nome_bp in SO_DONO_E_RECEPCAO and current_user.papel == PAPEL_INSTRUTOR:
+        abort(403)
+
+
+def _visao(nome_bp, nome_da_tela, metodos):
     """Cria a função que responde por uma linha de PENDENTES."""
     if metodos == ['POST']:
         @login_required
         def acao(**_):
+            _barra_instrutor(nome_bp)
             # categoria 'info': é uma das quatro que o front conhece (success|error|warning|info)
             flash(f'{nome_da_tela}: esta função ainda não está disponível.', 'info')
             return redirect(url_for('painel.index'))
@@ -51,6 +64,7 @@ def _visao(nome_da_tela, metodos):
 
     @login_required
     def pagina(**_):
+        _barra_instrutor(nome_bp)
         return tela_em_construcao(nome_da_tela)
     return pagina
 
@@ -74,7 +88,7 @@ def blueprints_pendentes():
     blueprints = {}
     for nome_bp, funcao, endereco, metodos, nome_da_tela in PENDENTES:
         bp = blueprints.setdefault(nome_bp, Blueprint(nome_bp, __name__ + '_' + nome_bp))
-        bp.add_url_rule(endereco, funcao, _visao(nome_da_tela, metodos), methods=metodos)
+        bp.add_url_rule(endereco, funcao, _visao(nome_bp, nome_da_tela, metodos), methods=metodos)
     for nome_bp, funcao, endereco, destino in PONTES:
         bp = blueprints.setdefault(nome_bp, Blueprint(nome_bp, __name__ + '_' + nome_bp))
         bp.add_url_rule(endereco, funcao, _ponte(destino), methods=['GET'])
