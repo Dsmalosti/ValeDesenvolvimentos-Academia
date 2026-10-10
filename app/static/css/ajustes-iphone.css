@@ -1,0 +1,26 @@
+/* ==========================================================================
+   Vale Tec — ajustes-iphone.css
+   [correcao-iphone 08/10] Bugs de popup que apareceram no iPhone (Safari) do Diogo.
+   Carregado DEPOIS do app.css (base.html e base_auth.html). Não muda nada no PC:
+   as regras de toque ficam em @media (hover:none) e as de teclado em celular.
+   ========================================================================== */
+/* 1) Toque fora do popup não fechava, e toque na linha da tabela não abria o aluno.
+      O Safari do iPhone só dispara "click" em elemento que ele considera clicável (link, botão,
+      ou com cursor:pointer). O fundo escuro do popup (o próprio <dialog>) e a <tr data-href>
+      não são, então o clique nunca chegava ao app.js. cursor:pointer só em tela de toque
+      (no mouse não muda nada). */
+@media (hover:none){
+  dialog.vt-dialog,dialog.vt-drawer,[data-href]{cursor:pointer;-webkit-tap-highlight-color:transparent;}  /* sem o flash cinza do Safari no popup inteiro */
+}
+/* 2) Com popup aberto, a página de trás rolava junto no iPhone (o Safari ignora o overflow só no body). */
+html:has(dialog[open]){overflow:hidden;}
+.vt-dialog,.vt-drawer{overscroll-behavior:contain;}
+/* 3) Teclado aberto cobria o popup de baixo (o botão Salvar sumia). 100dvh não encolhe com o teclado
+      no iPhone; o ajustes-iphone.js mede a área visível (visualViewport) e passa em --teclado e --vv-h. */
+@media (max-width:991.98px){
+  .vt-dialog{bottom:var(--teclado,0px);max-height:min(92dvh,calc(var(--vv-h,100dvh) - 8px));}
+}
+/* 4) Popup com <form> por dentro (Configurações, Agenda, Perfil do aluno...): o form ficava entre o <dialog> e o
+      corpo, então o corpo não rolava e o rodapé (botão Salvar) era cortado quando o popup não cabia na tela
+      (iPhone pequeno ou com teclado aberto). O form agora repassa o layout: corpo rola, rodapé fica fixo embaixo. */
+.vt-dialog>form,.vt-drawer>form{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}

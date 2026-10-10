@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.custom.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ajustes-iphone.css') }}">{# [correcao-iphone 08/10] popups no iPhone #}
   {# tema claro/escuro: no <head>, sem defer — marca o <html> antes do 1º quadro (sem piscar branco) #}
   <script src="{{ url_for('static', filename='js/tema.js') }}"></script>
 </head>
@@ -57,6 +58,7 @@
   {% block dialogs %}{% endblock %}
   {% include '_notificacao.html' %}
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/ajustes-iphone.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/digital.js') }}" defer></script>
 </body>
 </html>
