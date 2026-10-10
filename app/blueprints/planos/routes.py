@@ -5,8 +5,10 @@ from app.blueprints.planos.form import PlanoForm
 from app.models import Plano
 from app.services.plano_service import PlanoService
 from app.exceptions import BusinessError
+from app.helpers.conta import exigir_login_em
 
 planos_blueprint = Blueprint('planos', __name__, url_prefix='/planos', template_folder='templates')
+exigir_login_em(planos_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
 
 #Rota criação planos
 @planos_blueprint.route('/criar/', methods=['GET', 'POST'])

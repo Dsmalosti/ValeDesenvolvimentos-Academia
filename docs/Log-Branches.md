@@ -25,3 +25,15 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Testes:** `pytest` 15 de 15; smoke com os mesmos status da `main`.
 - **Observações:** o que dependia de autorização (tirar `.pyc` e `database.db` do git, `requirements.txt`, variável do banco, `SECRET_KEY`) foi para a `back-04-repo-e-config`. O `pytest` não está no `requirements.txt`.
 - **Doc:** `docs/mudancas/back-02-limpeza.md`
+
+## back-03-isolamento
+
+- **Sai de:** `back-02-limpeza` · **PR:** a abrir → `back-02-limpeza` · **Data:** 10/10/2026
+- **O que mudou:** filtro de conta num lugar só (`app/helpers/conta.py`); usuários, fichas, treinos, painel e select de planos passam a enxergar só a própria conta; login obrigatório em todas as rotas não públicas; excluir treino só por POST.
+- **Testes:** `pytest` 30 de 30. Contraprova: os 15 testes de isolamento rodados contra o código anterior dão 9 falhas. Smoke com os status esperados.
+- **Observações:** exercício continua sendo catálogo único (precisa de coluna nova); e-mail e CPF de aluno continuam únicos no banco inteiro. Vão para a `back-05`. Antes do deploy, conferir se há aluno ou plano sem dono no banco.
+- **Doc:** `docs/mudancas/back-03-isolamento.md`
+
+## Onde parou (10/10/2026)
+
+A próxima branch é a `back-04-repo-e-config`, e ela **não começa** sem as autorizações A2, A3 e A4 do roadmap. A `back-05` depende da A1 (migrations), da T1 e da D1. Nada mais pode ser feito sem resposta do Adauto: veja a seção "O que está parado esperando o Adauto" do `docs/ROADMAP-LANCAMENTO.md`.

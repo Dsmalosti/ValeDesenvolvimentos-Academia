@@ -5,8 +5,13 @@ from app.blueprints.exercicios.form import ExercicioForm
 from app.models import Exercicio
 from app.services.exercicio_service import ExercicioService
 from app.exceptions import BusinessError
+from app.helpers.conta import exigir_login_em
 
 exercicios_blueprint = Blueprint('exercicios', __name__, url_prefix='/exercicios', template_folder='templates')
+exigir_login_em(exercicios_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
+# [back-03-isolamento] ATENÇÃO: o exercício ainda NÃO é filtrado por conta. A tabela não tem a
+# coluna do dono, então hoje é um catálogo único, que qualquer academia logada vê, edita e apaga.
+# Resolver isso pede coluna nova (migration) e está na back-05-contas-e-papeis.
 
 # Rota criar exercicio
 @exercicios_blueprint.route('/criar/', methods=['GET', 'POST'])

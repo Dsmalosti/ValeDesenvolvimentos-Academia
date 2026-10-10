@@ -3,6 +3,7 @@ from wtforms import StringField, SubmitField, PasswordField, DateField, BooleanF
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError
 
 from app.extensions.database import db
+from app.helpers.conta import da_conta
 from app.models import Aluno, Plano
 
 
@@ -18,4 +19,7 @@ class AlunoForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super(AlunoForm, self).__init__(*args, **kwargs)
-        self.plano_id.choices = [(p.id, p.nome) for p in Plano.query.all()]
+        # [back-03-isolamento] antes: Plano.query.all(). O select mostrava os planos de TODAS as
+        # academias, e dava para matricular um aluno no plano de outra. Como o WTForms só aceita
+        # um valor que esteja nas opções, filtrar aqui também bloqueia o envio forjado.
+        self.plano_id.choices = [(p.id, p.nome) for p in da_conta(Plano).all()]
