@@ -1,0 +1,70 @@
+{#
+  Popups que os cards do painel abrem (recepção e instrutor) — mesmo padrão do popup "Pacotes acabando" do Personal.
+  Contexto: listas {
+    vencem   [aluno {id, nome, plano, vence_txt, telefone}]          card "Vencem este mês" / "Vencimentos no mês"
+    ausentes [{aluno, dias}]                                          card "Ausentes" (só com check-in ligado)
+    novas    [{aluno, data ('dd/mm')}]                                card "Novas matrículas"
+  }  Cada lista é a mesma consulta que gera o número do card.
+  Personal (personal/painel.html) reaproveita só o popup "novas" (card Matrículas): sem listas.vencem e sem check-in, os outros dois não renderizam.
+  Ações por linha: WhatsApp do aluno + Renovar (vencimentos) ou Ver perfil (ausentes e novas).
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, dialog_head %}
+{% macro zap(a) -%}
+<a class="iconbtn iconbtn--green-fill iconbtn--lg" href="https://wa.me/55{{ a.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener" aria-label="Chamar {{ a.nome }} no WhatsApp">{{ icon('chat', 20) }}</a>
+{%- endmacro %}
+
+{% if listas.vencem is defined %}
+<dialog class="vt-dialog" id="dlg-vencem" aria-label="Vencem este mês">
+  <span class="vt-dialog__grip"></span>
+  {{ dialog_head('Vencem este mês', listas.vencem|length ~ ' matrículas vencem até o fim do mês', 'calendar', 'blue') }}
+  <div class="vt-dialog__body">
+    <ul class="pop-list">
+      {% for a in listas.vencem %}
+      <li class="pop-item">{{ avatar(a.nome, 'sm', 'blue') }}
+        <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha tone-txt-blue">{{ a.plano }} · {{ a.vence_txt }}</span></div>
+        {{ zap(a) }}
+        <a class="iconbtn iconbtn--lg" href="{{ url_for('alunos.renovar', id=a.id) }}" aria-label="Renovar a matrícula de {{ a.nome }}">{{ icon('refresh', 20) }}</a>
+      </li>
+      {% else %}<li class="muted" style="padding:12px 0">Nenhuma matrícula vence este mês.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="vt-dialog__foot"><a class="btn btn-primary btn-block" href="{{ url_for('alunos.lista') }}">Ver todos os alunos</a></div>
+</dialog>
+{% endif %}
+
+{% if academia.checkin_ativo %}
+<dialog class="vt-dialog" id="dlg-ausentes" aria-label="Ausentes há mais de 15 dias">
+  <span class="vt-dialog__grip"></span>
+  {{ dialog_head('Ausentes há mais de 15 dias', listas.ausentes|length ~ ' alunos sem vir · risco de cancelar', 'user-x', 'orange') }}
+  <div class="vt-dialog__body">
+    <ul class="pop-list">
+      {% for x in listas.ausentes %}{% set a = x.aluno %}
+      <li class="pop-item">{{ avatar(a.nome, 'sm', 'orange') }}
+        <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha tone-txt-orange">{{ x.dias }} dias sem vir · {{ a.plano }}</span></div>
+        {{ zap(a) }}
+        <a class="iconbtn iconbtn--lg" href="{{ url_for('alunos.detalhe', id=a.id) }}" aria-label="Ver perfil de {{ a.nome }}">{{ icon('eye', 20) }}</a>
+      </li>
+      {% else %}<li class="muted" style="padding:12px 0">Ninguém sumido há mais de 15 dias.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="vt-dialog__foot"><a class="btn btn-primary btn-block" href="{{ url_for('frequencia.index') }}">Ver frequência</a></div>
+</dialog>
+{% endif %}
+
+<dialog class="vt-dialog" id="dlg-novas" aria-label="Novas matrículas do mês">
+  <span class="vt-dialog__grip"></span>
+  {{ dialog_head('Novas matrículas', listas.novas|length ~ ' alunos entraram este mês', 'user-plus', 'blue') }}
+  <div class="vt-dialog__body">
+    <ul class="pop-list">
+      {% for x in listas.novas %}{% set a = x.aluno %}
+      <li class="pop-item">{{ avatar(a.nome, 'sm', 'green') }}
+        <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha tone-txt-green">{{ a.plano }} · entrou {{ x.data }}</span></div>
+        {{ zap(a) }}
+        <a class="iconbtn iconbtn--lg" href="{{ url_for('alunos.detalhe', id=a.id) }}" aria-label="Ver perfil de {{ a.nome }}">{{ icon('eye', 20) }}</a>
+      </li>
+      {% else %}<li class="muted" style="padding:12px 0">Nenhuma matrícula nova este mês.</li>{% endfor %}
+    </ul>
+  </div>
+  <div class="vt-dialog__foot"><a class="btn btn-primary btn-block" href="{{ url_for('alunos.novo') }}">{{ icon('user-plus', 18) }}Nova matrícula</a></div>
+</dialog>

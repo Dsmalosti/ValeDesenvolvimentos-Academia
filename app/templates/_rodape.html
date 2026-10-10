@@ -1,0 +1,18 @@
+{# Barra inferior (mobile) + gaveta. Escondida no desktop pelo CSS (.tabbar).
+   Variante Personal (academia.modelo == 'personal'): Painel · Alunos · Pacotes · Agenda (Figma personal, barra de todas as telas).
+   "Pacotes" usa o mesmo endpoint de planos (no Personal o plano é um pacote de sessões). #}
+{#  tab_ativo (opcional): a aba da barra quando ela difere do item do rail. Ex.: Fichas fica sob "exercícios" no rail
+    do desktop (nav_ativo='exercicios'), mas no celular é a aba "Fichas" (tab_ativo='treinos'). Sem isso a aba não acende
+    e o gesto de deslizar entre abas não sabe em que aba está. #}
+{% from '_macros/icons.html' import icon %}
+{% if academia.modelo == 'personal' %}
+{% set _abas = [('painel','painel.index','home','Painel'),('alunos','alunos.lista','users','Alunos'),('planos','planos.lista','apps','Pacotes'),('agenda','agenda.index','calendar-plus','Agenda')] %}
+{% else %}
+{% set _abas = [('painel','painel.index','home','Painel'),('alunos','alunos.lista','users','Alunos'),('planos','planos.lista','apps','Planos'),('treinos','treinos.biblioteca','clipboard','Fichas')] %}
+{% endif %}
+<nav class="tabbar" aria-label="Navegação">
+  {% for chave, endpoint, ico, rotulo in _abas %}
+  <a class="tabbar__item" href="{{ url_for(endpoint) }}"{% if (tab_ativo or nav_ativo) == chave %} aria-current="page"{% endif %}>{{ icon(ico, 22) }}<span>{{ rotulo }}</span></a>
+  {% endfor %}
+</nav>
+{% include '_gaveta.html' %}
