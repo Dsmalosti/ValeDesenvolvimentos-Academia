@@ -19,6 +19,9 @@ from app.exceptions import BusinessError
 
 auth_blueprint = Blueprint('auth', __name__)
 
+# Nome da chave que guarda, na sessão, a página que a pessoa pediu antes de logar.
+_CHAVE_PROXIMO = 'login_proximo'
+
 
 def _destino_seguro(proximo):
     """
@@ -67,8 +70,9 @@ def login():
         except BusinessError as e:
             return tela_com_erro(str(e))
 
-        # Lê o `next` ANTES de limpar a sessão.
-        proximo = _destino_seguro(request.args.get('next'))
+        # Lê o `next` ANTES de limpar a sessão. Ele vem da URL ou, no uso normal pelo
+        # navegador, da sessão: o form da tela posta em /login sem o ?next= (veja o GET abaixo).
+        proximo = _destino_seguro(request.args.get('next') or session.get(_CHAVE_PROXIMO))
 
         # Sessão nova a cada login: impede "session fixation" (alguém que plantou um
         # cookie de sessão antes do login não herda a sessão logada).
@@ -76,6 +80,15 @@ def login():
         login_user(usuario, remember=lembrar)
         return redirect(proximo or url_for('main.homepage'))
 
+    # GET: o Flask-Login manda quem não está logado para /login?next=/pagina-que-pediu, mas o
+    # form do template posta em url_for('auth.login'), sem o ?next=. Sem guardar o destino aqui,
+    # ele se perderia no envio e a pessoa cairia sempre no painel. Fica na sessão (cookie assinado)
+    # só até o login; abrir /login sem ?next= apaga o destino antigo.
+    proximo = _destino_seguro(request.args.get('next'))
+    if proximo:
+        session[_CHAVE_PROXIMO] = proximo
+    else:
+        session.pop(_CHAVE_PROXIMO, None)
     return render_template('auth/login.html')
 
 

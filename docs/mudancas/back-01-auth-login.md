@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Branch** | `back-01-auth-login` |
-| **Sai de** | `front-01` (front do login), que sai da `main` `9b61934` |
+| **Sai de** | `front-01` (front do login, correção do iPhone e configuração do Claude Code), que sai da `main` `9b61934` |
 | **Data** | 06/10/2026 |
 | **Feito por** | Adauto (com o Claude) — **revisão: Diogo** |
 | **Tarefas da lista "Tarefas do backend — Diogo"** | 1.1, 1.2, 1.3, 1.4, 1.5 |
@@ -40,6 +40,7 @@ Toda linha alterada em arquivo que já existia tem o comentário `[back-01-auth-
   - **`lembrar`** agora funciona: `login_user(usuario, remember=lembrar)`. Antes, o login antigo ignorava isso.
   - **`session.clear()` antes do `login_user`** evita *session fixation*.
   - **`?next=`** só é aceito se for caminho do próprio site (`/...`). Isso evita o *open redirect* `?next=https://site-falso`.
+  - **O `next` fica guardado na sessão entre o GET e o POST** (chave `login_proximo`). O form do template posta em `url_for('auth.login')`, sem o `?next=`; sem guardar, a pessoa sempre caía no painel depois de entrar, e não na página que tinha pedido. Abrir `/login` sem `?next=` apaga o destino antigo, e ele some junto com o `session.clear()` do login. (Corrigido em 10/10: o teste de 06/10 postava direto em `/login?next=...` e por isso não pegou.)
   - **Já logado** que abre `/login` vai direto para `/`.
   - **`/sair` só por POST.** Por GET, uma `<img src="/sair">` em qualquer site deslogaria o usuário, e o prefetch de links do front também.
   - **Logout:** `session.clear()` vem **antes** do `logout_user()`. Na ordem inversa, o cookie "lembrar de mim" sobrevive e loga a pessoa de volta (o teste pegou isso).
@@ -100,6 +101,16 @@ Harness em `harness-integracao/` (fora do repo): sobe o app com SQLite descartá
     - uso só pelo teclado;
     - console sem erros e nenhum arquivo dando 404.
 - **`smoke_rotas.py`:** GET em todas as rotas sem parâmetro, logado. O resultado é **idêntico** ao da `main`.
+
+### Revalidação em 10/10/2026 (branch reaplicada em cima da `front-01` atual)
+
+A `front-01` ganhou o `CLAUDE.md`, as skills e a correção do iPhone (`ajustes-iphone`), então o commit desta branch foi reaplicado em cima dela e testado de novo, sem o remendo do harness (agora o blueprint `auth` é o do próprio repositório).
+
+- **Servidor (test client, SQLite descartável): 51 de 52 checagens passaram.** A que falha continua sendo o limite de tentativas (1.6, fora desta branch). Entraram checagens novas para o fluxo do navegador (POST em `/login` sem `?next=`), `POST /sair` sem CSRF e `perfil` vazio.
+- **Cookies com `FLASK_CONFIG=production`: 7 de 7** (`Secure`, `HttpOnly` e `SameSite=Lax` na sessão e no "lembrar de mim").
+- **Smoke de rotas, anônimo e logado, contra a `main`:** os status não mudaram. As únicas diferenças são as esperadas: quem não está logado é mandado para `/login` em vez de `/instrutores/login/`, e existem as três rotas novas.
+- **Navegador (o embutido do Claude, não o Playwright):** celular de 375 px e desktop de 1440 px. Pedir uma página sem login, cair na tela nova, errar a senha, acertar e voltar para a página pedida.
+- **Não refeito nesta rodada:** os testes de Playwright de 06/10 (toque de verdade, uso só pelo teclado). O Playwright não está instalado nesta máquina.
 
 ## Bug antigo encontrado (não é desta branch)
 
