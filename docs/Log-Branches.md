@@ -75,14 +75,14 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-03-alunos
 
-- **Sai de:** `back-06-contas-e-papeis` · **PR:** a abrir → `back-06-contas-e-papeis` · **Data:** 10/10/2026
+- **Sai de:** `back-06-contas-e-papeis` · **PR:** [#17](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/17) → `back-06-contas-e-papeis` · **Data:** 10/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `alunos/lista.html`, `detalhe.html`, `novo.html`, `editar.html`, `buscar.html`, `_form.html`, `_campos.html` e `_resultados.html`.
 - **Testes:** os 8 arquivos conferidos byte a byte com o Drive; `pytest` sem mudança.
 - **Observações:** sozinha não muda nada para quem usa: nenhuma rota aponta para esses templates antes da `back-07-alunos`.
 
 ## back-07-alunos
 
-- **Sai de:** `front-03-alunos` · **PR:** a abrir → `front-03-alunos` · **Data:** 10/10/2026
+- **Sai de:** `front-03-alunos` · **PR:** [#18](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/18) → `front-03-alunos` · **Data:** 10/10/2026
 - **O que mudou:** o menu "Alunos" abre as telas novas: lista com busca, filtros e paginação; cadastro e edição validados no servidor (datas em `dd/mm/aaaa`, CPF com dígitos conferidos, único por academia); perfil; busca ao vivo; exportar CSV; desativar (não apaga) e excluir (só o dono). A regra de "ativo, pendente ou inativo" saiu do painel para `situacao_service.py`, usada pelos dois. Quatro colunas novas em `alunos`.
 - **Migration:** `b07a1f2e3d40_colunas_novas_do_aluno.py`: só acrescenta `data_inicio`, `dia_vencimento`, `forma_pagamento` e `observacoes`, vazias. **Depois do pull, rodar `flask db upgrade`.**
 - **Testes:** `pytest` 155 de 155 (47 novos em `tests/test_alunos.py`); migration num Postgres temporário, 11 checagens; navegador: alunos 30 de 30, painel 70 de 70, login 60 de 60; varredura de todas as rotas GET como dono, recepção e instrutor, sem nenhuma rota pior que na branch anterior.
@@ -91,14 +91,14 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-04-planos
 
-- **Sai de:** `back-07-alunos` · **PR:** a abrir → `back-07-alunos` · **Data:** 10/10/2026
+- **Sai de:** `back-07-alunos` · **PR:** [#19](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/19) → `back-07-alunos` · **Data:** 10/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `planos/lista.html`, `form.html` e `_form.html`.
 - **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
 - **Observações:** sozinha não muda nada para quem usa: nenhuma rota aponta para esses templates antes da `back-08-planos`.
 
 ## back-08-planos
 
-- **Sai de:** `front-04-planos` · **PR:** a abrir → `front-04-planos` · **Data:** 10/10/2026
+- **Sai de:** `front-04-planos` · **PR:** [#20](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/20) → `front-04-planos` · **Data:** 10/10/2026
 - **O que mudou:** o menu "Planos" abre as telas novas: cartões com alunos, faturamento do mês e participação de cada plano (a mesma conta do gráfico do painel); criar e editar com valor em `1.234,56` conferido no servidor; pausar e reativar. Coluna nova `planos.avaliacoes_incluidas`.
 - **Migration:** `b08c3d4e5f60_avaliacoes_incluidas_no_plano.py`: só acrescenta a coluna, com 0 nos planos que já existem. **Depois do pull, rodar `flask db upgrade`.**
 - **Testes:** `pytest` 179 de 179 (26 novos em `tests/test_planos.py`); migration num Postgres temporário, 12 checagens; navegador: planos 31 de 31, alunos 30 de 30, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
@@ -107,4 +107,4 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## Onde parou (10/10/2026)
 
-Alunos e planos estão prontos e enviados (`front-03-alunos`, `back-07-alunos`, `front-04-planos`, `back-08-planos`). **Faltam os quatro PRs**, nesta ordem, e rodar as migrations `b07a1f2e3d40` e `b08c3d4e5f60` no banco local de quem for testar (`flask db upgrade`). A próxima é a **cobrança**: `front-05-cobranca` e `back-09-cobranca`. Antes de escrever código, montar o esquema das tabelas novas e mostrar ao Diogo (ele pediu, item 10 das respostas). Do Adauto e do Diogo faltam hospedagem, domínio e provedor de e-mail (D4, D5, D6); do Adauto, D12, D13, o botão de reativar aluno e a regra de nome de plano sem repetir.
+Alunos e planos estão prontos e enviados (`front-03-alunos`, `back-07-alunos`, `front-04-planos`, `back-08-planos`). Os PRs são #17, #18, #19 e #20, para o Diogo revisar nessa ordem. Quem for testar precisa rodar `flask db upgrade` (migrations `b07a1f2e3d40` e `b08c3d4e5f60`); o banco local do Adauto já recebeu as duas em 10/10/2026, com backup em `instance/`. A próxima é a **cobrança**: `front-05-cobranca` e `back-09-cobranca`. Antes de escrever código, montar o esquema das tabelas novas e mostrar ao Diogo (ele pediu, item 10 das respostas). Do Adauto e do Diogo faltam hospedagem, domínio e provedor de e-mail (D4, D5, D6); do Adauto, D12, D13, o botão de reativar aluno e a regra de nome de plano sem repetir.
