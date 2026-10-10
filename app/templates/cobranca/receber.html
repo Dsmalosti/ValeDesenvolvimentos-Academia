@@ -1,0 +1,214 @@
+{#
+  UM componente de cobrança para todos os motivos (matrícula, renovação, diária avulsa): nunca uma tela por motivo.
+  GET /cobrancas/<id>/receber  (cobrancas.receber)
+  Contexto:
+    c  {id, estado('pendente'|'aguardando_pix'|'confirmado'), tipo('matricula'|'renovacao'|'diaria'),
+        aluno_id, nome, plano, valor, valor_txt, inicio, vence, forma, origem('webhook'|'manual'|None),
+        confirmado_em, confirmado_por, pix_copia_cola, pix_qr_svg, pix_expira_s, contexto_txt,
+        termo ('pacote' na variante Personal; sem a chave = 'mensalidade', como na academia)}
+    pix_ligado (bool)  -> PIX ainda não configurado troca a opção por "Não configurado" e mostra o aviso
+  POSTs: cobrancas.pix | cobrancas.confirmar (forma, valor_recebido) | cobrancas.cancelar_pix
+  Regra do design: toda confirmação mostra a ORIGEM (banco automático x manual).
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, brl, iniciais %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Alunos' %}
+{% set pagina_sub = c.contexto_txt %}
+{% set m_titulo = 'Receber' %}
+{% set m_voltar = url_for('alunos.detalhe', id=c.aluno_id) if c.aluno_id else url_for('painel.index') %}
+{% set sem_tabbar = true %}
+{% set corpo_classe = 'page--rec' %}
+{% set m_header_classe = 'm-header--ok' if c.estado == 'confirmado' else '' %}
+{% set formas = [('pix','PIX','Confirma sozinho','tone-green','pix'),('debito','Débito','Você confirma','tone-blue','card'),('credito','Crédito','Você confirma','tone-slate','card'),('dinheiro','Dinheiro','Você confirma','tone-yellow','cash')] %}
+{% set forma_sel = c.forma or ('pix' if pix_ligado else 'debito') %}
+{% set aguardando = (c.estado == 'aguardando_pix') %}
+{% set confirmado = (c.estado == 'confirmado') %}
+{% set rotulo_forma = {'pix':'PIX','debito':'Débito','credito':'Crédito','dinheiro':'Dinheiro'} %}
+
+{% block m_acoes %}<span style="width:44px"></span>{% endblock %}
+{% block m_extra %}
+<div class="rec-mhead">
+  <span class="avatar avatar--lg" style="background:var(--navy-soft);color:#fff" aria-hidden="true">{{ iniciais(c.nome) }}</span>
+  <div><b>{{ c.nome }}</b><div class="m-header__sub" style="margin:0">{{ c.plano }} · {% if confirmado %}{{ (c.termo or 'mensalidade')|capitalize }} quitad{{ 'o' if c.termo == 'pacote' else 'a' }}{% elif aguardando %}Cobrança gerada · aguardando{% else %}{{ c.contexto_curto }}{% endif %}</div></div>
+</div>
+<div class="rec-mtotal num">{{ brl(c.valor) }}</div>
+{% endblock %}
+
+{% block content %}
+<section class="rec {{ 'rec--ok' if confirmado }}" aria-labelledby="rec-t">
+  {# cabeçalho do card (desktop) #}
+  <header class="rec__head d-only">
+    <span class="avatar avatar--lg" style="background:var(--navy-soft);color:#fff" aria-hidden="true">{{ iniciais(c.nome) }}</span>
+    <div class="grow"><h2 id="rec-t">{{ 'Recebido de ' if confirmado else 'Receber de ' }}{{ c.nome }}</h2><div class="rec__sub">{{ c.plano }} · {{ c.subtitulo_head }}</div></div>
+    <div class="ta-r"><small>Total</small><div class="rec__total num">{{ brl(c.valor) }}</div></div>
+    <a class="iconbtn iconbtn--lg rec__x" href="{{ url_for('alunos.detalhe', id=c.aluno_id) if c.aluno_id else url_for('painel.index') }}" aria-label="Fechar">{{ icon('close', 20) }}</a>
+  </header>
+
+  <div class="rec__body">
+    {# ======== coluna esquerda ======== #}
+    <div class="rec__col">
+
+      {% if confirmado %}
+      <div class="card card--pad rec-ok">
+        <span class="rec-ok__check">{{ icon('check', 34) }}</span>
+        <h3>Pagamento confirmado</h3>
+        <p>{% if c.origem == 'webhook' %}Confirmado pelo banco às {{ c.confirmado_em }}{% else %}Confirmado por {{ c.confirmado_por }} às {{ c.confirmado_em }}{% endif %}</p>
+        <div class="rec-ok__valor num">{{ brl(c.valor) }}</div>
+      </div>
+      <div class="card card--pad">
+        <dl class="kvs">
+          <div class="kv"><dt>Aluno</dt><dd>{{ c.nome }}</dd></div>
+          <div class="kv"><dt>{% if c.termo == 'pacote' %}Pacote{% else %}Plano{% endif %}</dt><dd>{{ c.plano }}{% if c.dias %} · {{ c.dias }} dias{% endif %}</dd></div>
+          <div class="kv"><dt>Forma</dt><dd>{{ rotulo_forma[c.forma] }}</dd></div>
+          <div class="kv"><dt>Recebido em</dt><dd>{{ c.confirmado_data }} · {{ c.confirmado_em }}</dd></div>
+          {% if c.vence %}<div class="kv"><dt>Próximo vencimento</dt><dd class="info">{{ c.vence }}</dd></div>{% endif %}
+        </dl>
+      </div>
+
+      {% else %}
+      {# ---- escolha da forma ---- #}
+      <form id="form-forma" method="post" class="stack gap-4" data-validate novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+        <section class="card card--pad stack gap-3">
+          <div><h3 class="ctitle" style="font-size:16px">Como o aluno vai pagar?</h3><div class="csub">A forma escolhida fica gravada no histórico dele</div></div>
+          <div class="opcoes formas" data-opcoes data-controla-forma data-alvo="h-forma" role="group" aria-label="Forma de pagamento">
+            {% for v, nome, sub, tom, ico in formas %}
+            {% set off = (v == 'pix' and not pix_ligado) or (aguardando and v != 'pix') %}
+            <button type="button" class="opcao" data-valor="{{ v }}" aria-pressed="{{ 'true' if v == forma_sel else 'false' }}"{% if off %} disabled{% endif %}>
+              <span class="tile tile--sm {{ tom }}">{{ icon(ico, 20) }}</span>{{ nome }}<span class="opcao-sub">{{ 'Não configurado' if v == 'pix' and not pix_ligado else sub }}</span>
+            </button>
+            {% endfor %}
+          </div>
+          <input type="hidden" id="h-forma" name="forma" value="{{ forma_sel }}">
+        </section>
+
+        {% if not pix_ligado %}
+        <div class="note note--yellow" data-so-forma="debito credito dinheiro">{{ icon('alert', 20) }}<span><strong>PIX ainda não está ligado</strong>Dá pra receber em dinheiro ou na maquininha normalmente, só que essas confirmações entram como manuais. Ligar o PIX leva uns minutos em Configurações.</span></div>
+        <a class="btn btn-accent btn-lg btn-block" href="{{ url_for('config.recebimento') }}" data-so-forma="debito credito dinheiro">{{ icon('bolt', 18) }}Ligar o PIX agora</a>
+        {% endif %}
+
+        {# --- PIX --- #}
+        {% if pix_ligado %}
+        <div class="note note--blue" data-so-forma="pix">{{ icon('bolt', 20) }}<span><strong>PIX é a única que confirma sozinha</strong>{% if aguardando %}O QR ao lado vale só pra esta cobrança. Quando o dinheiro cai, o sistema marca pago sem ninguém tocar. Nas outras formas a confirmação é manual e fica registrada como tal.{% else %}O sistema gera um QR só desta cobrança. Quando o dinheiro cai na {% if c.termo == 'pacote' %}sua conta{% else %}conta da academia{% endif %}, {% if c.termo == 'pacote' %}o pacote vira "pago"{% else %}a mensalidade vira "paga"{% endif %} sem ninguém precisar clicar.{% endif %}</span></div>
+        {% endif %}
+
+        {# --- maquininha --- #}
+        <section class="card card--pad stack gap-3" data-so-forma="debito credito" hidden>
+          <div class="row-flex gap-3"><span class="tile tone-blue">{{ icon('card', 22) }}</span><div><b style="font-size:16px">Passe o cartão na maquininha</b><div class="csub" style="margin:0"><span data-so-forma="debito">Débito</span><span data-so-forma="credito">Crédito</span> · {{ brl(c.valor) }}</div></div></div>
+          <div class="field-group"><label class="label" for="f-recebido-maq">Valor recebido</label>
+            <div class="input-affix"><span class="affix">R$</span><input class="input rec-valor" id="f-recebido-maq" name="valor_recebido" data-mask="dinheiro" inputmode="numeric" value="{{ c.valor_txt }}" required></div></div>
+          <dl class="kvs"><div class="kv"><dt>Maquininha</dt><dd>A que a academia já usa</dd></div></dl>
+        </section>
+        <div class="note note--yellow" data-so-forma="debito credito" hidden>{{ icon('alert', 20) }}<span><strong>Essa confirmação é sua</strong>O sistema não conversa com a maquininha. Ao tocar em confirmar, {{ 'o pacote fica pago' if c.termo == 'pacote' else 'a mensalidade fica paga' }} porque <b>você disse</b> que recebeu. Confira o comprovante da máquina antes.</span></div>
+
+        {# --- dinheiro --- #}
+        <section class="card card--pad stack gap-3" data-so-forma="dinheiro" hidden>
+          <div class="row-flex gap-3"><span class="tile tone-yellow">{{ icon('cash', 22) }}</span><div><b style="font-size:16px">Receber em dinheiro</b><div class="csub" style="margin:0">Total {{ brl(c.valor) }}</div></div></div>
+          <div class="field-group"><label class="label" for="f-recebido-din">Valor entregue pelo aluno</label>
+            <div class="input-affix"><span class="affix">R$</span><input class="input rec-valor" id="f-recebido-din" data-recebido="{{ c.valor_txt }}" data-mask="dinheiro" inputmode="numeric" value="{{ c.valor_txt }}"></div>
+            <div class="field-hint num" data-troco aria-live="polite"></div></div>
+        </section>
+        <div class="note note--yellow" data-so-forma="dinheiro" hidden>{{ icon('alert', 20) }}<span><strong>Essa confirmação é sua</strong>O dinheiro entra no caixa da recepção. O sistema registra como confirmação manual, com o seu nome.</span></div>
+
+        {# --- o que está sendo cobrado --- #}
+        <section class="card card--pad" aria-labelledby="h-cobrado">
+          <h3 class="ctitle" id="h-cobrado" style="font-size:16px;margin-bottom:6px">O que está sendo cobrado</h3>
+          <dl class="kvs">
+            <div class="kv"><dt>{% if c.termo == 'pacote' %}Pacote{% else %}Plano{% endif %}</dt><dd>{{ c.plano }}{% if c.dias %} · {{ c.dias }} dias{% endif %}</dd></div>
+            {% if c.inicio %}<div class="kv"><dt>Início</dt><dd>{{ c.inicio }}</dd></div>{% endif %}
+            {% if c.vence %}<div class="kv"><dt>{{ 'Vence em' if c.tipo != 'diaria' else 'Validade' }}</dt><dd>{{ c.vence }}</dd></div>{% endif %}
+            <div class="kv"><dt>Total</dt><dd class="num" style="font-size:16px">{{ brl(c.valor) }}</dd></div>
+          </dl>
+        </section>
+
+        {# --- ações --- #}
+        <div class="stack gap-3 rec-actions">
+          {% if pix_ligado and not aguardando %}
+          <button type="submit" formaction="{{ url_for('cobrancas.pix', id=c.id) }}" class="btn btn-primary btn-lg btn-block" data-so-forma="pix" data-carregando>Gerar cobrança PIX</button>
+          {% endif %}
+          <button type="submit" formaction="{{ url_for('cobrancas.confirmar', id=c.id) }}" class="btn btn-primary btn-lg btn-block" data-so-forma="debito credito" hidden>{{ icon('check', 18) }}Confirmar recebimento</button>
+          <button type="submit" formaction="{{ url_for('cobrancas.confirmar', id=c.id) }}" class="btn btn-primary btn-lg btn-block" data-so-forma="dinheiro" hidden>{{ icon('check', 18) }}Já recebi em dinheiro</button>
+          {% if aguardando %}
+          <button type="submit" formaction="{{ url_for('cobrancas.cancelar_pix', id=c.id) }}" class="btn btn-ghost btn-block" formnovalidate>Trocar a forma de pagamento</button>
+          {% else %}
+          <a class="btn btn-ghost btn-block" href="{{ url_for('cobrancas.depois', id=c.id) }}">Cobrar depois</a>
+          {% endif %}
+        </div>
+      </form>
+      {% endif %}
+    </div>
+
+    {# ======== coluna direita ======== #}
+    <div class="rec__col">
+      {% if confirmado %}
+        {% if c.origem == 'webhook' %}
+        <div class="note note--green">{{ icon('bolt', 20) }}<span><strong>Registrado automaticamente</strong>Ninguém marcou como pago. O banco avisou o sistema e {{ 'o pacote mudou sozinho' if c.termo == 'pacote' else 'a mensalidade mudou sozinha' }}. Esse é o dado em que você pode confiar no relatório.</span></div>
+        {% else %}
+        <div class="note note--yellow">{{ icon('edit', 20) }}<span><strong>Confirmado manualmente por {{ c.confirmado_por }}</strong>O sistema não recebeu aviso do banco. Este pagamento aparece como "manual" nos relatórios.</span></div>
+        {% endif %}
+        <div class="opcoes" style="--cols:2">
+          <button type="button" class="btn btn-green" data-toast="Comprovante enviado por WhatsApp.">{{ icon('chat', 18) }}Comprovante</button>
+          <button type="button" class="btn btn-ghost" data-imprimir>{{ icon('printer', 18) }}Imprimir</button>
+        </div>
+        {% if c.aluno_id %}<a class="btn btn-primary btn-block" href="{{ url_for('alunos.detalhe', id=c.aluno_id) }}">Ver o perfil do aluno</a>{% endif %}
+        <a class="btn btn-ghost btn-block" href="{{ url_for('alunos.novo') }}">{{ icon('user-plus', 18) }}Cadastrar outro aluno</a>
+
+      {% elif aguardando %}
+      <div class="card card--pad pix-panel" data-poll="{{ url_for('cobrancas.status', id=c.id) }}">
+        <span class="chip chip--blue" role="status">{{ icon('clock', 14) }}Esperando o pagamento</span>
+        <div class="pix-qr" role="img" aria-label="QR Code do PIX no valor de {{ brl(c.valor) }}">{{ c.pix_qr_svg|safe }}</div>
+        <div class="pix-total m-only num">{{ brl(c.valor) }}</div>
+        <div class="faint fs-13 m-only" style="margin-top:-4px">{{ c.nome }} · {{ c.plano }}</div>
+        <div class="pix-exp faint fs-13">{{ icon('clock', 15) }}<span>O código expira em <b class="tab-num" data-contagem="{{ c.pix_expira_s }}">--:--</b></span></div>
+        <div class="alert-inline note note--red" data-pix-expirado hidden>{{ icon('alert', 20) }}<span><strong>O código expirou</strong>Toque em "Trocar a forma de pagamento" e gere um novo.</span></div>
+      </div>
+      <div class="card card--pad pix-copia">
+        <div class="sectitle" style="font-size:11px">PIX copia e cola</div>
+        <code id="pix-codigo">{{ c.pix_copia_cola }}</code>
+      </div>
+      <div class="opcoes" style="--cols:2">
+        <button type="button" class="btn btn-ghost" data-copiar="{{ c.pix_copia_cola }}" data-copiar-msg="Código PIX copiado.">{{ icon('copy', 18) }}Copiar</button>
+        <button type="button" class="btn btn-green" data-toast="Cobrança PIX enviada por WhatsApp.">{{ icon('chat', 18) }}<span class="m-only">Enviar</span><span class="d-only">Mandar pro aluno</span></button>
+      </div>
+      <div class="note m-only">{{ icon('link', 20) }}<span><strong>Deu problema com o QR?</strong>Dá pra receber em dinheiro ou na maquininha e registrar aqui. A cobrança PIX é cancelada junto.</span></div>
+
+      {% else %}
+      <div class="card card--pad rec-vazio d-only">
+        <span class="tile tone-slate">{{ icon('qr', 22) }}</span>
+        <b>O QR aparece aqui</b>
+        <p>Escolha a forma ao lado. No PIX, o código é gerado só para esta cobrança e o sistema confirma sozinho quando o dinheiro cai.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if not confirmado %}
+  <footer class="rec__foot d-only">
+    <span class="foot-note">O dinheiro cai direto na conta da academia. A Vale Tec não intermedia.</span>
+  </footer>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block dialogs %}
+{% if recem_confirmado %}
+{# Popup rápido de "deu tudo certo", já abrindo sozinho: mostra o essencial e some.
+   Quem quiser o comprovante completo, forma, próximo vencimento etc. fecha o popup e
+   vê a tela de sucesso normal (a mesma section.rec--ok acima), que continua ali atrás. #}
+<dialog class="vt-dialog vt-dialog--sm" id="pop-pagamento-ok" aria-labelledby="pop-pgok-t" data-abrir>
+  <span class="vt-dialog__grip"></span>
+  <div class="vt-dialog__body" style="text-align:center;padding-top:22px">
+    <span class="rec-ok__check" style="margin:0 auto 14px">{{ icon('check', 34) }}</span>
+    <h2 class="vt-dialog__title" id="pop-pgok-t" style="margin-bottom:4px">Pagamento confirmado!</h2>
+    <div class="vt-dialog__sub">{{ rotulo_forma[c.forma] }} · {{ c.nome }}</div>
+    <div class="num" style="font-size:26px;font-weight:800;margin-top:10px">{{ brl(c.valor) }}</div>
+  </div>
+  <div class="vt-dialog__foot">
+    <a class="btn btn-primary btn-block" href="{{ url_for('painel.index') }}">Voltar ao painel</a>
+    <button type="button" class="btn btn-block btn-link-soft" data-close>Ver detalhes do pagamento</button>
+  </div>
+</dialog>
+{% endif %}
+{% endblock %}
