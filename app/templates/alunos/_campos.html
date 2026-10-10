@@ -1,0 +1,44 @@
+{#
+  Campos do aluno (macros). name de cada input == coluna do banco (regra do design system).
+  Usado por _form.html (novo + editar, página e modal).
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, seletor, opcoes %}
+
+{% macro identificacao(a, erros) -%}
+<div class="form-grid form-grid--2">
+  <div class="span-2">{{ campo('nome', 'Nome completo', a.nome, 'text', 'Nome e sobrenome do aluno', obrigatorio=True, erro=erros.nome, autocomplete='off', extra='data-autofocus') }}</div>
+  {{ campo('cpf', 'CPF', a.cpf, 'text', '000.000.000-00', mask='cpf', obrigatorio=True, erro=erros.cpf, inputmode='numeric', autocomplete='off') }}
+  {{ campo('telefone', 'Telefone / WhatsApp', a.telefone, 'tel', '(00) 00000-0000', mask='telefone', obrigatorio=True, erro=erros.telefone, inputmode='tel', autocomplete='off') }}
+  {{ campo('email', 'E-mail', a.email, 'email', 'email@exemplo.com', erro=erros.email, inputmode='email', autocomplete='off') }}
+  {{ campo('data_nascimento', 'Data de nascimento', a.data_nascimento_txt, 'text', 'dd/mm/aaaa', mask='data', erro=erros.data_nascimento, inputmode='numeric', autocomplete='off') }}
+</div>
+{%- endmacro %}
+
+{% macro cobranca(a, erros, planos, novo) -%}
+<div class="form-grid form-grid--2">
+  {% set ops = [] %}{% for p in planos if p.ativo %}{% set _ = ops.append((p.id, p.nome ~ ' · R$ ' ~ ('%.2f'|format(p.valor)).replace('.', ','), {'valor': p.valor, 'dias': p.duracao_dias})) %}{% endfor %}
+  {{ seletor('plano_id', 'Plano', ops, a.plano_id, True, erros.plano_id, vazio='Selecione o plano') }}
+  {% if novo %}{{ campo('data_inicio', 'Data de início', a.data_inicio_txt, 'text', 'dd/mm/aaaa', mask='data', obrigatorio=True, erro=erros.data_inicio, inputmode='numeric', extra='data-futuro-ok') }}{% endif %}
+  {{ seletor('forma_pagamento', 'Forma de pagamento', [('pix','PIX'),('debito','Débito'),('credito','Crédito'),('dinheiro','Dinheiro')], a.forma_pagamento, True, erros.forma_pagamento, vazio='PIX / Cartão / Dinheiro') }}
+  {{ campo('dia_vencimento', 'Dia de vencimento', a.dia_vencimento, 'number', 'Todo dia 15', obrigatorio=True, erro=erros.dia_vencimento, inputmode='numeric', extra='min="1" max="28"', ajuda='Entre 1 e 28, para valer em todos os meses.') }}
+</div>
+{%- endmacro %}
+
+{% macro observacoes(a, erros, secao=False) -%}
+<div class="field-group">
+  <label class="label{{ ' visually-hidden' if secao }}" for="f-observacoes">Observações</label>
+  <textarea class="input" id="f-observacoes" name="observacoes" rows="3" placeholder="Restrição médica, objetivo do aluno, indicação...">{{ a.observacoes or '' }}</textarea>
+</div>
+{%- endmacro %}
+
+{% macro foto(a) -%}
+<div class="foto-box">
+  <div class="foto-box__previa" data-foto-previa>{% if a.foto_url %}<img src="{{ a.foto_url }}" alt="Foto atual" style="width:100%;height:100%;object-fit:cover;border-radius:50%">{% else %}<span>{{ icon('camera', 24) }}<small>sem foto</small></span>{% endif %}</div>
+  <div class="stack gap-2 grow">
+    <button type="button" class="btn btn-primary btn-block" data-foto-abrir="camera">{{ icon('camera', 18) }}Tirar foto</button>
+    <button type="button" class="btn btn-ghost btn-block" data-foto-abrir="galeria">{{ icon('image', 18) }}Escolher da galeria</button>
+    <input class="visually-hidden" type="file" id="f-foto" name="foto" accept="image/*" data-foto tabindex="-1" aria-label="Foto do aluno">
+  </div>
+</div>
+{%- endmacro %}
