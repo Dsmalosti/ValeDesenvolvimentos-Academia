@@ -1,0 +1,12 @@
+{# GET/POST /planos/novo e /planos/<id>/editar — página inteira (mobile). No desktop o mesmo form aparece no painel da lista. #}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'planos' %}
+{% set pagina_titulo = 'Editar plano' if modo == 'editar' else 'Criar plano' %}
+{% set pagina_sub = plano.nome if modo == 'editar' else 'A duração em dias define o próximo vencimento' %}
+{% set m_voltar = url_for('planos.lista') %}
+{% set m_sub = plano.nome if modo == 'editar' else '' %}
+{% set corpo_classe = 'page--form' %}
+{% set sem_tabbar = true %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('planos.lista') }}">Planos</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ pagina_titulo }}</span></nav>{% endblock %}
+{% block content %}{% set em_painel = false %}{% include 'planos/_form.html' %}{% endblock %}

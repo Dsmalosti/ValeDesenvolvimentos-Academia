@@ -1,0 +1,54 @@
+{#
+  GET /planos (planos.lista)   ?editar=<id> mostra o painel lateral (desktop) já preenchido
+  Contexto: planos [{id,nome,valor,duracao_dias,descricao,ativo,alunos,faturamento,pct,tom,cor_barra}], ticket_medio, plano_edicao|None, erros
+  Cada plano aparece como cartão (desktop, com painel "Novo plano" ao lado) ou linha com barra (mobile, abre a página de edição).
+  ?destaque=<id> (vindo do gráfico "De onde vem o faturamento"): o cartão daquele plano rola até a tela e pisca (app.js)
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import brl %}
+{% set nav_ativo = 'planos' %}
+{% set pagina_titulo = 'Planos' %}
+{% set pagina_sub = planos|length ~ ' planos cadastrados · ticket médio de ' ~ brl(ticket_medio) ~ ' por aluno' %}
+{% set m_sub = planos|length ~ ' planos · ticket médio ' ~ brl(ticket_medio) %}
+
+{% block page_acoes %}<a class="btn btn-primary" href="{{ url_for('planos.lista') }}#painel-plano" data-foco="#f-nome">{{ icon('plus', 18) }}Criar plano</a>{% endblock %}
+
+{% block content %}
+<div class="planos-layout">
+  <div class="planos-grid">
+    {% for p in planos %}
+    {# --- desktop: cartão --- #}
+    <article class="card card--pad plano d-only{{ ' plano--off' if not p.ativo }}" data-plano="{{ p.id }}" aria-labelledby="pl-{{ p.id }}">
+      <div class="row-flex" style="justify-content:space-between;align-items:flex-start">
+        <div><h2 class="ctitle" id="pl-{{ p.id }}" style="font-size:15px">{{ p.nome }}</h2><div class="csub linha1" style="margin-top:2px">{{ p.duracao_dias }} {{ 'dia' if p.duracao_dias == 1 else 'dias' }} de duração</div></div>
+        {% if p.ativo %}<span class="chip chip--{{ p.tom }}">{{ p.alunos }} {{ 'no mês' if p.avulso else 'alunos' }}</span>{% else %}<span class="chip chip--slate">Inativo</span>{% endif %}
+      </div>
+      <div class="plano__valor num">{{ brl(p.valor) }}</div>
+      <div class="fs-13 muted linha1" style="margin-bottom:8px">{{ p.pct }}% do faturamento do mês</div>
+      <div class="bar" role="img" aria-label="{{ p.pct }}% do faturamento"><div style="width:{{ p.pct }}%;background:var(--{{ p.cor_barra }})"></div></div>
+      <hr class="divider" style="margin:16px 0 14px">
+      <div class="row-flex gap-2">
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('planos.lista', editar=p.id) }}#painel-plano">{{ icon('edit', 16) }}Editar</a>
+        <form method="post" action="{{ url_for('planos.alternar', id=p.id) }}" style="margin:0"><input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}"><button class="btn btn-ghost btn-sm" type="submit" style="color:var(--text-soft)">{{ 'Inativar' if p.ativo else 'Reativar' }}</button></form>
+      </div>
+    </article>
+    {# --- mobile: linha com barra --- #}
+    <a class="card plano-m m-only" href="{{ url_for('planos.editar', id=p.id) }}" data-plano="{{ p.id }}" aria-label="Editar plano {{ p.nome }}">
+      <div class="row-flex" style="justify-content:space-between;align-items:baseline"><b>{{ p.nome }}</b><span class="num plano-m__valor">{{ brl(p.valor) }}</span></div>
+      <div class="faint fs-12">{{ p.duracao_dias }} {{ 'dia' if p.duracao_dias == 1 else 'dias' }} · {{ p.alunos }} {{ 'no mês' if p.avulso else 'alunos' }}{% if not p.ativo %} · inativo{% endif %}</div>
+      <div class="bar" style="margin:8px 0 6px"><div style="width:{{ p.pct }}%;background:var(--{{ p.cor_barra }})"></div></div>
+      <div class="faint fs-12">{{ p.pct }}% do faturamento do mês</div>
+    </a>
+    {% endfor %}
+    <a class="btn btn-primary btn-lg btn-block m-only" href="{{ url_for('planos.novo') }}">{{ icon('plus', 18) }}Criar novo plano</a>
+  </div>
+
+  {# painel lateral (desktop): novo plano ou edição #}
+  <aside class="card card--pad d-only planos-painel" id="painel-plano" aria-label="{{ 'Editar plano' if plano_edicao else 'Novo plano' }}">
+    {% set plano = plano_edicao or {} %}{% set modo = 'editar' if plano_edicao else 'novo' %}{% set em_painel = true %}
+    {% include 'planos/_form.html' %}
+    {% if plano_edicao %}<a class="btn btn-ghost btn-block btn-sm" style="margin-top:10px" href="{{ url_for('planos.lista') }}">Cancelar edição</a>{% endif %}
+  </aside>
+</div>
+{% endblock %}
