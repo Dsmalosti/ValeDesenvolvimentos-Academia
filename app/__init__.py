@@ -44,6 +44,7 @@ def create_app():
     from app.blueprints.exercicios.routes import exercicios_blueprint
     from app.blueprints.fichas.routes import fichas_blueprint
     from app.blueprints.pagamentos.routes import pagamentos_blueprint
+    from app.blueprints.auth.routes import auth_blueprint  # [back-01-auth-login] login/sair da tela nova
 
 
     app.register_blueprint(main_blueprint)
@@ -53,6 +54,7 @@ def create_app():
     app.register_blueprint(exercicios_blueprint)
     app.register_blueprint(fichas_blueprint)
     app.register_blueprint(pagamentos_blueprint)
+    app.register_blueprint(auth_blueprint)  # [back-01-auth-login]
 
     # Models (necessário para migrations)
     from app import models

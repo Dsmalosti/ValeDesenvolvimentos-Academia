@@ -38,6 +38,16 @@ class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
 
+    # [back-01-auth-login] Cookies de login protegidos (só valem com HTTPS, que a produção terá).
+    # Secure: o navegador só manda o cookie por HTTPS (não vaza em rede aberta).
+    # SameSite=Lax: outro site não consegue disparar ações usando o cookie do usuário (CSRF).
+    # HttpOnly: JavaScript da página não lê o cookie (já é o padrão do Flask para a sessão).
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+
 
 # Mapeamento dos ambientes
 config_map = {
