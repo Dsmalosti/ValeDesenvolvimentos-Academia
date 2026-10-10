@@ -1,0 +1,66 @@
+{#
+  Formulário de plano. name == coluna: nome, valor, duracao_dias, descricao, ativo (+ avaliacoes_incluidas, se o backend adotar a coluna).
+  Contexto: plano (dict, vazio no novo), erros, modo ('novo'|'editar'), em_painel (bool: painel lateral no desktop)
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, seletor, brl %}
+{% set p = plano or {} %}
+{% set erros = erros or {} %}
+{% set editando = (modo == 'editar') %}
+<form method="post" action="{{ url_for('planos.editar', id=p.id) if editando else url_for('planos.novo') }}" data-validate novalidate class="stack gap-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  {% if em_painel %}
+  <div><h2 class="ctitle" style="font-size:16px">{{ 'Editar plano' if editando else 'Novo plano' }}</h2><div class="csub" style="font-size:12.5px">A duração em dias é o que define o próximo vencimento do aluno na renovação.</div></div>
+  {% endif %}
+  <div class="{{ 'stack gap-4' if em_painel else 'card card--pad stack gap-4' }}">
+    {% if not em_painel %}<h2 class="ctitle">Dados do plano</h2>{% endif %}
+    {{ campo('nome', 'Nome do plano', p.nome, 'text', 'Ex.: Mensal, Trimestral, Passe livre', obrigatorio=True, erro=erros.nome, autocomplete='off') }}
+    <div class="field-group">
+      <label class="label" for="f-valor">Valor (R$)</label>
+      <div class="input-affix"><span class="affix">R$</span><input class="input{{ ' is-invalid' if erros.valor }}" id="f-valor" name="valor" data-mask="dinheiro" inputmode="numeric" value="{{ ('%.2f'|format(p.valor)).replace('.', ',') if p.valor else '' }}" placeholder="0,00" required data-msg-required="Informe o valor do plano."></div>
+      {% if erros.valor %}<div class="field-error" data-server>{{ erros.valor }}</div>{% endif %}
+    </div>
+    <div class="field-group">
+      <label class="label" for="f-duracao_dias">Duração em dias</label>
+      <div class="field-icon">{{ icon('calendar', 18) }}<input class="input{{ ' is-invalid' if erros.duracao_dias }}" id="f-duracao_dias" name="duracao_dias" type="number" min="1" max="1095" inputmode="numeric" value="{{ p.duracao_dias or 30 }}" required></div>
+      {% if erros.duracao_dias %}<div class="field-error" data-server>{{ erros.duracao_dias }}</div>{% endif %}
+    </div>
+    {% if not em_painel %}
+    {{ seletor('avaliacoes_incluidas', 'Avaliação física inclusa', [('0','Nenhuma · cobrada à parte'),('1','1 avaliação no plano'),('2','2 avaliações no plano'),('4','4 avaliações no plano')], p.avaliacoes_incluidas or '0', vazio=None) }}
+    {% endif %}
+  </div>
+
+  {% if not em_painel %}
+  <div class="note note--blue">{{ icon('info', 20) }}<span><strong>Duração em dias é o que manda</strong>É esse número que calcula o próximo vencimento do aluno. Mensal = 30, trimestral = 90, semestral = 180, anual = 365.</span></div>
+  {% endif %}
+
+  <div class="{{ 'stack gap-2' if em_painel else 'card card--pad stack gap-2' }}">
+    {% if not em_painel %}<h2 class="ctitle">Descrição pro aluno</h2>{% endif %}
+    <div class="field-group"><label class="label{{ ' visually-hidden' if not em_painel }}" for="f-descricao">Descrição</label>
+      <textarea class="input" id="f-descricao" name="descricao" rows="3" placeholder="O que está incluso neste plano">{{ p.descricao or '' }}</textarea></div>
+  </div>
+
+  <div class="{{ 'switch-row' if em_painel else 'card card--pad switch-row' }}">
+    <div><b id="lb-ativo">{{ 'Plano ativo para venda' if em_painel else 'Plano ativo' }}</b>{% if not em_painel %}<div class="csub" style="margin:0">Aparece na hora de matricular</div>{% endif %}</div>
+    <label class="switch"><input type="checkbox" name="ativo" value="1" aria-labelledby="lb-ativo"{% if p.ativo is not defined or p.ativo %} checked{% endif %}><span class="switch__track"></span></label>
+  </div>
+
+  {% if editando and not em_painel %}
+  <section class="card card--pad" aria-labelledby="h-quem">
+    <h2 class="ctitle" id="h-quem" style="margin-bottom:6px">Quem está nesse plano</h2>
+    <dl class="kvs">
+      <div class="kv"><dt>Alunos ativos</dt><dd>{{ p.alunos }}</dd></div>
+      <div class="kv"><dt>Faturamento no mês</dt><dd>{{ brl(p.faturamento, 0) }}</dd></div>
+      <div class="kv"><dt>Participação</dt><dd>{{ p.pct }}%</dd></div>
+    </dl>
+  </section>
+  <div class="note note--yellow">{{ icon('alert', 20) }}<span><strong>Mudar o valor não mexe em quem já está no plano</strong>Os {{ p.alunos }} alunos atuais seguem no valor antigo até renovar. O novo valor vale pra matrícula e renovação daqui pra frente.</span></div>
+  {% endif %}
+
+  <div class="stack gap-3">
+    <button type="submit" class="btn btn-primary {{ 'btn-block' if em_painel else 'btn-lg btn-block' }}" data-carregando>{{ icon('check', 18) }}{{ 'Salvar plano' if editando else ('Salvar plano' if em_painel else 'Criar plano') }}</button>
+    {% if editando and not em_painel %}
+    <button type="submit" formaction="{{ url_for('planos.alternar', id=p.id) }}" formnovalidate class="btn btn-danger-ghost btn-block">{{ 'Desativar plano' if p.ativo else 'Reativar plano' }}</button>
+    {% endif %}
+  </div>
+</form>
