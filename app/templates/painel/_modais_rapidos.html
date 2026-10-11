@@ -1,0 +1,73 @@
+{# Ações rápidas da recepção que abrem em modal (desktop) ou sheet (mobile). Ver painel/index.html #}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, campo, opcoes, dialog_head, brl %}
+
+{# 1) Diária avulsa: entrada de caixa rápida. Continua no fluxo único de cobrança. #}
+<dialog class="vt-dialog vt-dialog--sm" id="receber-diaria" aria-labelledby="dlg-diaria-t">
+  <span class="vt-dialog__grip"></span>
+  <form method="post" action="{{ url_for('cobrancas.diaria') }}" data-validate novalidate style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <div class="vt-dialog__head">
+      <div class="row-flex gap-3" style="align-items:flex-start"><span class="tile tone-orange">{{ icon('ticket', 22) }}</span>
+        <div><h2 class="vt-dialog__title" id="dlg-diaria-t">Registrar diária avulsa</h2><div class="vt-dialog__sub">Entrada de caixa para visitante, sem matrícula.</div></div></div>
+      <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
+    </div>
+    <div class="vt-dialog__body stack gap-4">
+      {{ campo('nome_visitante', 'Nome do visitante (opcional)', '', 'text', 'Ex.: João da Silva', icone='user', autocomplete='off') }}
+      <div class="field-group">
+        <label class="label" for="f-valor">Valor</label>
+        <div class="input-affix"><span class="affix">R$</span><input class="input" id="f-valor" name="valor" data-mask="dinheiro" inputmode="numeric" value="25,00" required data-msg-required="Informe o valor da diária."></div>
+      </div>
+      {{ opcoes('forma_pagamento', [('pix','PIX'),('dinheiro','Dinheiro'),('debito','Débito'),('credito','Crédito')], 'pix', 2, 'Forma de pagamento') }}
+    </div>
+    <div class="vt-dialog__foot">
+      <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+      <button type="submit" class="btn btn-primary" data-carregando>Continuar para cobrança</button>
+    </div>
+  </form>
+</dialog>
+
+{# 2) Cobrança em lote por WhatsApp para quem está pendente #}
+<dialog class="vt-dialog" id="cobrar-whatsapp" aria-labelledby="dlg-cobr-t">
+  <span class="vt-dialog__grip"></span>
+  <form method="post" action="{{ url_for('cobrancas.lembrete_lote') }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <div class="vt-dialog__head">
+      <div class="row-flex gap-3" style="align-items:flex-start"><span class="tile tone-green">{{ icon('chat', 22) }}</span>
+        <div><h2 class="vt-dialog__title" id="dlg-cobr-t">Cobrança pelo WhatsApp</h2><div class="vt-dialog__sub">Lembrete para quem está com mensalidade pendente.</div></div></div>
+      <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
+    </div>
+    <div class="vt-dialog__body stack gap-4">
+      <label class="check"><input type="checkbox" data-marcar-todos="#lista-cobranca [data-item-lote]"><span class="check__box">{{ icon('check', 14) }}</span>Selecionar todos ({{ pendentes|length }})</label>
+      <ul class="pop-list" id="lista-cobranca">
+        {% for a in pendentes %}
+        <li class="pop-item">
+          <label class="check" style="min-height:0"><input type="checkbox" name="aluno_id" value="{{ a.id }}" data-item-lote><span class="check__box">{{ icon('check', 14) }}</span><span class="visually-hidden">Selecionar {{ a.nome }}</span></label>
+          {{ avatar(a.nome, 'sm') }}
+          <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha tone-txt-red">{{ a.vence_txt }} · {{ brl(a.valor) }}</span></div>
+        </li>
+        {% else %}<li class="faint" style="padding:12px 0">Ninguém com pagamento pendente agora.</li>{% endfor %}
+      </ul>
+      <div class="field-group"><label class="label" for="f-msg">Mensagem</label>
+        <textarea class="input" id="f-msg" name="mensagem" rows="3">Oi, [nome]! Sua mensalidade da Vale Tec está em aberto. Se já pagou, pode desconsiderar. Para regularizar é só falar com a recepção.</textarea></div>
+    </div>
+    <div class="vt-dialog__foot">
+      <button type="button" class="btn btn-ghost" data-close>Fechar</button>
+      <button type="submit" class="btn btn-green" data-lote-acao disabled>{{ icon('chat', 18) }}Enviar cobrança para <span data-lote-qtd>0</span></button>
+    </div>
+  </form>
+</dialog>
+
+{# 3) Bloquear / desbloquear acesso na recepção (busca no servidor, ?partial=1) #}
+<dialog class="vt-dialog" id="bloquear-acesso" aria-labelledby="dlg-acc-t">
+  <span class="vt-dialog__grip"></span>
+  <div class="vt-dialog__head">
+    <div class="row-flex gap-3" style="align-items:flex-start"><span class="tile tone-red">{{ icon('lock', 22) }}</span>
+      <div><h2 class="vt-dialog__title" id="dlg-acc-t">Bloquear ou liberar acesso</h2><div class="vt-dialog__sub">Busque o aluno e altere a permissão na recepção.</div></div></div>
+    <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
+  </div>
+  <div class="vt-dialog__body stack gap-4">
+    <div class="field-icon">{{ icon('search', 18) }}<input class="input" type="search" placeholder="Nome ou CPF" aria-label="Buscar aluno" data-remoto="{{ url_for('alunos.acesso_busca') }}" data-alvo="resultado-acesso" autocomplete="off" data-autofocus></div>
+    <div id="resultado-acesso" aria-live="polite"><p class="faint" style="margin:0">Digite pelo menos 2 letras para buscar.</p></div>
+  </div>
+</dialog>

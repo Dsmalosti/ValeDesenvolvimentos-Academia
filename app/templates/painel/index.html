@@ -1,0 +1,181 @@
+{#
+  GET /  (painel.index)   -> painel/index.html
+  Contexto esperado do backend (ver _dev/fixtures.py para o formato exato):
+    k            dict de indicadores (ativos, inativos, faturamento, vencimentos, inadimplencia, inad_qtd,
+                 ticket, ausentes, novas, novas_delta, aniversarios, em_risco)
+    serie        {labels, valores, meta}    alunos ativos por mês
+    planos_fat   lista [{plano_id, nome, alunos, dias, valor, pct, tom}]  participação no faturamento (linha leva a Planos, com o plano em destaque: planos?destaque=id)
+    alunos       últimos alunos (tabela gerencial)
+    alertas      {risco, aniversarios, renovacao}  (alimenta os 3 pop-ups)
+    listas       {vencem, ausentes, novas}         o que cada card abre (painel/_modais_cards.html)
+    k.fat_meta_pct  % da meta de faturamento (Configurações > Metas); None = sem meta
+    hoje         "Terça-feira, 15 de setembro"
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, kpi, brl %}
+{% set nav_ativo = 'painel' %}
+{% set pagina_titulo = 'Painel Gerencial' %}
+{% set pagina_sub = hoje %}
+{% set m_titulo = 'Vale Tec' %}
+{% set popups = true %}
+
+{% block m_acoes %}
+<a class="m-btn" href="{{ url_for('painel.notificacoes') }}" aria-label="Notificações, {{ k.notificacoes }} não lidas">{{ icon('bell', 22) }}{% if k.notificacoes %}<span class="dot"></span>{% endif %}</a>
+<a class="m-avatar" href="{{ url_for('config.index') }}" aria-label="Configurações">{{ usuario.iniciais }}</a>
+{% endblock %}
+
+{% block m_extra %}
+<div class="m-header__hero"><h2>Olá, {{ usuario.nome.split()[0] }}</h2><div class="m-header__sub" style="margin-top:2px">Resumo da academia hoje</div></div>
+{% endblock %}
+
+{% block page_head %}
+<div class="page-head">
+  <div><h1 class="page-title">{{ pagina_titulo }}</h1><div class="page-sub">{{ hoje }}</div></div>
+  <div class="row-flex gap-3">
+    <form class="field-icon" role="search" action="{{ url_for('alunos.lista') }}" method="get" style="width:250px">
+      {{ icon('search', 18) }}<input class="input" type="search" name="q" placeholder="Buscar aluno, plano..." aria-label="Buscar aluno ou plano" enterkeyhint="search">
+    </form>
+    <a class="iconbtn iconbtn--lg" style="position:relative" href="{{ url_for('painel.notificacoes') }}" aria-label="Notificações, {{ k.notificacoes }} não lidas">{{ icon('bell', 20) }}{% if k.notificacoes %}<span class="dot dot--light"></span>{% endif %}</a>
+    <div class="user-chip"><span class="avatar tone-blue" aria-hidden="true">{{ usuario.iniciais }}</span><div><b>{{ usuario.nome }}</b><small>{{ academia.nome }}</small></div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{# Alerta principal (mobile): abre o popup de avisos já na aba de alunos em risco #}
+<button type="button" class="card alert-card m-only" data-open="pop-avisos" data-open-aba="risco">
+  <span class="tile tone-yellow">{{ icon('alert', 22) }}</span>
+  <span class="grow"><b>{{ alertas.risco|length }} alunos em risco</b><span class="alert-card__sub">{{ 'Sem frequência ou pagamento em dia' if academia.checkin_ativo else 'Com pagamento atrasado' }}</span></span>
+  {{ icon('chevron-right', 18) }}
+</button>
+
+{# --- indicadores: 4 no celular (troca Ausentes por Ticket médio sem check-in) --- #}
+<section class="m-only stack gap-3" aria-label="Indicadores">
+  <div class="kpi-grid">
+    {{ kpi(k.ativos, 'Alunos ativos', 'users', 'green', href=url_for('alunos.lista', status='ativos')) }}
+    {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência · ' ~ k.inad_qtd, 'alert', 'red', valor_tom='', href=url_for('alunos.lista', status='pendente')) }}
+    {{ kpi(k.vencimentos, 'Vencem este mês', 'calendar', 'blue', abre='dlg-vencem') }}
+    {% if academia.checkin_ativo %}{{ kpi(k.ausentes, 'Ausentes (churn)', 'user-x', 'orange', abre='dlg-ausentes') }}{% else %}{{ kpi(brl(k.ticket), 'Ticket médio', 'trend', 'teal', href=url_for('relatorios.admin')) }}{% endif %}
+  </div>
+  <div class="mini-grid">
+    {# mini cards também levam a algum lugar: Faturamento -> Administrativo, Matrículas -> popup, Aniversários -> aba do popup de avisos #}
+    <a class="card mini" href="{{ url_for('relatorios.admin') }}"><div class="mini__lbl">Faturamento</div><div class="mini__val">{{ brl(k.faturamento, 0) }}</div>{% if k.fat_meta_pct is not none %}<div class="mini__meta">{{ k.fat_meta_pct }}% da meta</div>{% endif %}</a>
+    <button type="button" class="card mini" data-open="dlg-novas"><div class="mini__lbl">Matrículas</div><div class="mini__val">+{{ k.novas }}</div></button>
+    <button type="button" class="card mini" data-open="pop-avisos" data-open-aba="aniversario"><div class="mini__lbl">Aniversários</div><div class="mini__val">{{ k.aniversarios }}</div></button>
+  </div>
+</section>
+
+{# --- indicadores: 8 cards no desktop --- #}
+<section class="d-only" aria-label="Indicadores">
+  <div class="kpi-grid">
+    {{ kpi(k.ativos, 'Alunos ativos', 'users', 'green', '+' ~ k.ativos_delta ~ ' no mês', href=url_for('alunos.lista', status='ativos')) }}
+    {{ kpi(k.inativos, 'Alunos inativos', 'user-x', 'slate', href=url_for('alunos.lista', status='inativo')) }}
+    {{ kpi(brl(k.faturamento, 0), 'Faturamento estimado (mês)' ~ (' · ' ~ k.fat_meta_pct ~ '% da meta' if k.fat_meta_pct is not none else ''), 'dollar', 'yellow', '+' ~ k.fat_delta ~ '%', href=url_for('relatorios.admin')) }}
+    {{ kpi(brl(k.vencimentos_valor, 0), 'Vencimentos no mês · ' ~ k.vencimentos ~ ' alunos', 'calendar', 'blue', abre='dlg-vencem') }}
+    {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência real · ' ~ k.inad_qtd ~ ' alunos', 'alert', 'red', 'atenção', 'red', href=url_for('alunos.lista', status='pendente')) }}
+    {{ kpi(brl(k.ticket), 'Ticket médio por aluno', 'trend', 'teal', href=url_for('relatorios.admin')) }}
+    {% if academia.checkin_ativo %}{{ kpi(k.ausentes, 'Ausentes há mais de 15 dias', 'user-x', 'orange', abre='dlg-ausentes') }}{% else %}<button type="button" class="card kpi" data-open="dlg-avaliacoes-hoje"><div class="kpi__top"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">2</div><div class="kpi__lbl">Avaliações de hoje</div></div></button>{% endif %}
+    {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', '+' ~ k.novas_delta, abre='dlg-novas') }}
+  </div>
+</section>
+
+{# --- operação rápida (recepção) --- #}
+<section aria-labelledby="h-op" class="stack gap-3">
+  <h2 class="sectitle" id="h-op">Operação rápida</h2>
+  <div class="qa-grid" data-fit-grupo>
+    <a class="qa" href="{{ url_for('alunos.novo') }}"><span class="tile tone-blue">{{ icon('user-plus', 20) }}</span>Novo aluno</a>
+    <a class="qa d-only" href="{{ url_for('planos.novo') }}"><span class="tile tone-teal">{{ icon('clipboard', 20) }}</span>Criar plano</a>
+    <a class="qa" href="{{ url_for('alunos.buscar') }}"><span class="tile tone-slate">{{ icon('search', 20) }}</span><span>Buscar<span class="d-only"> aluno</span></span></a>
+    <a class="qa" href="{{ url_for('alunos.buscar', acao='renovar') }}"><span class="tile tone-yellow">{{ icon('refresh', 20) }}</span><span>Renovar<span class="d-only"> matrícula</span></span></a>
+    <button type="button" class="qa d-only" data-open="receber-diaria"><span class="tile tone-orange">{{ icon('ticket', 20) }}</span>Diária avulsa</button>
+    <button type="button" class="qa d-only" data-open="cobrar-whatsapp"><span class="tile tone-green">{{ icon('chat', 20) }}</span>Cobrança WhatsApp</button>
+    <button type="button" class="qa d-only" data-open="bloquear-acesso"><span class="tile tone-red">{{ icon('lock', 20) }}</span>Bloquear acesso</button>
+    <a class="qa m-only" href="{{ url_for('avaliacoes.agendar') }}" aria-label="Agendar avaliação"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span><span><span class="txt-curto">Avaliação</span><span class="txt-longo">Agendar avaliação</span></span></a>
+  </div>
+</section>
+
+{# --- gráficos --- #}
+<div class="painel-grid">
+  <section class="card card--pad" aria-labelledby="h-serie">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 class="ctitle" id="h-serie" style="font-size:16px">Alunos ativos por mês</h2><div class="csub">{{ serie.periodo }} · <span class="nowrap-frase">meta {{ serie.meta }} marcada em amarelo</span></div></div>
+      <div class="row-flex gap-3"><span class="chip chip--green d-only">+{{ k.ano_delta }}% no ano</span><a class="fw-7 row-flex gap-1" style="font-size:13px;white-space:nowrap" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos {{ icon('chevron-right', 16) }}</a></div>
+    </div>
+    {# link: clicar no gráfico (ou tocar duas vezes no mesmo mês, no celular) leva aos alunos ativos; o balão mostra o % da meta #}
+    <div class="chart" style="margin-top:12px" data-chart="linha" data-json='{{ {"labels": serie.labels, "valores": serie.valores, "meta": serie.meta, "unidade": "alunos", "titulo": "Alunos ativos por mês", "metaPct": true, "link": url_for("alunos.lista", status="ativos"), "linkRotulo": "ver alunos ativos"}|tojson|forceescape }}'></div>
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-fat" data-seg-grupo>
+    <h2 class="ctitle" id="h-fat" style="font-size:16px">De onde vem o faturamento</h2>
+    <div class="csub">Participação de cada plano no mês</div>
+    {# a barra tem links (toque), então não pode ser role=img: o resumo vai num texto só pro leitor de tela e a barra fica aria-hidden (as linhas abaixo são os links acessíveis) #}
+    <span class="visually-hidden">{% for p in planos_fat %}{{ p.nome }} {{ p.pct }}%{{ ', ' if not loop.last }}{% endfor %}</span>
+    <div class="stackbar" style="margin:14px 0 6px" aria-hidden="true">
+      {% for p in planos_fat %}<a href="{{ url_for('planos.lista', destaque=p.plano_id) }}" tabindex="-1" aria-hidden="true" data-seg="{{ p.plano_id }}" data-dica="{{ p.nome }} · {{ p.pct }}% · {{ brl(p.valor, 0) }}" style="flex:{{ p.pct }};background:var(--{{ p.cor }})">{{ p.pct ~ '%' if p.pct >= 10 }}</a>{% endfor %}
+    </div>
+    <ul class="mlist" style="margin-top:6px" data-fit-grupo>
+      {% for p in planos_fat %}
+      {# o gráfico mostra PLANOS, então cada linha leva pra tela de Planos com aquele plano em destaque (planos?destaque=id). Linha inteira clicável (stretched-link) #}
+      <li class="plan-row plan-row--link" data-seg="{{ p.plano_id }}">
+        <span class="sw" style="background:var(--{{ p.cor }})"></span>
+        <span class="plan-row__nome" data-fit><b><a class="stretched-link" href="{{ url_for('planos.lista', destaque=p.plano_id) }}">{{ p.nome }}</a></b><small>{{ p.alunos }} {{ 'diárias' if p.avulso else 'alunos' }}{% if p.dias %} · {{ p.dias }}<span class="txt-longo"> dias</span><span class="txt-curto">d</span>{% endif %}</small></span>
+        <span class="plan-row__bar bar d-only"><div style="width:{{ p.pct }}%;background:var(--{{ p.cor }})"></div></span>
+        <b class="plan-row__valor tab-num">{{ brl(p.valor, 0) }}</b>
+        {{ icon('chevron-right', 16) }}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+{# --- tabela gerencial (desktop) --- #}
+<section class="card card--flush d-only" aria-labelledby="h-alunos">
+  <div class="card__head"><h2 class="ctitle" id="h-alunos" style="font-size:16px">Alunos</h2><a class="fw-7 row-flex gap-1" style="font-size:13px" href="{{ url_for('alunos.lista') }}">Ver todos {{ icon('chevron-right', 16) }}</a></div>
+  <div class="table-scroll">
+    <table class="dtable">
+      <thead><tr><th scope="col">Aluno</th><th scope="col">Plano</th><th scope="col">Vencimento</th><th scope="col">Status</th><th scope="col" class="col-actions">Ações</th></tr></thead>
+      <tbody>
+        {% for a in alunos %}
+        {# a linha inteira abre o perfil (data-href, interacoes.js); o nome continua sendo um link de verdade pra teclado e leitor de tela #}
+        <tr class="row-link" data-href="{{ url_for('alunos.detalhe', id=a.id) }}">
+          <td><div class="cell-person">{{ avatar(a.nome) }}<a class="row-link__nome" href="{{ url_for('alunos.detalhe', id=a.id) }}"><b>{{ a.nome }}</b></a></div></td>
+          <td>{{ a.plano }}</td>
+          <td>{% if a.vencido %}<b class="bad">Venceu {{ a.vence }}</b>{% else %}{{ a.vence }}{% endif %}</td>
+          <td>{{ chip_status(a.status) }}</td>
+          <td class="col-actions"><span class="actions">
+            <button type="button" class="iconbtn iconbtn--green" data-toast="WhatsApp aberto para {{ a.nome.split()[0] }}." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>
+          </span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<dialog class="vt-dialog" id="dlg-avaliacoes-hoje" aria-labelledby="dlg-avh-t">
+  <span class="vt-dialog__grip"></span>
+  <div class="vt-dialog__head">
+    <div class="row-flex gap-3" style="align-items:flex-start"><span class="tile tone-green">{{ icon('calendar-plus', 22) }}</span>
+      <div><h2 class="vt-dialog__title" id="dlg-avh-t">Avaliações de hoje</h2><div class="vt-dialog__sub">2 avaliações agendadas para hoje</div></div></div>
+    <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
+  </div>
+  <div class="vt-dialog__body">
+    <ul class="pop-list">
+      <li class="pop-item">{{ avatar('Camila Duarte', 'sm', 'green') }}<div class="grow"><b class="truncate" style="display:block">Camila Duarte</b><span class="pop-item__linha tone-txt-green">09:00 · Reavaliação de 90 dias · Confirmada</span></div>
+        <button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="Mensagem de WhatsApp aberta para Camila." aria-label="Chamar Camila no WhatsApp">{{ icon('chat', 20) }}</button></li>
+      <li class="pop-item">{{ avatar('Pedro Henrique', 'sm', 'yellow') }}<div class="grow"><b class="truncate" style="display:block">Pedro Henrique</b><span class="pop-item__linha tone-txt-yellow">14:30 · Primeira avaliação · A confirmar</span></div>
+        <button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="Mensagem de WhatsApp aberta para Pedro." aria-label="Chamar Pedro no WhatsApp">{{ icon('chat', 20) }}</button></li>
+    </ul>
+  </div>
+  <div class="vt-dialog__foot">
+    <a class="btn btn-primary btn-block" href="{{ url_for('avaliacoes.agenda') }}">Ver agenda completa</a>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block dialogs %}
+{% include 'painel/_modais_rapidos.html' %}
+{% include 'painel/_modais_cards.html' %}
+{% endblock %}

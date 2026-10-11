@@ -1,0 +1,20 @@
+{#
+  Popup "Entrar com digital" — oferecido UMA vez por aparelho, logo depois de entrar com senha.
+  O backend liga com a variável oferecer_digital (no mock: session.pop('oferecer_digital') logo após o login com senha).
+  Só aparece se o aparelho tiver leitor de digital/rosto (static/js/digital.js confere antes de abrir).
+#}
+{% from '_macros/icons.html' import icon %}
+{% if oferecer_digital %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-digital" aria-labelledby="t-digital" data-oferecer>
+  <div class="vt-dialog__grip" aria-hidden="true"></div>
+  <div class="vt-dialog__body ta-c" style="padding-top:22px">
+    <span class="tile tone-blue digital-tile" aria-hidden="true">{{ icon('digital', 30) }}</span>
+    <h2 class="vt-dialog__title" id="t-digital" style="margin-top:14px">Entrar com a digital?</h2>
+    <p class="muted" style="margin:6px 0 0">Da próxima vez, é só encostar o dedo (ou olhar pro celular). Sua digital não sai do aparelho: o sistema guarda só uma chave de segurança.</p>
+  </div>
+  <div class="vt-dialog__foot stack gap-2">
+    <button type="button" class="btn btn-primary btn-lg btn-block" data-digital-sim>{{ icon('digital', 20) }}Ativar digital</button>
+    <button type="button" class="btn btn-ghost btn-block" data-close>Agora não</button>
+  </div>
+</dialog>
+{% endif %}
