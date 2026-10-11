@@ -1,0 +1,90 @@
+/* ==========================================================================
+   Vale Tec — tokens do Design System
+   Fonte da verdade: "57 · Sistema de design" (Figma). Cor NUNCA sai de hex solto:
+   use sempre var(--...). Se faltar uma cor, o problema é o design, não o código.
+   ========================================================================== */
+
+/* Fontes locais (self-hosted): o painel não depende de CDN nem de Google Fonts */
+@font-face{font-family:'Plus Jakarta Sans';font-weight:400;font-style:normal;font-display:swap;src:url('../fonts/plus-jakarta-sans-latin-400-normal.woff2') format('woff2');}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:500;font-style:normal;font-display:swap;src:url('../fonts/plus-jakarta-sans-latin-500-normal.woff2') format('woff2');}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:600;font-style:normal;font-display:swap;src:url('../fonts/plus-jakarta-sans-latin-600-normal.woff2') format('woff2');}
+@font-face{font-family:'Plus Jakarta Sans';font-weight:700;font-style:normal;font-display:swap;src:url('../fonts/plus-jakarta-sans-latin-700-normal.woff2') format('woff2');}
+@font-face{font-family:'Sora';font-weight:600;font-style:normal;font-display:swap;src:url('../fonts/sora-latin-600-normal.woff2') format('woff2');}
+@font-face{font-family:'Sora';font-weight:700;font-style:normal;font-display:swap;src:url('../fonts/sora-latin-700-normal.woff2') format('woff2');}
+@font-face{font-family:'Sora';font-weight:800;font-style:normal;font-display:swap;src:url('../fonts/sora-latin-800-normal.woff2') format('woff2');}
+
+:root{
+  /* AZUL DA LOGO Vale Tec — #1977C4 é o hex exato tirado do arquivo da marca */
+  --navy:#0B3456; --navy-deep:#08243B; --navy-soft:rgba(255,255,255,.1);
+  --blue:#1977C4; --blue-dark:#125891; --blue-bg:#E7F1F8; --blue-100:#C8DDEF; --blue-300:#8BBCE4; --blue-500:#3898E6;
+  /* AMARELO DA LOGO — #F7BE23 é ORNAMENTO. Em gráfico use --yellow-chart, em texto --yellow-ink */
+  --yellow:#F7BE23; --yellow-ink:#8E6905; --yellow-chart:#C59207; --yellow-bg:#FEF3D8;
+  /* apoio */
+  --teal:#0E9B84; --teal-bg:#E1F4F0;
+  --aging-1:#FCE5B0; --aging-2:#EFB13E; --aging-3:#C4600F; --aging-4:#8F2D26; --orange:#C2610F; --orange-bg:#FBEDE2;
+  /* status */
+  --green:#12855F; --green-bg:#E2F3EC; --green-line:#BFE3D4;
+  --red:#C9453D; --red-bg:#FBEAE9;
+  --slate:#5D7793; --slate-bg:#EDF2F7;
+  /* superfícies e texto — todos na matiz 207 da marca */
+  --bg:#EEF4F9; --card:#FFFFFF; --field:#F6F9FB;
+  /* --text-faint era #8EA3B4 (2.6:1 no branco, reprovado no WCAG AA). #597287 passa 4.5:1 no branco, no campo e no fundo da página */
+  --text:#102637; --text-soft:#546E83; --text-faint:#597287;
+  --border:#D3DFE9; --grid:#E7EEF3;
+  /* TINTA (texto) de cada cor de status sobre o próprio fundo claro: mesma matiz, um pouco mais escura, pra passar 4.5:1.
+     A cor base continua igual em preenchimentos, ícones e gráficos; só texto em chip/avatar/tile usa a tinta. */
+  --green-ink:#117C59; --blue-ink:#1870B9; --red-ink:#C13E36; --slate-ink:#58708B; --teal-ink:#0B7B69; --orange-ink:#AB560D;
+  /* texto claro sobre o azul-marinho (cabeçalho mobile, rail) */
+  --on-navy:#FFFFFF; --on-navy-soft:#A9C4E0;
+
+  /* tipografia */
+  --font-body:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-num:'Sora',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+
+  /* forma */
+  --r-card:18px; --r-field:11px; --r-btn:11px; --r-tile:11px; --r-pill:100px; --r-sheet:26px;
+  --shadow-card:0 1px 2px rgba(8,42,77,.04),0 10px 24px -8px rgba(8,42,77,.10);
+  --shadow-pop:0 24px 60px -12px rgba(8,36,59,.35);
+
+  /* espaço (escala de 4) */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:20px; --s-6:24px; --s-8:32px; --s-10:40px;
+
+  /* movimento: curva expo-out, sem bounce; ≤ 300ms em interação */
+  --ease-out:cubic-bezier(.16,1,.3,1);
+  --t-fast:140ms; --t-base:220ms; --t-slow:320ms;
+
+  /* foco visível — obrigatório (nada de outline:none) */
+  --focus-ring:0 0 0 3px rgba(56,152,230,.55);
+
+  /* layout */
+  --rail-w:84px; --page-pad:40px; --tabbar-h:64px;
+
+  /* COR DE TEXTO por papel (camada semântica). No claro é a própria cor da marca; no escuro vira o tom claro dela.
+     Regra: texto colorido usa -txt; preenchimento, ícone em botão e gráfico usam a cor base. */
+  --navy-txt:var(--navy); --blue-txt:var(--blue); --blue-dark-txt:var(--blue-dark); --red-txt:var(--red); --green-txt:var(--green);
+  color-scheme:light;
+}
+
+/* ==========================================================================
+   MODO ESCURO — mesma marca, outra luz. data-tema="escuro" é posto no <html> pelo static/js/tema.js ANTES do 1º quadro
+   (sem piscar branco). Escolha: Configurações > Aparência (Automático segue o aparelho / Claro / Escuro).
+   Regras (skills impeccable + dataviz):
+   · nunca preto puro: superfícies na MESMA matiz 207 do azul da marca, só muda a luz — fundo 9% < cartão 13% < campo 16%
+     (no escuro, o que está "mais perto" é mais claro; sombra quase não aparece);
+   · só a camada semântica muda (superfície, texto, tintas, -txt); azul, amarelo e verde da marca continuam os mesmos;
+   · todo par texto/fundo validado ≥ 4.5:1 (WCAG AA) — script em _dev/testes (test_contraste_do_escuro).
+   ========================================================================== */
+:root[data-tema="escuro"]{
+  color-scheme:dark;
+  --bg:#0B1722; --card:#12212E; --field:#182A39; --grid:#1D3142; --border:#2A3E50;
+  --text:#E7EEF4; --text-soft:#AFC2D2; --text-faint:#93A9BC;
+  --navy-txt:#DCEAF6; --blue-txt:#7FC0F5; --blue-dark-txt:#A8D4FA; --red-txt:#FF968D; --green-txt:#6FD8AA;
+  --blue-bg:#123150; --blue-100:#22446A;
+  --green-bg:#0F3427; --green-line:#1E5A43; --red-bg:#3B1C1D; --yellow-bg:#352B10; --slate-bg:#1C2D3D; --teal-bg:#0D332E; --orange-bg:#3A2412;
+  --blue-ink:#7FC0F5; --green-ink:#6FD8AA; --red-ink:#FF968D; --slate-ink:#B4C6D6; --teal-ink:#5FD6C1; --orange-ink:#F5A766; --yellow-ink:#F2C94C;
+  --yellow-chart:#D6A21A;
+  --navy-soft:rgba(255,255,255,.08);
+  --shadow-card:0 1px 2px rgba(0,0,0,.35),0 10px 24px -12px rgba(0,0,0,.6);
+  --shadow-pop:0 24px 60px -12px rgba(0,0,0,.75);
+  --focus-ring:0 0 0 3px rgba(56,152,230,.6);
+}
