@@ -22,6 +22,9 @@ from datetime import date
 
 from app.helpers.conta import da_conta
 from app.models import Aluno, Pagamento, Plano
+# [back-07-alunos] a regra de vencimento e de status saiu daqui para o situacao_service,
+# para o painel e as telas de alunos usarem a mesma.
+from app.services.situacao_service import data_curta as _dm, linha_do_aluno as _linha_aluno
 
 DIAS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
 MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
@@ -29,13 +32,6 @@ MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'a
 # cores do gráfico "De onde vem o faturamento", do plano que mais rende para o que menos rende
 CORES_PLANOS = ['blue-dark', 'blue', 'blue-500', 'blue-300', 'blue-100']
 MESES_NO_GRAFICO = 9
-
-
-def _dm(d, hoje=None):
-    """Data curta. Mostra o ano quando ele não é o atual: num plano anual, '20/09' pareceria já vencido."""
-    if hoje is not None and d.year != hoje.year:
-        return d.strftime('%d/%m/%y')
-    return d.strftime('%d/%m')
 
 
 def _mes_anterior(ano, mes):
@@ -51,30 +47,6 @@ def _pct(novo, antigo):
     if not antigo:
         return None
     return round((novo - antigo) / antigo * 100)
-
-
-def _linha_aluno(aluno, vencimento, hoje):
-    """Um aluno no formato que os templates do painel esperam."""
-    vencido = bool(aluno.ativo and vencimento and vencimento < hoje)
-    if not aluno.ativo:
-        status = 'inativo'
-    elif vencido:
-        status = 'pendente'
-    else:
-        status = 'ativo'
-    plano = aluno.plano
-    return {
-        'id': aluno.id,
-        'nome': aluno.nome or 'Aluno sem nome',
-        'plano': plano.nome if plano else 'Sem plano',
-        'valor': float(plano.valor) if plano else 0.0,
-        'telefone': aluno.telefone or '',
-        'vence': _dm(vencimento, hoje) if vencimento else '—',
-        'vence_txt': (('Venceu ' if vencido else 'Vence ') + _dm(vencimento, hoje)) if vencimento else 'Sem pagamento registrado',
-        'vencido': vencido,
-        'dias_atraso': (hoje - vencimento).days if vencido else 0,
-        'status': status,
-    }
 
 
 def montar_painel(hoje=None):
