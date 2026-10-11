@@ -4,7 +4,9 @@ from app.helpers.date_helper import is_aniversariante
 def obter_dados_dashboard():
     alunos = Aluno.query.all()
 
-    ativos = sum(1 for a in alunos if a.ativo == 'ativo')
+    # [back-02-limpeza] antes: a.ativo == 'ativo'. A coluna é True/False, nunca o texto 'ativo',
+    # então a contagem de alunos ativos do painel dava sempre zero.
+    ativos = sum(1 for a in alunos if a.ativo)
     aniversariantes = sum(1 for a in alunos if is_aniversariante(a.data_nascimento))
 
     return {

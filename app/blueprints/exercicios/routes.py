@@ -60,7 +60,9 @@ def editarExercicio(exercicio_id):
         try:
             ExercicioService.editar_exercicio(exercicio_id,dados)
             flash('Exercicio atualizado com sucesso!')
-            return redirect(url_for('exercicios.listarPlanos'))
+            # [back-02-limpeza] antes: url_for('exercicios.listarPlanos'), endpoint que não existe.
+            # Salvar a edição de um exercício dava BuildError (erro 500).
+            return redirect(url_for('exercicios.listarExercicios'))
         except BusinessError as e:
             flash(str(e), "error")
 

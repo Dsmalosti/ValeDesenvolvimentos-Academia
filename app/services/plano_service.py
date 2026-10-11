@@ -6,7 +6,7 @@ class PlanoService:
 
     @staticmethod
     def criar_plano(dados, instrutor_id):
-        print("CRIANDO PLANO:", dados)
+        # [back-02-limpeza] antes: print("CRIANDO PLANO:", dados)
 
         """
         Docstring for criar_plano
