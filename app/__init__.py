@@ -56,6 +56,20 @@ def create_app():
     app.register_blueprint(pagamentos_blueprint)
     app.register_blueprint(auth_blueprint)  # [back-01-auth-login]
 
+    # [back-04-painel] painel do front novo, e as seções que ainda não têm backend
+    # (cada uma responde "em construção" até a tela de verdade entrar).
+    from app.blueprints.painel.routes import painel_blueprint
+    from app.blueprints.pendentes import blueprints_pendentes
+    app.register_blueprint(painel_blueprint)
+    for blueprint_pendente in blueprints_pendentes():
+        app.register_blueprint(blueprint_pendente)
+
+    # [back-04-painel] `usuario` e `academia` em todo template, e páginas de erro do front novo.
+    from app.helpers.contexto import registrar_contexto
+    from app.helpers.erros import registrar_paginas_de_erro
+    registrar_contexto(app)
+    registrar_paginas_de_erro(app)
+
     # Models (necessário para migrations)
     from app import models
 

@@ -1,7 +1,7 @@
 """Testes da branch back-02-limpeza: os defeitos que quebravam telas ou sujavam o log."""
 from app.models import Ficha, Plano
 from tests.conftest import (contar, criar_aluno, criar_exercicio, criar_ficha, criar_plano,
-                            criar_usuario, logar)
+                            criar_usuario, logar, numero_do_card)
 
 
 def test_editar_exercicio_volta_para_a_lista(cliente):
@@ -39,7 +39,7 @@ def test_painel_conta_os_alunos_ativos(cliente):
     pagina = cliente.get("/")
 
     assert pagina.status_code == 200
-    assert _total_de_ativos(pagina.get_data(as_text=True)) == 2
+    assert numero_do_card(pagina.get_data(as_text=True), 'Alunos ativos') == '2'
 
 
 def test_criar_plano_nao_imprime_dados_do_formulario(cliente, capsys):
@@ -54,11 +54,3 @@ def test_criar_plano_nao_imprime_dados_do_formulario(cliente, capsys):
     saida = capsys.readouterr()
     assert saida.out == ""
     assert "Plano Secreto" not in saida.err
-
-
-def _total_de_ativos(html):
-    """Lê do painel antigo (templates/notificacao.html) o número do card de alunos ativos."""
-    import re
-    achado = re.search(r"Alunos\s+ativos.*?<[^>]+>\s*(\d+)\s*<", html, re.S | re.I)
-    assert achado, "não achei o card de alunos ativos no painel"
-    return int(achado.group(1))

@@ -11,7 +11,7 @@ exercicios_blueprint = Blueprint('exercicios', __name__, url_prefix='/exercicios
 exigir_login_em(exercicios_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
 # [back-03-isolamento] ATENÇÃO: o exercício ainda NÃO é filtrado por conta. A tabela não tem a
 # coluna do dono, então hoje é um catálogo único, que qualquer academia logada vê, edita e apaga.
-# Resolver isso pede coluna nova (migration) e está na back-05-contas-e-papeis.
+# Resolver isso pede coluna nova (migration) e está na back-06-contas-e-papeis.
 
 # Rota criar exercicio
 @exercicios_blueprint.route('/criar/', methods=['GET', 'POST'])
@@ -84,8 +84,11 @@ def excluirExercicio(exercicio_id):
         flash(str(e), "error")
         
     return redirect(url_for('exercicios.listarExercicios'))
-    
 
 
-
-
+# ---------------------------------------------------------------------------
+# [back-04-painel] PONTE TEMPORÁRIA para o front novo (veja a explicação em alunos/routes.py).
+# ---------------------------------------------------------------------------
+@exercicios_blueprint.route('')
+def lista():
+    return redirect(url_for('exercicios.listarExercicios'))
