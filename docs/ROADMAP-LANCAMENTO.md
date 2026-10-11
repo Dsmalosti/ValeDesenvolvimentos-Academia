@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase A em andamento. Feito tudo o que não depende de autorização; **parado na `back-04`, esperando as respostas da seção [O que está parado esperando o Adauto](#o-que-está-parado-esperando-o-adauto).** |
+| **Estado** | Fase A em andamento. Feito tudo o que não depende de autorização (até a `back-03`); **parado na `back-04`, esperando as respostas da seção [O que está parado esperando o Adauto](#o-que-está-parado-esperando-o-adauto).** |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -24,8 +24,9 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | Branch | O que entrega | PR | Estado |
 |---|---|---|---|---|
 | [x] | `front-01` | Tela de login nova, correção de popups do iPhone, `CLAUDE.md` e skills | [#8](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/8) → `main` | Aguardando revisão do Diogo |
-| [x] | `back-01-auth-login` | Login e logout de verdade (tarefas 1.1 a 1.5) | a abrir → `front-01` | Push feito; falta abrir o PR |
-| [x] | `back-02-limpeza` | Defeitos que quebravam telas, `print()` com dados, `.gitignore`, primeiros testes automáticos | a abrir → `back-01-auth-login` | Push feito; falta abrir o PR |
+| [x] | `back-01-auth-login` | Login e logout de verdade (tarefas 1.1 a 1.5) | [#9](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/9) → `front-01` | Aguardando revisão do Diogo |
+| [x] | `back-02-limpeza` | Defeitos que quebravam telas, `print()` com dados, `.gitignore`, primeiros testes automáticos | [#10](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/10) → `back-01-auth-login` | Aguardando revisão do Diogo |
+| [x] | `back-03-isolamento` | Uma academia não enxerga a outra; login obrigatório em tudo; nenhum GET apaga dados | [#11](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/11) → `back-02-limpeza` | Aguardando revisão do Diogo |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -36,7 +37,7 @@ Nenhuma tela logada do front novo entra antes disto. São as tarefas das etapas 
 | | Branch | O que entrega | Tarefas | Pronto quando | Trava |
 |---|---|---|---|---|---|
 | [x] | `back-02-limpeza` | Redirect para rota inexistente nos exercícios, `/excuir/` nas fichas, `print()` com dados de formulário, contagem de ativos do painel, `.gitignore`. Pasta `tests/`. | 2.1, 2.2, 2.4, parte da 2.5 | Feito. | — |
-| [ ] | `back-03-isolamento` | Uma academia não enxerga nada da outra: as consultas passam por um filtro de conta único; login obrigatório em todas as rotas; nenhuma rota GET apaga ou altera dados. Sem migration. | 3.1, 3.3, 3.4 | Logado na conta A, abrir qualquer `/…/<id da conta B>` dá 404. Teste automático para cada rota com id. | — |
+| [x] | `back-03-isolamento` | Uma academia não enxerga nada da outra: as consultas passam por um filtro de conta único; login obrigatório em todas as rotas; nenhuma rota GET apaga ou altera dados. Sem migration. | 3.1 (parte), 3.3, 3.4 | Feito, com 15 testes "conta A × conta B". Ficou para a `back-05` o que pede migration: exercício com dono e unicidade de e-mail e CPF por academia. | — |
 | [ ] | `back-04-repo-e-config` | Tira do git os 100 `.pyc` e o `instance/database.db`. Limpa o `requirements.txt` (o `mysql-connector` não instala em Python novo) e cria o `requirements-dev.txt` com o `pytest`. Um nome só para a variável do banco. `SECRET_KEY` sem valor padrão. | 2.5, 1.7, 2.3, 3.8 | `git ls-files` sem `.pyc`; `pip install -r requirements.txt` roda limpo num ambiente novo; o app não sobe se faltar segredo. | ⏸ A2, A3, A4 |
 | [ ] | `back-05-contas-e-papeis` | Separa **conta** (a academia) de **usuário** (dono, recepção, instrutor). Coluna `papel` e bloqueio no servidor das telas de dono. E-mail e CPF de aluno únicos por academia. Exercício com dono. `instrutor_id` obrigatório. | 3.2, 3.5, 3.6 | Dois usuários da mesma conta veem os mesmos alunos; o instrutor recebe 403 em relatórios e configurações. | ⏸ A1; T1; D1 |
 | [ ] | `front-02-layout` | O layout das telas logadas: `base.html` novo, cabeçalho, menu, rodapé e páginas de erro. O `base.html` antigo é renomeado (não apagado) para as telas antigas continuarem abrindo até serem trocadas. | — | Os arquivos batem com os do Drive; as telas antigas continuam iguais. | ⏸ A5 |
@@ -129,7 +130,7 @@ Decisões de negócio ou de conta externa. Nenhuma é técnica: só você pode r
 | # | Decisão | O que trava | Sugestão |
 |---|---|---|---|
 | T1 | Tabela `contas` separada, ou `conta_id` apontando para o dono? | `back-05` e tudo depois | Tabela `contas`: é onde ficam os dados da academia |
-| T2 | O Diogo revisa branch por branch, na ordem, ou em lotes? PR empilhado só anda se o anterior for aprovado. Hoje há 3 PRs na fila. | O ritmo de todo o roadmap | Combinar um dia fixo de revisão |
+| T2 | O Diogo revisa branch por branch, na ordem, ou em lotes? PR empilhado só anda se o anterior for aprovado. Hoje há 4 PRs na fila. | O ritmo de todo o roadmap | Combinar um dia fixo de revisão |
 | T3 | Aluno: `ativo` sim/não, ou `status` (ativo, pausado, cancelado)? | `back-08` e o relatório de cancelamento | `status`, se o motivo de cancelamento for entrar nos relatórios |
 | T4 | Qualquer pessoa pode abrir `/instrutores/cadastro/` e criar uma conta de academia nova. Fica aberto até o lançamento ou fecha já? | `back-05` | Fechar quando a D9 for respondida |
 
@@ -150,6 +151,8 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | O popup de perfil do login fecha com Esc ou "voltar" antes do primeiro toque, deixando o formulário sem perfil | front | Some com a remoção do popup (`back-19`) |
 | Erro "Transition was skipped" no console ao sair da tela de login para uma tela do layout antigo | front (transição entre páginas) | Conferir de novo depois de `back-06` |
 | A checagem de e-mail repetido ao editar aluno olha todas as academias e, pela mensagem, revela que o e-mail existe em outra | `aluno_service.py` | `back-05` (tarefa 3.5) |
+| O exercício não tem dono: é um catálogo único que qualquer academia logada edita e apaga | `models.py` | `back-05` |
+| Aluno ou plano antigo sem dono (`instrutor_id` vazio) fica invisível, e as fichas dele também. Conferir no banco de produção antes do deploy | banco | `back-05` e Fase D |
 
 ## Registro de atualizações
 
@@ -157,3 +160,5 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 |---|---|
 | 10/10/2026 | Criado na Etapa 0. `front-01` (PR #8) e `back-01-auth-login` enviadas. |
 | 10/10/2026 | OK do Adauto para seguir com o que não depende de decisão. `back-02-limpeza` enviada. A limpeza que depende de autorização virou a `back-04-repo-e-config`, e as branches seguintes foram renumeradas. Entrou a seção "O que está parado esperando o Adauto". |
+| 10/10/2026 | `back-03-isolamento` enviada. Entraram os achados sobre exercício sem dono e registros antigos sem dono. |
+| 10/10/2026 | PRs abertos: #9 (`back-01`), #10 (`back-02`) e #11 (`back-03`). |

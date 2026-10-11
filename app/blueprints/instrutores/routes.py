@@ -1,7 +1,8 @@
 from app.extensions.database import db
 from app.extensions.security import bcrypt
-from flask import Blueprint,render_template, url_for, request, redirect, flash
+from flask import Blueprint,render_template, url_for, request, redirect, flash, abort
 from flask_login import login_user, logout_user, current_user, login_required
+from app.helpers.conta import conta_id
 from app.blueprints.instrutores.form import UserForm, LoginForm
 from app.models import User, Aluno
 from wtforms.validators import Optional, DataRequired
@@ -40,7 +41,10 @@ def cadastroInstrutor():
 @instrutores_blueprint.route('/lista/')
 @login_required
 def listarInstrutores():
-    instrutores = User.query.all()
+    # [back-03-isolamento] antes: User.query.all(). A lista mostrava o nome e o e-mail dos
+    # usuários de TODAS as academias. Hoje a conta é o próprio usuário, então a lista tem só
+    # ele; quando existir a tabela `contas` (tarefa 3.2), passa a listar a equipe da academia.
+    instrutores = User.query.filter_by(id=conta_id()).all()
 
     return render_template('instrutor-lista.html', instrutores=instrutores)
 
@@ -48,6 +52,11 @@ def listarInstrutores():
 @instrutores_blueprint.route('/editar/<int:instrutor_id>', methods=['GET','POST'])
 @login_required
 def editarInstrutor(instrutor_id):
+    # [back-03-isolamento] antes: User.query.get_or_404(instrutor_id). Qualquer pessoa logada
+    # trocava o e-mail e a senha do dono de OUTRA academia mudando o número na URL, e assim
+    # tomava a conta dele. Agora só dá para editar o próprio usuário; o resto responde 404.
+    if instrutor_id != conta_id():
+        abort(404)
     instrutor = User.query.get_or_404(instrutor_id)
     form = UserForm(obj=instrutor)
     form.senha.validators = [Optional()]  # remove a obrigatoriedade da senha na edição
@@ -74,6 +83,10 @@ def editarInstrutor(instrutor_id):
 @instrutores_blueprint.route('/excluir/<int:instrutor_id>', methods=['POST'])
 @login_required
 def excluirInstrutor(instrutor_id):
+    # [back-03-isolamento] antes: excluía qualquer id. Qualquer pessoa logada apagava o usuário
+    # de outra academia. Agora só o próprio usuário; o resto responde 404.
+    if instrutor_id != conta_id():
+        abort(404)
     try:
         InstrutorService.excluir_instrutor(instrutor_id)
         flash('Instrutor excluido com sucesso')

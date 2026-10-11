@@ -5,8 +5,10 @@ from app.blueprints.alunos.form import AlunoForm
 from app.services.aluno_service import AlunoService
 from app.models import Aluno
 from app.exceptions import BusinessError
+from app.helpers.conta import exigir_login_em
 
 alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos', template_folder='templates')
+exigir_login_em(alunos_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
 
 
 # Rota cadastro aluno
