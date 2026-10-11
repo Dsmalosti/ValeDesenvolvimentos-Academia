@@ -31,7 +31,7 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
+from app.models import Aluno, Conta, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -66,10 +66,27 @@ def _salvar(objeto):
         return objeto.id
 
 
-def criar_usuario(email, nome="Usuario", ativo=True):
-    """Cria um usuário (hoje cada usuário é uma academia). Devolve o id."""
-    return _salvar(User(nome=nome, sobrenome="Teste", email=email, ativo=ativo,
+def criar_conta(nome="Academia Teste", modelo="academia"):
+    """Cria uma conta (academia) vazia. Devolve o id."""
+    return _salvar(Conta(nome=nome, modelo=modelo))
+
+
+def criar_usuario(email, nome="Usuario", ativo=True, conta=None, papel="proprietario"):
+    """
+    Cria um usuário. Sem `conta`, cria também uma academia nova só para ele (é o dono).
+    Com `conta` (um id), o usuário entra na equipe daquela academia, com o `papel` informado.
+    Devolve o id do usuário.
+    """
+    if conta is None:
+        conta = criar_conta(nome=f"Academia de {nome}")
+    return _salvar(User(nome=nome, sobrenome="Teste", email=email, ativo=ativo, conta_id=conta, papel=papel,
                         senha=bcrypt.generate_password_hash(SENHA_TESTE).decode("utf-8")))
+
+
+def conta_de(usuario_id):
+    """Id da conta (academia) de um usuário."""
+    with _APP.app_context():
+        return db.session.get(User, usuario_id).conta_id
 
 
 def logar(cliente, usuario_id):
@@ -80,24 +97,27 @@ def logar(cliente, usuario_id):
 
 
 def criar_plano(dono_id, nome="Mensal"):
-    return _salvar(Plano(nome=nome, valor=100, duracao_dias=30, descricao="", ativo=True, instrutor_id=dono_id))
+    return _salvar(Plano(nome=nome, valor=100, duracao_dias=30, descricao="", ativo=True, instrutor_id=dono_id,
+                         conta_id=conta_de(dono_id)))
 
 
 def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=None, nascimento=date(1990, 1, 1)):
     aluno = Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo,
-                  data_nascimento=nascimento, plano_id=plano_id, instrutor_id=dono_id)
+                  data_nascimento=nascimento, plano_id=plano_id, instrutor_id=dono_id, conta_id=conta_de(dono_id))
     if cadastrado_em:  # um `date`; sem isso o banco usa o momento atual
         aluno.data_cadastro = datetime(cadastrado_em.year, cadastrado_em.month, cadastrado_em.day)
     return _salvar(aluno)
 
 
 def criar_pagamento(dono_id, aluno_id, valor, pago_em, vence_em):
-    return _salvar(Pagamento(aluno_id=aluno_id, instrutor_id=dono_id, valor=valor, forma_pagamento="pix",
+    return _salvar(Pagamento(aluno_id=aluno_id, instrutor_id=dono_id, conta_id=conta_de(dono_id), valor=valor, forma_pagamento="pix",
                              data_pagamento=pago_em, data_vencimento=vence_em))
 
 
-def criar_exercicio(nome="Supino"):
-    return _salvar(Exercicio(nome=nome, grupo_muscular="peito", ativo=True))
+def criar_exercicio(nome="Supino", dono_id=None):
+    """Sem `dono_id`, o exercício é do catálogo padrão (todo mundo usa, ninguém edita)."""
+    return _salvar(Exercicio(nome=nome, grupo_muscular="peito", ativo=True,
+                             conta_id=conta_de(dono_id) if dono_id else None))
 
 
 def criar_ficha(aluno_id, nome="Ficha A"):

@@ -1,6 +1,7 @@
 from app.models import Exercicio
 from app.services.base_service import BaseService
 from app.exceptions import BusinessError
+from app.helpers.conta import conta_id, exercicios_proprios
 
 
 class ExercicioService:
@@ -18,7 +19,8 @@ class ExercicioService:
             grupo_muscular=dados["grupo_muscular"],
             descricao=dados.get("descricao"),
             video_url=dados.get("video_url"),
-            ativo=dados.get("ativo", True)
+            ativo=dados.get("ativo", True),
+            conta_id=conta_id(),   # [back-06-contas-e-papeis] o exercício nasce como da academia que o criou
         )
 
         return BaseService.salvar(exercicio)
@@ -35,7 +37,9 @@ class ExercicioService:
         :return: Description
         :rtype: Exercicio
         """
-        exercicio = Exercicio.query.get_or_404(exercicio_id)
+        # [back-06-contas-e-papeis] antes: Exercicio.query.get_or_404(id). Qualquer academia editava ou apagava o exercício
+        # de qualquer outra. Agora só os que a própria conta criou; o resto responde 404.
+        exercicio = exercicios_proprios().filter_by(id=exercicio_id).first_or_404()
 
         if not exercicio:
             raise BusinessError("Exercicio não encontrado")
@@ -65,7 +69,9 @@ class ExercicioService:
         :param exercicio_id: Description
         :type exercicio_id: int
         """
-        exercicio = Exercicio.query.get_or_404(exercicio_id)
+        # [back-06-contas-e-papeis] antes: Exercicio.query.get_or_404(id). Qualquer academia editava ou apagava o exercício
+        # de qualquer outra. Agora só os que a própria conta criou; o resto responde 404.
+        exercicio = exercicios_proprios().filter_by(id=exercicio_id).first_or_404()
 
         if not exercicio:
             raise BusinessError("Exercicio nao encontrado")

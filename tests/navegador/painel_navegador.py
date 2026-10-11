@@ -34,7 +34,7 @@ from werkzeug.serving import make_server  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Pagamento, Plano, User  # noqa: E402
+from app.models import Conta, Aluno, Pagamento, Plano, User  # noqa: E402
 
 EMAIL, SENHA = "marina@valetec.com", "Senha-de-teste-123"
 resultados = []
@@ -52,11 +52,14 @@ def montar_app():
     hoje = date.today()
     with app.app_context():
         db.create_all()
-        dona = User(nome="Marina", sobrenome="Albuquerque dos Santos", email=EMAIL, ativo=True,
+        conta = Conta(nome="Academia Corpo em Movimento")
+        db.session.add(conta)
+        db.session.flush()
+        dona = User(nome="Marina", sobrenome="Albuquerque dos Santos", email=EMAIL, ativo=True, conta_id=conta.id,
                     senha=bcrypt.generate_password_hash(SENHA).decode("utf-8"))
         db.session.add(dona)
         db.session.flush()
-        planos = [Plano(nome=n, valor=v, duracao_dias=d, descricao="", ativo=True, instrutor_id=dona.id)
+        planos = [Plano(nome=n, valor=v, duracao_dias=d, descricao="", ativo=True, instrutor_id=dona.id, conta_id=conta.id)
                   for n, v, d in [("Mensal", 149.90, 30), ("Trimestral", 399, 90), ("Anual", 1290, 365)]]
         db.session.add_all(planos)
         db.session.flush()
@@ -68,13 +71,13 @@ def montar_app():
         for i, (nome, p, dias_cad, dias_pag, ativo, niver) in enumerate(pessoas):
             nasc = date(1992, hoje.month, hoje.day) if niver else date(1990, 1, 1 + i)
             aluno = Aluno(nome=nome, email=f"aluno{i}@exemplo.com", cpf=f"cpf-{i}", telefone="(12) 98211-44%02d" % i,
-                          ativo=ativo, data_nascimento=nasc, plano_id=planos[p].id, instrutor_id=dona.id,
+                          ativo=ativo, data_nascimento=nasc, plano_id=planos[p].id, instrutor_id=dona.id, conta_id=conta.id,
                           data_cadastro=datetime.combine(hoje - timedelta(days=dias_cad), datetime.min.time()))
             db.session.add(aluno)
             db.session.flush()
             if dias_pag is not None:
                 pago = hoje - timedelta(days=dias_pag)
-                db.session.add(Pagamento(aluno_id=aluno.id, instrutor_id=dona.id, valor=planos[p].valor, forma_pagamento="pix",
+                db.session.add(Pagamento(aluno_id=aluno.id, instrutor_id=dona.id, conta_id=conta.id, valor=planos[p].valor, forma_pagamento="pix",
                                          data_pagamento=pago, data_vencimento=pago + timedelta(days=planos[p].duracao_dias)))
         db.session.commit()
     return app

@@ -5,7 +5,7 @@ from app.blueprints.planos.form import PlanoForm
 from app.models import Plano
 from app.services.plano_service import PlanoService
 from app.exceptions import BusinessError
-from app.helpers.conta import exigir_login_em
+from app.helpers.conta import DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
 planos_blueprint = Blueprint('planos', __name__, url_prefix='/planos', template_folder='templates')
 exigir_login_em(planos_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
@@ -13,6 +13,7 @@ exigir_login_em(planos_blueprint)  # [back-03-isolamento] toda rota daqui exige 
 #Rota criação planos
 @planos_blueprint.route('/criar/', methods=['GET', 'POST'])
 @login_required
+@papel_requerido(*DONO_E_RECEPCAO)  # [back-06-contas-e-papeis] plano e preço: instrutor só consulta
 def criarPlano():
 
 
@@ -43,16 +44,17 @@ def criarPlano():
 @planos_blueprint.route('/listar/')
 @login_required
 def listarPlanos():
-    planos = PlanoService.listar_planos(current_user.id)
+    planos = PlanoService.listar_planos()
 
     return render_template('plano-lista.html', planos=planos)
 
 # Rota editar plano
 @planos_blueprint.route('/editar/<int:plano_id>/', methods=['GET', 'POST'])
 @login_required
+@papel_requerido(*DONO_E_RECEPCAO)  # [back-06-contas-e-papeis] plano e preço: instrutor só consulta
 def editarPlano(plano_id):
     # filtra por instrutor_id também aqui, pelo mesmo motivo do aluno
-    plano = Plano.query.filter_by(id=plano_id, instrutor_id=current_user.id).first_or_404()
+    plano = da_conta(Plano).filter_by(id=plano_id).first_or_404()  # [back-06-contas-e-papeis] antes: instrutor_id=current_user.id
     form = PlanoForm(obj=plano)
 
     if form.validate_on_submit():
@@ -65,7 +67,7 @@ def editarPlano(plano_id):
         }
 
         try:
-            PlanoService.editar_plano(plano_id, dados, current_user.id)
+            PlanoService.editar_plano(plano_id, dados)
             flash('Plano atualizado com sucesso!')
             return redirect(url_for('planos.listarPlanos'))
         except BusinessError as e:
@@ -76,9 +78,10 @@ def editarPlano(plano_id):
 # Rota excluir plano
 @planos_blueprint.route('/excluir/<int:plano_id>', methods=['POST'])
 @login_required
+@papel_requerido(*DONO_E_RECEPCAO)  # [back-06-contas-e-papeis] plano e preço: instrutor só consulta
 def excluirPlano(plano_id):
     try:
-        PlanoService.excluir_plano(plano_id, current_user.id)
+        PlanoService.excluir_plano(plano_id)
         flash('Plano excluído com sucesso!', 'success')
     except BusinessError as e:
         flash(str(e), "error")

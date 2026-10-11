@@ -3,13 +3,14 @@ from datetime import date, timedelta
 from app.models import Pagamento, Aluno
 from app.services.base_service import BaseService
 from app.exceptions import BusinessError
+from app.helpers.conta import conta_id, da_conta
 
 
 class PagamentoService:
 
     @staticmethod
     def registrar_pagamento(aluno_id: int, dados: dict, instrutor_id: int) -> Pagamento:
-        aluno = Aluno.query.filter_by(id=aluno_id, instrutor_id=instrutor_id).first()
+        aluno = da_conta(Aluno).filter_by(id=aluno_id).first()  # [back-06-contas-e-papeis] antes: instrutor_id=instrutor_id
 
         if not aluno:
             raise BusinessError("Aluno não encontrado")
@@ -22,7 +23,8 @@ class PagamentoService:
 
         pagamento = Pagamento(
             aluno_id=aluno.id,
-            instrutor_id=instrutor_id,
+            instrutor_id=instrutor_id,   # [back-06-contas-e-papeis] agora é só "quem registrou"
+            conta_id=conta_id(),         # [back-06-contas-e-papeis] a academia dona do pagamento
             valor=dados["valor"],
             data_pagamento=data_pagamento,
             data_vencimento=data_vencimento,
@@ -33,9 +35,10 @@ class PagamentoService:
         return BaseService.salvar(pagamento)
 
     @staticmethod
-    def listar_pagamentos_aluno(aluno_id: int, instrutor_id: int):
-        return Pagamento.query.filter_by(
-            aluno_id=aluno_id, instrutor_id=instrutor_id
+    def listar_pagamentos_aluno(aluno_id: int):
+        # [back-06-contas-e-papeis] antes: Pagamento.query.filter_by(aluno_id=..., instrutor_id=instrutor_id)
+        return da_conta(Pagamento).filter_by(
+            aluno_id=aluno_id
         ).order_by(Pagamento.data_pagamento.desc()).all()
 
     @staticmethod
@@ -44,7 +47,7 @@ class PagamentoService:
         Retorna 'em_dia', 'vencido' ou 'sem_pagamento', baseado no
         vencimento mais recente entre os pagamentos do aluno.
         """
-        ultimo = Pagamento.query.filter_by(aluno_id=aluno.id).order_by(
+        ultimo = da_conta(Pagamento).filter_by(aluno_id=aluno.id).order_by(
             Pagamento.data_vencimento.desc()
         ).first()
 
@@ -57,10 +60,10 @@ class PagamentoService:
         return "em_dia"
 
     @staticmethod
-    def listar_status_alunos(instrutor_id: int):
+    def listar_status_alunos():
         """
         Retorna uma lista de tuplas (aluno, status) para todos os
-        alunos do instrutor logado.
+        alunos da conta (academia) de quem está logado.
         """
-        alunos = Aluno.query.filter_by(instrutor_id=instrutor_id).all()
+        alunos = da_conta(Aluno).all()  # [back-06-contas-e-papeis] antes: filter_by(instrutor_id=instrutor_id)
         return [(aluno, PagamentoService.status_pagamento(aluno)) for aluno in alunos]

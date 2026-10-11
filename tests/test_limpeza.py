@@ -6,8 +6,9 @@ from tests.conftest import (contar, criar_aluno, criar_exercicio, criar_ficha, c
 
 def test_editar_exercicio_volta_para_a_lista(cliente):
     """Antes dava erro 500: o redirect apontava para 'exercicios.listarPlanos', que não existe."""
-    logar(cliente, criar_usuario("dono@teste.local"))
-    exercicio_id = criar_exercicio("Supino")
+    dono = criar_usuario("dono@teste.local")
+    logar(cliente, dono)
+    exercicio_id = criar_exercicio("Supino", dono_id=dono)   # exercício da própria academia: editável
 
     resposta = cliente.post(f"/exercicios/editar/{exercicio_id}",
                             data={"nome": "Supino reto", "grupo_muscular": "peito", "ativo": "y"})

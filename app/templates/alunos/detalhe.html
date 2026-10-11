@@ -1,0 +1,149 @@
+{#
+  GET /alunos/<id>  (alunos.detalhe)
+  Contexto: aluno {id,nome,cpf,telefone,email,status,plano,valor,inicio,vence,vencido,forma,desde,observacoes,acesso_liberado},
+            pagamentos [{data,forma,valor,origem('webhook'|'manual'),quem,status}], total_ano,
+            freq {pct, semana:[1,1,0,...], checkins:[(rotulo, hora)]}, avaliacao {data, peso, imc, delta, situacao}|None,
+            ficha {treinos:[nomes], atualizada, por}|None
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, brl %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = aluno.nome %}
+{% set m_titulo = 'Perfil do aluno' %}
+{% set m_voltar = url_for('alunos.lista') %}
+{% set fem = aluno.nome.split()[0][-1] in ['a','A'] %}
+
+{% block m_acoes %}<a class="m-btn" href="{{ url_for('alunos.editar', id=aluno.id) }}" aria-label="Editar {{ aluno.nome }}">{{ icon('edit', 20) }}</a>{% endblock %}
+
+{% block page_head %}
+<nav class="crumbs d-only" aria-label="Você está em"><a href="{{ url_for('alunos.lista') }}">Alunos</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ aluno.nome }}</span></nav>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- cabeçalho do perfil: desktop ---------- #}
+<section class="card card--pad perfil-head d-only" aria-label="Aluno">
+  <span class="avatar avatar--xxl tone-blue" aria-hidden="true" style="width:64px;height:64px;font-size:22px">{{ aluno.nome.split()[0][0] }}{{ aluno.nome.split()[-1][0] }}</span>
+  <div class="grow">
+    <div class="row-flex gap-3"><h1 class="page-title" style="font-size:22px">{{ aluno.nome }}</h1>{{ chip_status(aluno.status) }}</div>
+    <div class="perfil-meta"><span>CPF {{ aluno.cpf }}</span><span>{{ aluno.telefone }}</span><span>{{ aluno.email }}</span><span>{{ 'Aluna' if fem else 'Aluno' }} desde {{ aluno.desde }}</span></div>
+  </div>
+  <div class="row-flex gap-3">
+    <button type="button" class="btn btn-green" data-toast="WhatsApp aberto para {{ aluno.nome.split()[0] }}.">{{ icon('chat', 18) }}WhatsApp</button>
+    <a class="btn btn-ghost" href="{{ url_for('alunos.renovar', id=aluno.id) }}">{{ icon('refresh', 18) }}Renovar</a>
+    <a class="btn btn-ghost" href="{{ url_for('alunos.editar', id=aluno.id) }}">{{ icon('edit', 18) }}Editar</a>
+    <a class="btn btn-primary" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('clipboard', 18) }}Iniciar avaliação física</a>
+    {% if aluno.acesso_liberado %}<button type="button" class="btn btn-danger-ghost" data-open="dlg-acesso">{{ icon('lock', 18) }}Bloquear</button>
+    {% else %}<button type="button" class="btn btn-ghost" data-open="dlg-acesso">{{ icon('unlock', 18) }}Liberar</button>{% endif %}
+  </div>
+</section>
+
+{# ---------- cabeçalho do perfil: mobile ---------- #}
+<section class="card card--pad m-only perfil-m" aria-label="Aluno" style="margin-top:0">
+  <span class="avatar avatar--xxl tone-blue" aria-hidden="true">{{ aluno.nome.split()[0][0] }}{{ aluno.nome.split()[-1][0] }}</span>
+  <h2 class="linha1">{{ aluno.nome }}</h2>
+  <div class="row-flex gap-2" style="justify-content:center">{{ chip_status(aluno.status) }}<span class="chip chip--blue">{{ aluno.plano }}</span></div>
+  <div class="faint fs-13" style="margin-top:2px">{{ aluno.telefone }} · {{ 'aluna' if fem else 'aluno' }} desde {{ aluno.desde }}</div>
+  <div class="opcoes" style="--cols:2;width:100%;margin-top:6px">
+    <button type="button" class="btn btn-green" data-toast="WhatsApp aberto para {{ aluno.nome.split()[0] }}.">{{ icon('chat', 18) }}WhatsApp</button>
+    <a class="btn btn-ghost" href="{{ url_for('alunos.renovar', id=aluno.id) }}">{{ icon('refresh', 18) }}Renovar</a>
+  </div>
+  <a class="btn btn-primary btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">{{ icon('clipboard', 18) }}Visualizar ficha</a>
+  <a class="btn btn-ghost btn-block" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('scale', 18) }}Iniciar avaliação física</a>
+</section>
+
+<div class="detalhe-grid">
+  <div class="detalhe-col">
+    <section class="card card--pad card--plano" aria-labelledby="h-plano">
+      <h2 class="ctitle" id="h-plano" style="margin-bottom:6px">Plano atual</h2>
+      <dl class="kvs">
+        <div class="kv"><dt>Plano</dt><dd>{{ aluno.plano }}</dd></div>
+        <div class="kv"><dt>Valor</dt><dd>{{ brl(aluno.valor) }}</dd></div>
+        <div class="kv d-only"><dt>Início</dt><dd>{{ aluno.inicio }}</dd></div>
+        <div class="kv"><dt>Vencimento</dt><dd class="{{ 'bad' if aluno.vencido else 'warn' }}">{{ aluno.vence_completo }}</dd></div>
+        <div class="kv"><dt>Pagamento</dt><dd>{{ aluno.forma_txt }}</dd></div>
+      </dl>
+    </section>
+    {% if ficha %}
+    <section class="card card--pad d-only" aria-labelledby="h-ficha">
+      <div class="row-flex" style="justify-content:space-between"><h2 class="ctitle" id="h-ficha">Ficha de treino</h2><a class="fw-7 fs-13" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">Abrir</a></div>
+      <div class="row-flex gap-2" style="margin:12px 0 10px;flex-wrap:wrap">{% for t in ficha.treinos %}<span class="chip chip--blue">{{ t }}</span>{% endfor %}</div>
+      <div class="faint fs-12">Atualizada em {{ ficha.atualizada }} por {{ ficha.por }}</div>
+    </section>
+    {% endif %}
+  </div>
+
+  <div class="detalhe-col">
+    <section class="card card--pad card--hist" aria-labelledby="h-hist">
+      <div class="row-flex" style="justify-content:space-between;margin-bottom:4px"><h2 class="ctitle" id="h-hist">Histórico financeiro</h2><span class="chip chip--{{ 'red' if aluno.vencido else 'green' }}">{{ 'Em atraso' if aluno.vencido else 'Em dia' }}</span></div>
+      <ul class="mlist">
+        {% for p in pagamentos[:5] %}
+        <li class="mrow hist-row{{ ' d-only' if loop.index > 3 }}">
+          <div class="mrow__main"><div class="mrow__title" style="font-size:14px">{{ p.data }}</div><div class="mrow__sub" style="font-size:12px">{{ p.forma }}</div></div>
+          <b class="tab-num" style="font-size:14px">{{ brl(p.valor) }}</b>
+          <span class="chip chip--green">Pago</span>
+        </li>
+        {% else %}<li class="faint" style="padding:14px 0">Nenhum pagamento registrado ainda.</li>{% endfor %}
+      </ul>
+      <div class="hist-total d-only"><span class="muted linha1">Total pago em 2026</span><b class="num" style="font-size:19px">{{ brl(total_ano) }}</b></div>
+      <a class="fw-7 fs-13 m-only ta-c" style="display:block;padding:12px 0 4px" href="{{ url_for('alunos.pagamentos', id=aluno.id) }}">Ver todos os pagamentos</a>
+    </section>
+  </div>
+
+  <div class="detalhe-col">
+    {% if academia.checkin_ativo %}
+    <section class="card card--pad card--freq" aria-labelledby="h-freq">
+      <h2 class="ctitle" id="h-freq">Frequência</h2>
+      <div class="row-flex gap-2" style="align-items:baseline;margin-top:6px"><span class="num" style="font-size:30px;font-weight:700">{{ freq.pct }}%</span><span class="muted fs-13">de assiduidade nos últimos 30 dias</span></div>
+      <div class="bar bar--lg" style="margin:10px 0 16px" role="img" aria-label="{{ freq.pct }}% de assiduidade"><div style="width:{{ freq.pct }}%;background:var(--green)"></div></div>
+      <div class="sectitle" style="font-size:11.5px;margin-bottom:8px">Esta semana</div>
+      <ol class="week" aria-label="Presença na semana">
+        {% for v in freq.semana %}<li class="{{ 'ok' if v else 'no' }}"><span class="week__box">{{ icon('check' if v else 'close', 16) }}</span><span class="week__lbl"><span class="d-only">{{ ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'][loop.index0] }}</span><span class="m-only">{{ ['S','T','Q','Q','S','S','D'][loop.index0] }}</span></span><span class="visually-hidden">{{ 'presente' if v else 'ausente' }}</span></li>{% endfor %}
+      </ol>
+      <div class="d-only" style="margin-top:16px">
+        <div class="sectitle" style="font-size:11.5px;margin-bottom:4px">Últimos check-ins</div>
+        <ul class="mlist">{% for r, h in freq.checkins %}<li class="mrow" style="min-height:44px;padding:8px 0"><span class="mrow__main muted fs-13">{{ r }}</span><b class="tab-num">{{ h }}</b></li>{% endfor %}</ul>
+      </div>
+    </section>
+    {% endif %}
+    {% if avaliacao %}
+    <a class="card card--pad card--aval" href="{{ url_for('avaliacoes.aluno', id=aluno.id) }}" style="color:inherit;display:block">
+      <div class="row-flex" style="justify-content:space-between;margin-bottom:10px"><h2 class="ctitle">Avaliação física</h2><span class="chip chip--{{ 'green' if avaliacao.em_dia else 'yellow' }}">{{ 'Em dia' if avaliacao.em_dia else 'Vencida' }}</span></div>
+      <div class="row-flex gap-3"><span class="tile tone-green">{{ icon('clipboard', 20) }}</span>
+        <div class="grow"><b style="font-size:14px">Última: {{ avaliacao.data }}</b><div class="faint fs-12 linha1">{{ avaliacao.resumo }}</div></div>{{ icon('chevron-right', 18) }}</div>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if aluno.observacoes %}
+<section class="card card--pad d-only" aria-labelledby="h-obs"><h2 class="ctitle" id="h-obs" style="margin-bottom:6px">Observações</h2><p class="muted" style="margin:0;font-size:14px">{{ aluno.observacoes }}</p></section>
+{% endif %}
+
+<section class="card card--pad" aria-labelledby="h-risco">
+  <h2 class="ctitle" id="h-risco">Zona de risco</h2>
+  <div class="csub" style="margin-bottom:14px">Desativar mantém o histórico e pode ser revertido; excluir apaga o cadastro.</div>
+  <div class="risco-btns">
+    <button type="button" class="btn btn-danger-ghost" data-open="dlg-inativar">{{ icon('lock', 18) }}Desativar aluno</button>
+    <button type="button" class="btn btn-danger" data-open="dlg-excluir">{{ icon('close', 18) }}Excluir aluno</button>
+  </div>
+</section>
+{% endblock %}
+
+{% block dialogs %}
+{% macro confirmar(id, titulo, texto, rota, botao, classe='btn-danger', extra='') %}
+<dialog class="vt-dialog vt-dialog--sm" id="{{ id }}" aria-labelledby="{{ id }}-t">
+  <span class="vt-dialog__grip"></span>
+  <form method="post" action="{{ rota }}" style="display:contents">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <div class="vt-dialog__head"><div><h2 class="vt-dialog__title" id="{{ id }}-t">{{ titulo }}</h2><div class="vt-dialog__sub">{{ texto }}</div></div></div>
+    {% if extra %}<div class="vt-dialog__body">{{ extra|safe }}</div>{% endif %}
+    <div class="vt-dialog__foot"><button type="button" class="btn btn-ghost" data-close>Voltar</button><button type="submit" class="btn {{ classe }}">{{ botao }}</button></div>
+  </form>
+</dialog>
+{% endmacro %}
+{{ confirmar('dlg-inativar', 'Desativar ' ~ aluno.nome.split()[0] ~ '?', 'O histórico é mantido e o acesso na recepção é bloqueado. Dá para reativar depois.', url_for('alunos.inativar', id=aluno.id), 'Desativar aluno') }}
+{{ confirmar('dlg-excluir', 'Excluir cadastro?', 'Isso apaga o cadastro e o histórico de ' ~ aluno.nome ~ ' e não dá para desfazer. Se só quer parar de cobrar, prefira desativar.', url_for('alunos.excluir', id=aluno.id), 'Excluir para sempre') }}
+{{ confirmar('dlg-acesso', ('Bloquear' if aluno.acesso_liberado else 'Liberar') ~ ' acesso?', 'Muda na hora a permissão de ' ~ aluno.nome ~ ' na recepção.', url_for('alunos.acesso', id=aluno.id), 'Bloquear acesso' if aluno.acesso_liberado else 'Liberar acesso', 'btn-danger' if aluno.acesso_liberado else 'btn-primary') }}
+{% endblock %}

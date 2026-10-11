@@ -1,0 +1,19 @@
+{# Resultado da busca de alunos (parcial). Contexto: q, resultados, acao #}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status %}
+{% if q and q|length >= 2 %}
+  <div style="margin-bottom:6px"><b>{{ resultados|length }} resultado{{ '' if resultados|length == 1 else 's' }}</b><div class="csub">Busca por nome ou CPF</div></div>
+  {% if resultados %}
+  <ul class="mlist">
+    {% for a in resultados %}
+    <li><a class="mrow" href="{{ url_for('alunos.renovar' if acao == 'renovar' else 'alunos.detalhe', id=a.id) }}">
+      {{ avatar(a.nome, 'lg') }}
+      <span class="mrow__main"><span class="mrow__title truncate" style="display:block">{{ a.nome }}</span><span class="mrow__sub" style="display:block">{{ a.cpf }} · {{ a.plano }}</span></span>
+      <span class="mrow__end">{{ chip_status(a.status) }}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted" style="margin:10px 0 0">Ninguém com "{{ q }}". Confira a grafia ou busque pelo CPF.</p>{% endif %}
+{% else %}
+  <p class="faint" style="margin:0">Digite pelo menos 2 letras do nome, ou o CPF.</p>
+{% endif %}
