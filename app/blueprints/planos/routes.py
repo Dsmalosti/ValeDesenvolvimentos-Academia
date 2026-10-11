@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from app.blueprints.planos.form import PlanoForm
 from app.models import Plano
 from app.services.plano_service import PlanoService
+from app.services import plano_tela_service as telas  # [back-08-planos] regras das telas novas
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -90,13 +91,66 @@ def excluirPlano(plano_id):
 
 
 # ---------------------------------------------------------------------------
-# [back-04-painel] PONTES TEMPORÁRIAS para o front novo (veja a explicação em alunos/routes.py).
+# [back-08-planos] TELAS DE PLANOS DO FRONT NOVO (templates/planos/).
+# Os nomes das funções e os endereços são os do contrato do front: os templates chamam
+# url_for('planos.lista'), 'planos.novo', 'planos.editar' e 'planos.alternar'.
+# Antes (back-04), 'lista' e 'novo' eram só "pontes" que redirecionavam para as telas antigas
+# (/planos/listar/ e /planos/criar/); 'editar' e 'alternar' não existiam com estes nomes.
+#
+# As rotas ANTIGAS, lá em cima, continuam funcionando: as telas antigas de alunos e de
+# pagamentos ainda têm links para elas. Saem quando o layout antigo sair.
+#
+# As regras (validação, números de cada cartão) ficam em services/plano_tela_service.py.
 # ---------------------------------------------------------------------------
+def _plano_da_conta(id):
+    """O plano, se for da conta de quem está logado; senão 404 (como se não existisse)."""
+    return da_conta(Plano).filter_by(id=id).first_or_404()
+
+
 @planos_blueprint.route('')
 def lista():
-    return redirect(url_for('planos.listarPlanos'))
+    # o instrutor consulta os planos, mas o serviço não entrega a ele os valores de faturamento
+    return render_template('planos/lista.html', **telas.contexto_da_lista(request.args))
 
 
-@planos_blueprint.route('/novo')
+def _salvar(plano=None):
+    """Cria (plano=None) ou edita. Com erro, volta a página do formulário com o que foi digitado."""
+    valores, erros = telas.validar(request.form, plano)
+    if erros:
+        flash(telas.aviso_dos_erros(erros), 'error')
+        return render_template('planos/form.html', plano=telas.do_formulario(valores, request.form, plano),
+                               erros=erros, modo='editar' if plano else 'novo')
+    if plano:
+        telas.atualizar(plano, valores)
+        flash('Plano salvo.', 'success')
+    else:
+        telas.criar(valores)
+        flash('Plano criado. Ele já aparece na hora de matricular.' if valores['ativo']
+              else 'Plano criado como inativo. Ative para ele aparecer na hora de matricular.', 'success')
+    return redirect(url_for('planos.lista'))
+
+
+@planos_blueprint.route('/novo', methods=['GET', 'POST'])
+@papel_requerido(*DONO_E_RECEPCAO)   # plano e preço: instrutor só consulta
 def novo():
-    return redirect(url_for('planos.criarPlano'))
+    if request.method == 'POST':
+        return _salvar()
+    return render_template('planos/form.html', plano={}, erros={}, modo='novo')
+
+
+@planos_blueprint.route('/<int:id>/editar', methods=['GET', 'POST'])
+@papel_requerido(*DONO_E_RECEPCAO)
+def editar(id):
+    plano = _plano_da_conta(id)
+    if request.method == 'POST':
+        return _salvar(plano)
+    return render_template('planos/form.html', plano=telas.linha_do_plano(plano), erros={}, modo='editar')
+
+
+@planos_blueprint.route('/<int:id>/alternar', methods=['POST'])
+@papel_requerido(*DONO_E_RECEPCAO)
+def alternar(id):
+    # Pausar NÃO apaga: o plano some do cadastro de aluno e continua em quem já está nele.
+    plano = telas.alternar(_plano_da_conta(id))
+    flash(f"Plano {plano.nome} {'reativado' if plano.ativo else 'inativado'}.", 'success')
+    return redirect(url_for('planos.lista'))

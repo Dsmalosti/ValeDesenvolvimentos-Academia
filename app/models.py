@@ -106,6 +106,10 @@ class Plano(db.Model):
     duracao_dias = db.Column(db.Integer, nullable=False)
     descricao = db.Column(db.Text, nullable=True)
     ativo = db.Column(db.Boolean, default=True)
+    # [back-08-planos] quantas avaliações físicas o plano inclui: 0 (cobrada à parte), 1, 2 ou 4.
+    # É o campo "Avaliação física inclusa" do formulário do front. Por enquanto só é guardado;
+    # quem vai usar é o módulo de avaliações.
+    avaliacoes_incluidas = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     # chave estrangeira para o instrutor (academia) dono deste plano
     # OBS: nullable=True por enquanto, só até preenchermos os registros
     # antigos. Depois trocamos para nullable=False (passo 4 do plano).

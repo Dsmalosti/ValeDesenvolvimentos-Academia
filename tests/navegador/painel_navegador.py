@@ -169,7 +169,7 @@ with sync_playwright() as p:
               "Em construção" in pg.inner_text("#conteudo") and pg.locator(".app .main").count() == 1)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-4-em-construcao.png"))
 
-        # --- menu: Alunos já é tela nova; Planos ainda é ponte para a tela antiga ---
+        # --- menu: Alunos e Planos já são telas novas; Exercícios ainda é ponte para a tela antiga ---
         pg.goto(BASE + "/")
         pg.wait_for_selector(CARD)
         if celular:
@@ -184,8 +184,10 @@ with sync_playwright() as p:
             pg.tap(".tabbar__item:has-text('Planos')")
         else:
             pg.click(".rail .navicon[aria-label='Planos']")
-        pg.wait_for_url("**/planos/listar/", timeout=6000)
-        checa(f"[{nome}] menu 'Planos' leva à tela antiga de planos (ponte)", "Mensal" in pg.content())
+        pg.wait_for_url("**/planos", timeout=6000)
+        checa(f"[{nome}] menu 'Planos' abre a lista nova de planos", "Mensal" in pg.content() and pg.locator(".app .main").count() == 1)
+        pg.goto(BASE + "/exercicios")
+        checa(f"[{nome}] /exercicios leva à tela antiga de exercícios (ponte)", pg.url.endswith("/exercicios/listar/"))
 
         # --- sair ---
         pg.goto(BASE + "/")

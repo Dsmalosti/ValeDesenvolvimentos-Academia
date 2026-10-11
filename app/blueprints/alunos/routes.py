@@ -232,7 +232,7 @@ def acesso(id):
 # ---------------------------------------------------------------------------
 # PONTES TEMPORÁRIAS para o front novo (criadas na back-04-painel).
 # O que é uma ponte: o menu e as telas novas chamam endpoints com os nomes do contrato do front
-# (url_for('alunos.pagamentos'), 'planos.lista' etc.). Enquanto a tela nova daquele assunto não
+# (url_for('alunos.pagamentos'), 'exercicios.lista' etc.). Enquanto a tela nova daquele assunto não
 # foi ligada, o endpoint existe só para levar à tela antiga equivalente. Nenhuma ponte mexe em
 # dado, e cada uma vira a tela de verdade na branch do seu assunto.
 # [back-07-alunos] lista, novo, detalhe e buscar deixaram de ser pontes (são as rotas acima).

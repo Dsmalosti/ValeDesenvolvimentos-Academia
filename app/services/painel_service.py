@@ -165,7 +165,22 @@ def _serie_ativos(ativos, cadastro, hoje):
     }
 
 
-def _faturamento_por_plano(planos, ativos, pagamentos, faturamento, ano, mes):
+def planos_com_faturamento(hoje=None):
+    """
+    [back-08-planos] Para a tela de Planos: a mesma conta do gráfico "De onde vem o faturamento",
+    mas com TODOS os planos da conta (o gráfico esconde plano pausado sem aluno).
+    Devolve ({plano_id: linha}, ticket médio do mês).
+    """
+    hoje = hoje or date.today()
+    ativos = [a for a in da_conta(Aluno).all() if a.ativo]
+    pagamentos = da_conta(Pagamento).all()
+    faturamento = sum(float(p.valor) for p in pagamentos if _mesmo_mes(p.data_pagamento, hoje.year, hoje.month))
+    linhas = _faturamento_por_plano(da_conta(Plano).all(), ativos, pagamentos, faturamento, hoje.year, hoje.month, todos=True)
+    return {linha['plano_id']: linha for linha in linhas}, (faturamento / len(ativos)) if ativos else 0.0
+
+
+# [back-08-planos] ganhou o parâmetro `todos` (antes: sempre escondia plano pausado sem aluno).
+def _faturamento_por_plano(planos, ativos, pagamentos, faturamento, ano, mes, todos=False):
     """Gráfico "De onde vem o faturamento": quanto cada plano recebeu no mês."""
     plano_do_aluno = {a.id: a.plano_id for a in ativos}
     alunos_no_plano = defaultdict(int)
@@ -184,7 +199,7 @@ def _faturamento_por_plano(planos, ativos, pagamentos, faturamento, ano, mes):
         'dias': int(pl.duracao_dias) if pl.duracao_dias else None,
         'valor': recebido[pl.id],
         'pct': round(recebido[pl.id] / faturamento * 100) if faturamento else 0,
-    } for pl in planos if pl.ativo or alunos_no_plano[pl.id]]
+    } for pl in planos if todos or pl.ativo or alunos_no_plano[pl.id]]
     linhas.sort(key=lambda x: (-x['valor'], -x['alunos'], x['nome']))
     for i, linha in enumerate(linhas):
         linha['cor'] = CORES_PLANOS[min(i, len(CORES_PLANOS) - 1)]
