@@ -1,0 +1,61 @@
+{#
+  Formulário de aluno — novo e editar; renderizado como PÁGINA (mobile / rota própria) ou MODAL (desktop).
+  Variáveis: modo ('novo'|'editar'), aluno (dict, vazio no novo), erros (dict campo->mensagem), planos, em_modal (bool)
+  POST /alunos/novo  ou  POST /alunos/<id>/editar   -> nomes dos inputs = colunas do banco.
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import dialog_head %}
+{% import 'alunos/_campos.html' as c %}
+{% set a = aluno or {} %}
+{% set erros = erros or {} %}
+{% set editando = (modo == 'editar') %}
+{% set acao = url_for('alunos.editar', id=a.id) if editando else url_for('alunos.novo') %}
+
+{% if em_modal %}
+<span class="vt-dialog__grip"></span>
+<form method="post" action="{{ acao }}" data-validate novalidate style="display:contents">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  {{ dialog_head('Editar aluno' if editando else 'Novo aluno', 'Matrícula rápida da recepção, leva menos de um minuto') }}
+  <div class="vt-dialog__body stack gap-4">
+    {{ c.identificacao(a, erros) }}
+    {{ c.cobranca(a, erros, planos, not editando) }}
+    {{ c.observacoes(a, erros) }}
+  </div>
+  <div class="vt-dialog__foot">
+    <span class="foot-note grow">O aluno já entra como <b class="ok">Ativo</b> e o primeiro vencimento é calculado pela duração do plano.</span>
+    <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+    <button type="submit" class="btn btn-primary" data-carregando>{{ icon('check', 18) }}Salvar aluno</button>
+  </div>
+</form>
+{% else %}
+<form method="post" action="{{ acao }}" enctype="multipart/form-data" data-validate novalidate class="stack gap-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <section class="card card--pad stack gap-3" aria-labelledby="s-foto">
+    <div><h2 class="ctitle" id="s-foto">{{ 'Foto de perfil' if editando else 'Foto do aluno' }}</h2><div class="csub">{{ 'Toque pra trocar a foto atual' if editando else 'Ajuda a recepção a reconhecer quem chega' }}</div></div>
+    {{ c.foto(a) }}
+  </section>
+  <section class="card card--pad stack gap-4" aria-labelledby="s-dados">
+    <h2 class="ctitle" id="s-dados">Dados do aluno</h2>
+    {{ c.identificacao(a, erros) }}
+  </section>
+  <section class="card card--pad stack gap-4" aria-labelledby="s-plano">
+    <h2 class="ctitle" id="s-plano">Plano e cobrança</h2>
+    {{ c.cobranca(a, erros, planos, not editando) }}
+  </section>
+  <section class="card card--pad stack gap-3" aria-labelledby="s-obs">
+    <h2 class="ctitle" id="s-obs">Observações</h2>
+    {{ c.observacoes(a, erros, true) }}
+  </section>
+  {% if not editando %}
+  <div class="note note--blue">{{ icon('check', 20) }}<span>O aluno entra como <b class="ok">Ativo</b> e o primeiro vencimento sai da duração do plano.</span></div>
+  {% endif %}
+  <div class="stack gap-3 form-actions">
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>{{ icon('check', 18) }}{{ 'Salvar alterações' if editando else 'Salvar aluno' }}</button>
+    {% if editando %}
+    <button type="button" class="btn btn-danger-ghost btn-block" data-open="confirmar-inativar">{{ icon('lock', 18) }}Inativar aluno</button>
+    {% else %}
+    <a class="btn btn-ghost btn-block" href="{{ url_for('alunos.lista') }}">Cancelar</a>
+    {% endif %}
+  </div>
+</form>
+{% endif %}

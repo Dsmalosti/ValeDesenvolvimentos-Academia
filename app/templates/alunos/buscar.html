@@ -1,0 +1,33 @@
+{#
+  GET /alunos/buscar?q=&acao=detalhe|renovar   (alunos.buscar)
+  Com ?partial=1 devolve só alunos/_resultados.html (usado pela busca ao vivo do app.js).
+  acao decide para onde o resultado leva: perfil (padrão) ou renovação.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Buscar aluno' %}
+{% set pagina_sub = 'Por nome ou CPF' if acao != 'renovar' else 'Escolha quem vai renovar a matrícula' %}
+{% set m_voltar = url_for('painel.index') %}
+{% set corpo_classe = 'page--narrow' %}
+{% set sem_tabbar = false %}
+{% block content %}
+<form class="field-icon" role="search" method="get" action="{{ url_for('alunos.buscar') }}">
+  {{ icon('search', 20) }}
+  <input class="input" id="q-busca" type="search" name="q" value="{{ q }}" placeholder="Nome ou CPF" aria-label="Buscar aluno por nome ou CPF" autocomplete="off" enterkeyhint="search"
+    data-remoto="{{ url_for('alunos.buscar', acao=acao) }}" data-alvo="resultado-busca" data-autofocus style="min-height:52px;border-radius:16px;background:var(--card);box-shadow:var(--shadow-card)">
+  <input type="hidden" name="acao" value="{{ acao }}">
+</form>
+<section class="card card--pad" aria-live="polite" id="resultado-busca">
+  {% include 'alunos/_resultados.html' %}
+</section>
+{% if recentes and not q %}
+<section class="stack gap-3" aria-labelledby="h-rec">
+  <h2 class="sectitle" id="h-rec">Vistos recentemente</h2>
+  <div class="row-flex gap-2" style="flex-wrap:wrap">
+    {% for r in recentes %}<a class="pill" href="{{ url_for('alunos.renovar' if acao == 'renovar' else 'alunos.detalhe', id=r.id) }}">{{ r.nome }}</a>{% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

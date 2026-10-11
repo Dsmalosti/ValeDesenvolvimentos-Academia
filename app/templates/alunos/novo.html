@@ -1,0 +1,12 @@
+{# GET/POST /alunos/novo (alunos.novo). Na mobile é página inteira; no desktop o botão "Novo aluno" da lista abre o mesmo form em modal. #}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Novo aluno' %}
+{% set pagina_sub = 'Matrícula rápida da recepção, leva menos de um minuto' %}
+{% set m_voltar = url_for('alunos.lista') %}
+{% set m_sub = 'Matrícula em menos de um minuto' %}
+{% set corpo_classe = 'page--form' %}
+{% set sem_tabbar = true %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('alunos.lista') }}">Alunos</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Novo aluno</span></nav>{% endblock %}
+{% block content %}{% set modo = 'novo' %}{% set em_modal = false %}{% include 'alunos/_form.html' %}{% endblock %}
