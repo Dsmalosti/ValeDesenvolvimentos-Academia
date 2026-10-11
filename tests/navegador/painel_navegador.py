@@ -22,7 +22,7 @@ sys.path.insert(0, RAIZ)
 os.chdir(RAIZ)
 
 _PASTA = tempfile.mkdtemp(prefix="vt-navegador-")
-os.environ["DATABASE_URI"] = "sqlite:///" + os.path.join(_PASTA, "navegador.db").replace("\\", "/")
+os.environ["DATABASE_URL"] = os.environ["DATABASE_URI"] = "sqlite:///" + os.path.join(_PASTA, "navegador.db").replace("\\", "/")
 os.environ["SECRET_KEY"] = "chave-so-de-teste"
 os.environ["FLASK_CONFIG"] = "testing"
 FOTOS = sys.argv[1] if len(sys.argv) > 1 else os.path.join(_PASTA, "fotos")
