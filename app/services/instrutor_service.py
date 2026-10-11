@@ -7,7 +7,7 @@ from app.extensions.security import bcrypt
 class InstrutorService:
 
     @staticmethod
-    def criar_instrutor(dados):
+    def criar_instrutor(dados, conta_id, papel='proprietario'):
         """
         Docstring for criar_instrutor
 
@@ -16,8 +16,10 @@ class InstrutorService:
         instrutor = User(
             nome=dados["nome"],
             sobrenome=dados["sobrenome"],
-            email=dados["email"],
-            senha=bcrypt.generate_password_hash(dados["senha"]).decode("utf-8")
+            email=dados["email"].strip().lower(),  # [back-01-auth-login] e-mail sempre minúsculo
+            senha=bcrypt.generate_password_hash(dados["senha"]).decode("utf-8"),
+            conta_id=conta_id,   # [back-06-contas-e-papeis] todo usuário pertence a uma conta (academia)
+            papel=papel,         # [back-06-contas-e-papeis] proprietario | recepcao | instrutor
         )
 
         return BaseService.salvar(instrutor)
@@ -46,7 +48,7 @@ class InstrutorService:
             instrutor.sobrenome = dados["sobrenome"]
 
         if "email" in dados:
-            instrutor.email = dados["email"]
+            instrutor.email = dados["email"].strip().lower()  # [back-01-auth-login]
 
          # Se a senha foi preenchida, altera
         if dados.get("senha"):

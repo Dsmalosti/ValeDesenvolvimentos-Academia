@@ -1,19 +1,95 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+{#
+  Layout base do painel (dono + recepção). Uma única marcação responsiva:
+  >= 992px  -> rail lateral + cabeçalho de página
+  <  992px  -> cabeçalho azul-marinho + barra inferior + gaveta
+  Variáveis que a página filha define no topo (todas opcionais):
+    nav_ativo      painel | alunos | planos | exercicios | frequencia | relatorios | administrativo | config
+    pagina_titulo  título da página (h1)
+    pagina_sub     subtítulo
+    m_voltar       qualquer valor ativa o botão voltar no cabeçalho mobile (volta à última página visitada; sem histórico vai ao Painel). Sem ele mostra o menu
+    m_titulo       título curto do cabeçalho mobile (padrão = pagina_titulo)
+    m_sub          linha abaixo do título no mobile
+    sem_tabbar     true em fluxos de tela cheia (receber, registrar avaliação)
+  Blocks: titulo, m_acoes, m_extra, page_head, page_acoes, content, dialogs, scripts
+#}
+{% from '_macros/icons.html' import icon %}
+<!doctype html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/reset.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B3456">
+  <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
+  <title>{% block titulo %}{{ pagina_titulo or 'Painel' }}{% endblock %} · Vale Tec</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon-32.png') }}" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/favicon-180.png') }}">
+  {# instalar como app (Adicionar à tela inicial): abre em tela cheia, sem a barra do navegador #}
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Vale Tec">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preload" href="{{ url_for('static', filename='fonts/sora-latin-700-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/plus-jakarta-sans-latin-500-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.custom.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/ajustes-iphone.css') }}">{# [correcao-iphone 08/10] popups no iPhone #}
+  {# tema claro/escuro: no <head>, sem defer — marca o <html> antes do 1º quadro (sem piscar branco) #}
+  <script src="{{ url_for('static', filename='js/tema.js') }}"></script>
+  {# gestos e transições entre páginas: no <head> e sem defer porque o ouvinte de "pagereveal" precisa existir antes do 1º quadro #}
+  <script src="{{ url_for('static', filename='js/interacoes.js') }}"></script>
+  {% block head_extra %}{% endblock %}
 </head>
 <body>
-    <section class="container-fluid mt-4">
-        {% block content %} {% endblock %}
-    </section>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+  <div class="app">
+    {% include '_cabecalho.html' %}
+    <main class="main" id="conteudo" tabindex="-1">
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-    
+      {# ---- cabeçalho mobile ---- #}
+      <header class="m-header on-navy{{ " " ~ m_header_classe if m_header_classe }}">
+        <div class="m-header__row">
+          {% if m_voltar %}
+          {# data-voltar: volta à última página visitada; sem histórico, cai no Painel (href) #}
+          <a class="m-btn" href="{{ url_for('painel.index') }}" data-voltar aria-label="Voltar">{{ icon('chevron-left', 22) }}</a>
+          {% else %}
+          <button type="button" class="m-btn" data-open="gaveta" aria-label="Abrir menu">{{ icon('menu', 22) }}</button>
+          {% endif %}
+          <h1 class="m-header__title">{{ m_titulo or pagina_titulo }}</h1>
+          {% block m_acoes %}
+          <a class="m-avatar" href="{{ url_for('config.index') }}" aria-label="Configurações de {{ usuario.nome }}">{{ usuario.iniciais }}</a>
+          {% endblock %}
+        </div>
+        {% if m_sub %}<div class="m-header__sub">{{ m_sub }}</div>{% endif %}
+        {% block m_extra %}{% endblock %}
+      </header>
+
+      <div class="m-body{{ ' m-body--no-tabbar' if sem_tabbar }}{{ ' ' ~ corpo_classe if corpo_classe }}">
+        {% block page_head %}
+        <div class="page-head">
+          <div>
+            {% block crumbs %}{% endblock %}
+            <h1 class="page-title">{{ pagina_titulo }}</h1>
+            {% if pagina_sub %}<div class="page-sub">{{ pagina_sub }}</div>{% endif %}
+          </div>
+          <div class="row-flex gap-3">{% block page_acoes %}{% endblock %}</div>
+        </div>
+        {% endblock %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+    {% if not sem_tabbar %}{% include '_rodape.html' %}{% else %}{% include '_gaveta.html' %}{% endif %}
+  </div>
+  {% block dialogs %}{% endblock %}
+  {% include '_digital.html' %}
+  {% include '_notificacao.html' %}
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/ajustes-iphone.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/digital.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+  {% if dev_tools is defined %}{% include dev_tools %}{% endif %}
 </body>
 </html>

@@ -1,0 +1,55 @@
+{#
+  GET/POST /alunos/<id>/renovar (alunos.renovar)   campos: plano_id, acao ('receber'|'sem_cobrar')
+  Contexto: aluno, planos [{id,nome,dias,valor,valor_txt,novo_venc}], plano_atual_id
+  novo_venc já vem calculado pelo servidor (a regra de renovação é do backend; o front só espelha).
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, brl %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Renovar matrícula' %}
+{% set pagina_sub = aluno.nome %}
+{% set m_voltar = url_for('alunos.detalhe', id=aluno.id) %}
+{% set m_sub = aluno.nome %}
+{% set corpo_classe = 'page--narrow' %}
+{% set sem_tabbar = true %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('alunos.lista') }}">Alunos</a>{{ icon('chevron-right', 14) }}<a href="{{ url_for('alunos.detalhe', id=aluno.id) }}">{{ aluno.nome }}</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Renovar</span></nav>{% endblock %}
+{% block content %}
+{% set sel = (planos|selectattr('id', 'equalto', plano_atual_id)|first) or planos[0] %}
+<form method="post" action="{{ url_for('alunos.renovar', id=aluno.id) }}" class="stack gap-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <section class="card card--pad row-flex gap-3">
+    {{ avatar(aluno.nome, 'lg') }}
+    <div class="grow"><b class="linha1" style="font-size:15px">{{ aluno.nome }}</b><div class="faint fs-13 linha1">{{ aluno.plano }} · {{ 'venceu em' if aluno.vencido else 'vence em' }} {{ aluno.vence_completo }}</div></div>
+    {{ chip_status(aluno.status) }}
+  </section>
+
+  <section class="card card--pad stack gap-3" aria-labelledby="h-plano">
+    <div><h2 class="ctitle" id="h-plano">Renovar com qual plano?</h2><div class="csub">Pode trocar de plano na renovação</div></div>
+    <div class="opcoes" data-opcoes data-alvo="h-plano-id" style="--cols:1" role="group" aria-labelledby="h-plano">
+      {% for p in planos %}
+      <button type="button" class="opcao opcao--linha" data-valor="{{ p.id }}" data-e-valor="{{ brl(p.valor) }}" data-e-novo="{{ p.novo_venc }}" aria-pressed="{{ 'true' if p.id == sel.id else 'false' }}">
+        <span class="radio-round">{{ icon('check', 14) }}</span>
+        <span class="grow"><b>{{ p.nome }}</b><small>{{ p.dias }} dias</small></span>
+        <span class="preco">{{ brl(p.valor) }}</span>
+      </button>
+      {% endfor %}
+    </div>
+    <input type="hidden" id="h-plano-id" name="plano_id" value="{{ sel.id }}">
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-fica">
+    <h2 class="ctitle" id="h-fica" style="margin-bottom:6px">Como fica</h2>
+    <dl class="kvs">
+      <div class="kv"><dt>Vencimento atual</dt><dd>{{ aluno.vence_completo }}</dd></div>
+      <div class="kv"><dt>Novo vencimento</dt><dd class="info" data-e="novo">{{ sel.novo_venc }}</dd></div>
+      <div class="kv"><dt>Valor a receber</dt><dd class="num" style="font-size:16px" data-e="valor">{{ brl(sel.valor) }}</dd></div>
+    </dl>
+  </section>
+
+  <div class="stack gap-3">
+    <button type="submit" name="acao" value="receber" class="btn btn-primary btn-lg btn-block" data-carregando>Renovar e receber</button>
+    <button type="submit" name="acao" value="sem_cobrar" class="btn btn-ghost btn-block">Renovar sem cobrar agora</button>
+  </div>
+</form>
+{% endblock %}

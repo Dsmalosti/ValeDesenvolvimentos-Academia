@@ -1,5 +1,10 @@
+import logging
+
 from app.extensions.database import db
 from app.exceptions import BusinessError
+
+# [back-02-limpeza] log do módulo, no lugar dos print()
+logger = logging.getLogger(__name__)
 
 
 class BaseService:
@@ -10,19 +15,21 @@ class BaseService:
 
     @staticmethod
     def salvar(obj):
-        print("SALVANDO:", obj)
-
         """
         Adiciona e commita um objeto no banco
         """
+        # [back-02-limpeza] antes: print("SALVANDO:", obj), print("ANTES DO COMMIT") e
+        # print("DEPOIS DO COMMIT"). Saíram; no lugar, o erro passa a ser registrado no log.
         try:
-            print("ANTES DO COMMIT")
             db.session.add(obj)
             db.session.commit()
-            print("DEPOIS DO COMMIT")
             return obj
-        except Exception:
+        except Exception as erro:
             db.session.rollback()
+            # [back-02-limpeza] antes o erro era engolido sem deixar rastro. Só o TIPO do erro e do
+            # objeto vão para o log: a mensagem do banco traz os valores (e-mail, CPF), que são
+            # dado pessoal e não podem ir para o log (LGPD).
+            logger.error("Falha ao salvar %s: %s", type(obj).__name__, type(erro).__name__)
             raise BusinessError("Erro ao salvar registro")
 
 

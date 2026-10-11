@@ -5,8 +5,13 @@ from app.blueprints.exercicios.form import ExercicioForm
 from app.models import Exercicio
 from app.services.exercicio_service import ExercicioService
 from app.exceptions import BusinessError
+from app.helpers.conta import exercicios_proprios, exercicios_visiveis, exigir_login_em
 
 exercicios_blueprint = Blueprint('exercicios', __name__, url_prefix='/exercicios', template_folder='templates')
+exigir_login_em(exercicios_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
+# [back-06-contas-e-papeis] O exercício agora tem dono. A conta USA os do catálogo padrão (sem dono) e os que ela
+# criou; EDITA e EXCLUI só os que ela criou. Antes era um catálogo único, que qualquer academia
+# logada editava e apagava.
 
 # Rota criar exercicio
 @exercicios_blueprint.route('/criar/', methods=['GET', 'POST'])
@@ -37,7 +42,7 @@ def criarExercicio():
 @exercicios_blueprint.route('/listar/')
 @login_required
 def listarExercicios():
-    exercicios = Exercicio.query.all()
+    exercicios = exercicios_visiveis().all()  # [back-06-contas-e-papeis] antes: Exercicio.query.all()
     
     return render_template('exercicio-lista.html', exercicios=exercicios)
 
@@ -45,7 +50,9 @@ def listarExercicios():
 @exercicios_blueprint.route('/editar/<int:exercicio_id>', methods=['GET', 'POST'])
 @login_required
 def editarExercicio(exercicio_id):
-    exercicio = Exercicio.query.get_or_404(exercicio_id)
+    # [back-06-contas-e-papeis] antes: Exercicio.query.get_or_404(exercicio_id). Exercício do catálogo padrão ou de
+    # outra academia responde 404: não é editável por esta conta.
+    exercicio = exercicios_proprios().filter_by(id=exercicio_id).first_or_404()
     form = ExercicioForm(obj=exercicio)
 
     if form.validate_on_submit():
@@ -60,7 +67,9 @@ def editarExercicio(exercicio_id):
         try:
             ExercicioService.editar_exercicio(exercicio_id,dados)
             flash('Exercicio atualizado com sucesso!')
-            return redirect(url_for('exercicios.listarPlanos'))
+            # [back-02-limpeza] antes: url_for('exercicios.listarPlanos'), endpoint que não existe.
+            # Salvar a edição de um exercício dava BuildError (erro 500).
+            return redirect(url_for('exercicios.listarExercicios'))
         except BusinessError as e:
             flash(str(e), "error")
 
@@ -77,8 +86,11 @@ def excluirExercicio(exercicio_id):
         flash(str(e), "error")
         
     return redirect(url_for('exercicios.listarExercicios'))
-    
 
 
-
-
+# ---------------------------------------------------------------------------
+# [back-04-painel] PONTE TEMPORÁRIA para o front novo (veja a explicação em alunos/routes.py).
+# ---------------------------------------------------------------------------
+@exercicios_blueprint.route('')
+def lista():
+    return redirect(url_for('exercicios.listarExercicios'))

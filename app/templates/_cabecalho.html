@@ -1,0 +1,29 @@
+{# Rail de navegação (desktop). No mobile fica oculto; a navegação vira _rodape.html + _gaveta.html #}
+{% from '_macros/icons.html' import icon %}
+{% macro item(chave, endpoint, ico, rotulo) -%}
+<a class="navicon" href="{{ url_for(endpoint) }}" data-tip="{{ rotulo }}" aria-label="{{ rotulo }}"{% if nav_ativo == chave %} aria-current="page"{% endif %}>{{ icon(ico, 22) }}</a>
+{%- endmacro %}
+<aside class="rail" aria-label="Menu principal">
+  <a class="rail__brand" href="{{ url_for('painel.index') }}" aria-label="Vale Tec, ir para o painel">{{ icon('crown', 24) }}</a>
+  <nav class="stack gap-2" style="align-items:center" aria-label="Seções">
+    {{ item('painel', 'painel.index', 'home', 'Painel') }}
+    {{ item('alunos', 'alunos.lista', 'users', 'Alunos') }}
+    {% if academia.modelo == 'personal' %}
+    {# Personal: "plano" é pacote de sessões e a Agenda (sessões marcadas) tem lugar fixo no menu, igual à tabbar do celular #}
+    {{ item('planos', 'planos.lista', 'apps', 'Pacotes') }}
+    {{ item('agenda', 'agenda.index', 'calendar-plus', 'Agenda') }}
+    {% else %}
+    {{ item('planos', 'planos.lista', 'apps', 'Planos') }}
+    {% endif %}
+    {{ item('exercicios', 'exercicios.lista', 'dumbbell', 'Exercícios e fichas') }}
+    {{ item('mensagens', 'mensagens.index', 'chat', 'Mensagens') }}
+    {% if academia.checkin_ativo %}{{ item('frequencia', 'frequencia.index', 'chart', 'Frequência') }}{% endif %}
+    {% if usuario.perfil != 'instrutor' %}{{ item('administrativo', 'relatorios.admin', 'trend', 'Administrativo') }}{% endif %}
+  </nav>
+  <div class="rail__spacer"></div>
+  {{ item('config', 'config.index', 'settings', 'Configurações') }}
+  <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <button class="navicon" type="submit" data-tip="Sair" aria-label="Sair">{{ icon('logout', 22) }}</button>
+  </form>
+</aside>

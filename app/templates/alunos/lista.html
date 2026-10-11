@@ -1,0 +1,121 @@
+{#
+  GET /alunos  (alunos.lista)   filtros por querystring: ?q=&status=todos|ativos|pendente|inativo&plano=<id>&pagina=<n>
+  A busca e os filtros são SERVER-SIDE (252 alunos hoje, milhares amanhã): o formulário é GET, então
+  a URL é compartilhável e o botão voltar funciona.
+  Contexto: alunos (lista da página), contagem {total, ativos, pendentes, inativos}, filtro {q,status,plano},
+            planos, pag {atual, total, de, ate, total_registros}
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, paginador, vazio %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Alunos' %}
+{% set pagina_sub = contagem.total ~ ' cadastros · ' ~ contagem.ativos ~ ' ativos · ' ~ contagem.pendentes ~ ' com pagamento pendente' %}
+{% set m_sub = contagem.total ~ ' cadastros · ' ~ contagem.pendentes ~ ' pendentes' %}
+
+{% block page_acoes %}
+<a class="btn btn-ghost" href="{{ url_for('alunos.exportar', **filtro_qs) }}">{{ icon('download', 18) }}Exportar</a>
+<button type="button" class="btn btn-primary" data-open="novo-aluno">{{ icon('user-plus', 18) }}Novo aluno</button>
+{% endblock %}
+
+{% block content %}
+
+{# ---------- estatísticas (desktop) ---------- #}
+<section class="stat-grid d-only" aria-label="Resumo">
+  <div class="card stat"><div class="stat__val">{{ contagem.total }}</div><div class="stat__lbl">Total de cadastros</div></div>
+  <div class="card stat"><div class="stat__val ok">{{ contagem.ativos }}</div><div class="stat__lbl">Ativos</div></div>
+  <div class="card stat"><div class="stat__val warn">{{ contagem.pendentes }}</div><div class="stat__lbl">Pagamento pendente</div></div>
+  <div class="card stat"><div class="stat__val bad">{{ contagem.inativos }}</div><div class="stat__lbl">Inativos</div></div>
+</section>
+
+{# ---------- busca: mobile (sobe sobre o cabeçalho) ---------- #}
+<form class="m-only field-icon" role="search" method="get" action="{{ url_for('alunos.lista') }}">
+  {{ icon('search', 20) }}
+  <input class="input" type="search" name="q" value="{{ filtro.q }}" placeholder="Buscar por nome ou CPF" aria-label="Buscar aluno por nome ou CPF" enterkeyhint="search" style="min-height:52px;border-radius:16px;background:var(--card);box-shadow:var(--shadow-card)">
+  {% if filtro.status != 'todos' %}<input type="hidden" name="status" value="{{ filtro.status }}">{% endif %}
+</form>
+<nav class="pills m-only" aria-label="Filtrar por situação">
+  {% for chave, rotulo, n in [('todos','Todos',None),('ativos','Ativos',contagem.ativos),('pendente','Pendentes',contagem.pendentes),('inativo','Inativos',contagem.inativos)] %}
+  <a class="pill" href="{{ url_for('alunos.lista', q=filtro.q or None, status=chave if chave != 'todos' else None) }}"{% if filtro.status == chave %} aria-current="true"{% endif %}>{{ rotulo }}{% if n is not none %}&nbsp;{{ n }}{% endif %}</a>
+  {% endfor %}
+</nav>
+
+{# ---------- busca e filtros: desktop ---------- #}
+<form class="card card--pad d-only" method="get" action="{{ url_for('alunos.lista') }}" role="search">
+  <div class="filtros">
+    <div class="field-icon grow">{{ icon('search', 18) }}<input class="input" type="search" name="q" value="{{ filtro.q }}" placeholder="Buscar por nome ou CPF" aria-label="Buscar por nome ou CPF"></div>
+    <div class="select filtros__sel"><select class="input" name="status" aria-label="Situação">
+      {% for v, t in [('todos','Status: todos'),('ativos','Ativos'),('pendente','Pendentes'),('inativo','Inativos')] %}<option value="{{ v }}"{% if filtro.status == v %} selected{% endif %}>{{ t }}</option>{% endfor %}
+    </select>{{ icon('chevron-down', 18) }}</div>
+    <div class="select filtros__sel"><select class="input" name="plano" aria-label="Plano">
+      <option value="">Plano: todos</option>
+      {% for p in planos %}<option value="{{ p.id }}"{% if filtro.plano|string == p.id|string %} selected{% endif %}>{{ p.nome }}</option>{% endfor %}
+    </select>{{ icon('chevron-down', 18) }}</div>
+    <button class="btn btn-ghost" type="submit">{{ icon('filter', 18) }}Filtrar</button>
+  </div>
+</form>
+
+{# ---------- lista mobile ---------- #}
+<section class="card card--pad m-only" aria-label="Lista de alunos" style="padding-top:6px;padding-bottom:6px">
+  {% if alunos %}
+  <ul class="mlist">
+    {% for a in alunos %}
+    <li><a class="mrow" href="{{ url_for('alunos.detalhe', id=a.id) }}">
+      {{ avatar(a.nome, 'lg') }}
+      <span class="mrow__main"><span class="mrow__title truncate" style="display:block">{{ a.nome }}</span><span class="mrow__sub" style="display:block">{{ a.plano }} · {{ a.vence_txt }}</span></span>
+      <span class="mrow__end">{{ chip_status(a.status) }}{{ icon('chevron-right', 18) }}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}{{ vazio('Nenhum aluno encontrado', 'Tente outro nome, CPF ou limpe os filtros.', 'search', 'Limpar filtros', url_for('alunos.lista')) }}{% endif %}
+</section>
+{% if pag.total > 1 %}
+<div class="m-only row-flex" style="justify-content:space-between;gap:12px">
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('alunos.lista', pagina=pag.atual - 1, **filtro_qs) }}"{% if pag.atual <= 1 %} aria-disabled="true"{% endif %}>{{ icon('chevron-left', 16) }}Anterior</a>
+  <span class="faint fs-13 nowrap">Página {{ pag.atual }} de {{ pag.total }}</span>
+  <a class="btn btn-ghost btn-sm" href="{{ url_for('alunos.lista', pagina=pag.atual + 1, **filtro_qs) }}"{% if pag.atual >= pag.total %} aria-disabled="true"{% endif %}>Próxima{{ icon('chevron-right', 16) }}</a>
+</div>
+{% endif %}
+<a class="btn btn-primary btn-lg btn-block m-only" href="{{ url_for('alunos.novo') }}">{{ icon('user-plus', 18) }}Novo aluno</a>
+
+{# ---------- tabela desktop ---------- #}
+<section class="card card--flush d-only" aria-label="Lista de alunos">
+  {% if alunos %}
+  <div class="table-scroll">
+    <table class="dtable">
+      <thead><tr><th scope="col">Aluno</th><th scope="col">Contato</th><th scope="col">Plano</th><th scope="col">Vencimento</th><th scope="col">Status</th><th scope="col" class="col-actions">Ações</th></tr></thead>
+      <tbody>
+        {% for a in alunos %}
+        <tr>
+          <td><div class="cell-person">{{ avatar(a.nome) }}<div><b>{{ a.nome }}</b><small>{{ a.cpf }}</small></div></div></td>
+          <td>{{ a.telefone }}</td>
+          <td>{{ a.plano }}</td>
+          <td>{% if a.vencido %}<b class="bad">Venceu {{ a.vence }}</b>{% else %}{{ a.vence }}{% endif %}</td>
+          <td>{{ chip_status(a.status) }}</td>
+          <td class="col-actions"><span class="actions">
+            <a class="iconbtn" href="{{ url_for('alunos.detalhe', id=a.id) }}" aria-label="Ver {{ a.nome }}">{{ icon('eye', 18) }}</a>
+            <button type="button" class="iconbtn iconbtn--green" data-toast="WhatsApp aberto para {{ a.nome.split()[0] }}." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>
+            <a class="iconbtn" href="{{ url_for('alunos.editar', id=a.id) }}" aria-label="Editar {{ a.nome }}">{{ icon('edit', 18) }}</a>
+          </span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="tfoot-bar"><span>Mostrando {{ pag.de }}-{{ pag.ate }} de {{ pag.total_registros }} alunos</span>
+    <nav class="pager" aria-label="Paginação">
+      <a href="{{ url_for('alunos.lista', pagina=pag.atual - 1, **filtro_qs) }}" aria-label="Página anterior"{% if pag.atual <= 1 %} aria-disabled="true"{% endif %}>{{ icon('chevron-left', 16) }}</a>
+      {% for n in pag.janela %}{% if n is none %}<span aria-hidden="true">…</span>{% else %}<a href="{{ url_for('alunos.lista', pagina=n, **filtro_qs) }}"{% if n == pag.atual %} aria-current="page"{% endif %}>{{ n }}</a>{% endif %}{% endfor %}
+      <a href="{{ url_for('alunos.lista', pagina=pag.atual + 1, **filtro_qs) }}" aria-label="Próxima página"{% if pag.atual >= pag.total %} aria-disabled="true"{% endif %}>{{ icon('chevron-right', 16) }}</a>
+    </nav>
+  </div>
+  {% else %}{{ vazio('Nenhum aluno encontrado', 'Tente outro nome, CPF ou limpe os filtros.', 'search', 'Limpar filtros', url_for('alunos.lista')) }}{% endif %}
+</section>
+{% endblock %}
+
+{% block dialogs %}
+<dialog class="vt-dialog" id="novo-aluno" aria-labelledby="dlg-novo-t"{% if abrir_novo %} data-abrir{% endif %}>
+  {% set em_modal = true %}
+  {% include 'alunos/_form.html' %}
+</dialog>
+{% endblock %}
