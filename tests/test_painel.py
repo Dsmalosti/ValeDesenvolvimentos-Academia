@@ -75,7 +75,8 @@ def test_listas_batem_com_os_numeros(app, academia):
     assert [x["nome"] for x in painel["listas"]["vencem"]] == ["Duda Paz"]
     assert [x["aluno"]["nome"] for x in painel["listas"]["novas"]] == ["Ana Souza"]
     assert painel["alertas"]["risco"][0]["motivo"] == "Pagamento atrasado há 14 dias"
-    assert painel["alertas"]["aniversarios"][0] == {"nome": "Ana Souza", "motivo": "Completa 36 anos hoje"}
+    # [back-16-mensagens] o aviso passou a levar o telefone do aluno (o botão do WhatsApp virou link)
+    assert painel["alertas"]["aniversarios"][0] == {"nome": "Ana Souza", "telefone": "11999990000", "motivo": "Completa 36 anos hoje"}
     assert [x["nome"] for x in painel["alertas"]["renovacao"]] == ["Bia Lima"]
     assert painel["alunos"][0]["nome"] == "Ana Souza" and painel["alunos"][0]["status"] == "ativo"
     assert {x["nome"]: x["status"] for x in painel["alunos"]}["Bia Lima"] == "pendente"

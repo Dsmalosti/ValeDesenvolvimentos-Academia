@@ -515,3 +515,39 @@ class AvaliacaoFisica(db.Model):
 
     def __repr__(self):
         return f'<AvaliacaoFisica aluno={self.aluno_id} {self.data}>'
+
+
+# [back-16-mensagens] tipos de mensagem da fila do dia (os mesmos nomes dos modelos de texto em `modelos_mensagem`)
+MENSAGEM_ANIVERSARIO, MENSAGEM_AVALIACAO, MENSAGEM_COBRANCA = 'aniversario', 'avaliacao', 'cobranca'
+
+
+class MensagemEnviada(db.Model):
+    """
+    [back-16-mensagens] Registro de que alguém da equipe tocou em "Enviar no WhatsApp" numa linha da
+    fila de mensagens. O SISTEMA NÃO ENVIA nada: ele abre o WhatsApp de quem está usando com o texto
+    pronto. Esta tabela só guarda o toque, para a linha aparecer como "Enviada hoje" para toda a
+    equipe e para a mesma cobrança não ser mandada de novo dia após dia.
+
+    Não guarda o texto nem o telefone: só quem, para quem, de que tipo e quando.
+    """
+    __tablename__ = 'mensagens_enviadas'
+    __table_args__ = (
+        # uma linha por mensagem por dia: tocar duas vezes no mesmo dia não duplica
+        db.UniqueConstraint('conta_id', 'tipo', 'referencia', 'data', name='uq_mensagens_enviadas_conta_id_tipo_referencia_data'),
+        db.Index('ix_mensagens_enviadas_conta_data', 'conta_id', 'data'),
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)          # a academia
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False, index=True)
+    tipo = db.Column(db.String(20), nullable=False)                                        # aniversario | avaliacao | cobranca
+    referencia = db.Column(db.String(40), nullable=False)        # o id do aluno (aniversário, cobrança) ou do horário da avaliação
+    data = db.Column(db.Date, nullable=False)                    # o dia do envio (é o que entra na regra de "uma por dia")
+    enviada_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    enviada_por_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)   # quem tocou no botão
+
+    # cascade: é só um registro de toque. Se o aluno for excluído (cadastro feito por engano), os registros dele vão junto,
+    # em vez de impedirem a exclusão.
+    aluno = db.relationship('Aluno', backref=db.backref('mensagens_enviadas', lazy=True, cascade='all, delete-orphan'), lazy=True)
+
+    def __repr__(self):
+        return f'<MensagemEnviada {self.tipo} aluno={self.aluno_id} {self.data}>'

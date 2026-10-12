@@ -29,7 +29,7 @@ PENDENTES = [
     # [back-12-config] 'config.index' saiu daqui: agora é rota de verdade em blueprints/config/routes.py.
     # [back-11-relatorios] 'relatorios.index' e 'relatorios.admin' saíram daqui: agora são rotas de verdade em
     # blueprints/relatorios/routes.py.
-    ('mensagens',  'index',          '/mensagens',                             ['GET'],  'Mensagens'),
+    # [back-16-mensagens] 'mensagens.index' saiu daqui: agora é rota de verdade em blueprints/mensagens/routes.py.
     # [back-10-frequencia] 'frequencia.index' saiu daqui: agora é rota de verdade em blueprints/frequencia/routes.py.
     # [back-15-avaliacoes] 'avaliacoes.agenda', 'avaliacoes.agendar' e 'avaliacoes.registrar' saíram daqui: agora são
     # rotas de verdade em blueprints/avaliacoes/routes.py.

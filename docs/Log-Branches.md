@@ -211,6 +211,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** arquivo novo `app/helpers/whatsapp.py` (o endereço `wa.me`, que a ficha de treino também passou a usar). 10 ajustes marcados em templates (lista no doc). Ficaram de fora: fotos, PDF, cobrança da avulsa e percentual de gordura.
 - **Doc:** `docs/mudancas/back-15-avaliacoes.md`
 
+## front-12-mensagens
+
+- **Sai de:** `back-15-avaliacoes` · **PR:** a abrir → `back-15-avaliacoes` · **Data:** 12/10/2026
+- **O que mudou:** só template. Cópia fiel do Drive de `mensagens/index.html`.
+- **Testes:** o arquivo conferido byte a byte com o Drive.
+
+## back-16-mensagens
+
+- **Sai de:** `front-12-mensagens` · **PR:** a abrir → `front-12-mensagens` · **Data:** 12/10/2026
+- **O que mudou:** a fila de mensagens do dia: aniversariantes de hoje, avaliações de amanhã e mensalidades vencidas, cada uma com o texto dos modelos de Configurações já preenchido e o botão que abre o WhatsApp de quem usa (custo zero, sem API; decisão D14). O toque fica gravado ("Enviada hoje" para toda a equipe); cobrança no máximo a cada 3 dias; instrutor não vê cobrança. Botões de WhatsApp que eram demonstração (perfil, lista, painel, avisos) viraram links; a cobrança em lote do painel leva à fila.
+- **Migration:** `b16e2f3a4b50_mensagens_enviadas.py`: cria `mensagens_enviadas`. **Depois do pull, `flask db upgrade`.**
+- **Testes:** `pytest` 422 de 422 (25 novos em `tests/test_mensagens.py`); migration num Postgres temporário, 18 checagens; navegador: mensagens 34 de 34 (sem sair para a internet) e as outras onze telas; varredura de rotas por papel sem mudança.
+- **Observações:** a tela nunca diz que a fila "sai sozinha" (o envio automático não existe). Ficaram de fora: envio automático pela API oficial, filas de "sumido" e "boas-vindas", e o "Comprovante" da tela de pagamento.
+- **Doc:** `docs/mudancas/back-16-mensagens.md`
+
 ## Onde parou (12/10/2026)
 
-Primeira parte da Fase B completa e enviada (alunos, planos, cobrança, frequência, relatórios, configurações e equipe), mais exercícios e fichas de treino (`back-14`) e avaliação física (`back-15`). PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-15`** (12 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b15`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-12-mensagens` + `back-16-mensagens` (por link do WhatsApp, D14), personal, depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates (agora também os 3 de `treinos/enviar.html`) e o `auth/nova_senha.html`; decidir "Editar o modelo"/"Duplicar ficha" e pôr o "Salvar ficha" no desktop; avaliação: recepção vê medidas?, preço da avulsa, fotos, percentual de gordura; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).
+Primeira parte da Fase B completa e enviada (alunos, planos, cobrança, frequência, relatórios, configurações e equipe), mais exercícios e fichas de treino (`back-14`) avaliação física (`back-15`) e mensagens (`back-16`). PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-16`** (14 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b16`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-13-personal` + `back-17-personal` (D12 em aberto), depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates (agora também os 3 de `treinos/enviar.html`) e o `auth/nova_senha.html`; decidir "Editar o modelo"/"Duplicar ficha" e pôr o "Salvar ficha" no desktop; avaliação: recepção vê medidas?, preço da avulsa, fotos, percentual de gordura; mensagens: envio automático (API paga), chave de lembretes, filas de sumido e boas-vindas; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).

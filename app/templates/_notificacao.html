@@ -14,11 +14,14 @@
 <script id="flash-data" type="application/json">{{ _msgs|tojson }}</script>
 
 {% if popups and alertas %}
-{% macro pop_item(nome, linha, tom) -%}
+{# [back-16-mensagens] `telefone` (opcional): com ele o botão vira um link que abre o WhatsApp do aluno. Antes era só um
+   aviso de demonstração ("Mensagem de WhatsApp aberta para..."), que continua valendo quando o telefone não vem. #}
+{% macro pop_item(nome, linha, tom, telefone='') -%}
 <li class="pop-item">
   {{ avatar(nome, 'sm', tom) }}
   <div class="grow"><b class="truncate" style="display:block">{{ nome }}</b><span class="pop-item__linha tone-txt-{{ tom }}">{{ linha }}</span></div>
-  <button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="Mensagem de WhatsApp aberta para {{ nome.split()[0] }}." aria-label="Chamar {{ nome }} no WhatsApp">{{ icon('chat', 20) }}</button>
+  {% if telefone %}<a class="iconbtn iconbtn--green-fill iconbtn--lg" href="https://wa.me/55{{ telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener" aria-label="Chamar {{ nome }} no WhatsApp">{{ icon('chat', 20) }}</a>
+  {% else %}<button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="{{ nome.split()[0] }} não tem telefone cadastrado." aria-label="Chamar {{ nome }} no WhatsApp">{{ icon('chat', 20) }}</button>{% endif %}
 </li>
 {%- endmacro %}
 
@@ -67,7 +70,7 @@
   <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-risco" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'risco' %} hidden{% endif %}>
     <div class="vt-dialog__body">
       <div class="faint fs-13" style="margin-bottom:8px">{{ alertas.risco|length }} aluno{{ 's' if alertas.risco|length != 1 }} {{ 'sem frequência ou ' if academia.checkin_ativo }}com pagamento atrasado</div>
-      <ul class="pop-list">{% for a in alertas.risco %}{{ pop_item(a.nome, a.motivo, a.tom) }}{% endfor %}</ul>
+      <ul class="pop-list">{% for a in alertas.risco %}{{ pop_item(a.nome, a.motivo, a.tom, a.telefone) }}{% endfor %}</ul>
     </div>
     <div class="vt-dialog__foot">
       <a class="btn btn-primary btn-block" href="{{ url_for('alunos.lista', status='risco') }}">Ver todos os alunos em risco</a>
@@ -79,11 +82,12 @@
   <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-aniversario" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'aniversario' %} hidden{% endif %}>
     <div class="vt-dialog__body">
       <div class="faint fs-13" style="margin-bottom:8px">{{ alertas.aniversarios|length }} aluno{{ 's' if alertas.aniversarios|length != 1 }} fazem aniversário hoje. Que tal parabenizar?</div>
-      <ul class="pop-list">{% for a in alertas.aniversarios %}{{ pop_item(a.nome, a.motivo, 'yellow') }}{% endfor %}</ul>
+      <ul class="pop-list">{% for a in alertas.aniversarios %}{{ pop_item(a.nome, a.motivo, 'yellow', a.telefone) }}{% endfor %}</ul>
       <div class="note note--blue" style="margin-top:12px"><span>Mensagem sugerida: "Parabéns, [nome]! A equipe da Vale Tec deseja um dia ótimo. Aproveite 10% de desconto na próxima renovação até sexta."</span></div>
     </div>
     <div class="vt-dialog__foot">
-      <button type="button" class="btn btn-primary btn-block" data-toast="Mensagens de parabéns enviadas." data-close>Enviar mensagem para todos</button>
+      {# [back-16-mensagens] antes: botão de demonstração que só mostrava "Mensagens de parabéns enviadas". Agora leva à fila de mensagens, onde cada parabéns já vem escrito. #}
+      <a class="btn btn-primary btn-block" href="{{ url_for('mensagens.index') }}">Enviar mensagem para todos</a>
       <button type="button" class="btn btn-block btn-link-soft" data-close>Fechar</button>
     </div>
   </div>
@@ -91,10 +95,11 @@
   <div class="vt-dialog__painel"{% if _abas|length > 1 %} role="tabpanel"{% endif %} id="pnl-renovacao" style="display:flex;flex-direction:column;flex:1;min-height:0"{% if _abas[0] != 'renovacao' %} hidden{% endif %}>
     <div class="vt-dialog__body">
       <div class="faint fs-13" style="margin-bottom:8px">{{ alertas.renovacao|length }} aluno{{ 's' if alertas.renovacao|length != 1 }} est{{ 'á' if alertas.renovacao|length == 1 else 'ão' }} há mais de 5 dias com o plano vencido</div>
-      <ul class="pop-list">{% for a in alertas.renovacao %}{{ pop_item(a.nome, a.motivo, a.tom) }}{% endfor %}</ul>
+      <ul class="pop-list">{% for a in alertas.renovacao %}{{ pop_item(a.nome, a.motivo, a.tom, a.telefone) }}{% endfor %}</ul>
     </div>
     <div class="vt-dialog__foot">
-      <button type="button" class="btn btn-primary btn-block" data-toast="Lembretes de renovação enviados." data-close>Enviar lembrete de renovação</button>
+      {# [back-16-mensagens] antes: botão de demonstração que só mostrava "Lembretes de renovação enviados". Agora leva à fila de mensagens. #}
+      <a class="btn btn-primary btn-block" href="{{ url_for('mensagens.index') }}">Enviar lembrete de renovação</a>
       <button type="button" class="btn btn-block btn-link-soft" data-close>Ver depois</button>
     </div>
   </div>

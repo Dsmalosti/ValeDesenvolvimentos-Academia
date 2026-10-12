@@ -30,7 +30,9 @@
     <div class="perfil-meta"><span>CPF {{ aluno.cpf }}</span><span>{{ aluno.telefone }}</span><span>{{ aluno.email }}</span><span>{{ 'Aluna' if fem else 'Aluno' }} desde {{ aluno.desde }}</span></div>
   </div>
   <div class="row-flex gap-3">
-    <button type="button" class="btn btn-green" data-toast="WhatsApp aberto para {{ aluno.nome.split()[0] }}.">{{ icon('chat', 18) }}WhatsApp</button>
+    {# [back-16-mensagens] antes: botão de demonstração (só mostrava "WhatsApp aberto para..."). Agora abre a conversa do aluno; sem telefone, avisa. #}
+    {% if aluno.telefone %}<a class="btn btn-green" href="https://wa.me/55{{ aluno.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp</a>
+    {% else %}<button type="button" class="btn btn-green" data-toast="{{ aluno.nome.split()[0] }} não tem telefone cadastrado.">{{ icon('chat', 18) }}WhatsApp</button>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('alunos.renovar', id=aluno.id) }}">{{ icon('refresh', 18) }}Renovar</a>
     <a class="btn btn-ghost" href="{{ url_for('alunos.editar', id=aluno.id) }}">{{ icon('edit', 18) }}Editar</a>
     <a class="btn btn-primary" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('clipboard', 18) }}Iniciar avaliação física</a>
@@ -46,7 +48,9 @@
   <div class="row-flex gap-2" style="justify-content:center">{{ chip_status(aluno.status) }}<span class="chip chip--blue">{{ aluno.plano }}</span></div>
   <div class="faint fs-13" style="margin-top:2px">{{ aluno.telefone }} · {{ 'aluna' if fem else 'aluno' }} desde {{ aluno.desde }}</div>
   <div class="opcoes" style="--cols:2;width:100%;margin-top:6px">
-    <button type="button" class="btn btn-green" data-toast="WhatsApp aberto para {{ aluno.nome.split()[0] }}.">{{ icon('chat', 18) }}WhatsApp</button>
+    {# [back-16-mensagens] antes: botão de demonstração (só mostrava "WhatsApp aberto para..."). Agora abre a conversa do aluno; sem telefone, avisa. #}
+    {% if aluno.telefone %}<a class="btn btn-green" href="https://wa.me/55{{ aluno.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp</a>
+    {% else %}<button type="button" class="btn btn-green" data-toast="{{ aluno.nome.split()[0] }} não tem telefone cadastrado.">{{ icon('chat', 18) }}WhatsApp</button>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('alunos.renovar', id=aluno.id) }}">{{ icon('refresh', 18) }}Renovar</a>
   </div>
   <a class="btn btn-primary btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">{{ icon('clipboard', 18) }}Visualizar ficha</a>

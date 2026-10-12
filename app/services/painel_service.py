@@ -101,9 +101,10 @@ def montar_painel(hoje=None):
     ausentes = sorted(({'aluno': linhas[a.id], 'dias': sem_vir[a.id]} for a in ativos
                        if sem_vir and sem_vir.get(a.id, 0) > frequencia_service.DIAS_AUSENTE), key=lambda x: -x['dias'])
     # em risco = quem está com pagamento atrasado + quem sumiu
-    risco = [{'nome': x['nome'], 'tipo': 'pagamento', 'tom': 'red',
+    # [back-16-mensagens] cada aviso passa a levar o `telefone` do aluno: o botão do WhatsApp do popup virou link de verdade
+    risco = [{'nome': x['nome'], 'tipo': 'pagamento', 'tom': 'red', 'telefone': x['telefone'],
               'motivo': f"Pagamento atrasado há {x['dias_atraso']} dia{'s' if x['dias_atraso'] != 1 else ''}"} for x in pendentes]
-    risco += [{'nome': x['aluno']['nome'], 'tipo': 'frequencia', 'tom': 'yellow',
+    risco += [{'nome': x['aluno']['nome'], 'tipo': 'frequencia', 'tom': 'yellow', 'telefone': x['aluno']['telefone'],
                'motivo': f"{x['dias']} dias sem vir à academia"} for x in ausentes]
 
     conta = current_user.conta
@@ -144,10 +145,10 @@ def montar_painel(hoje=None):
         'avaliacao_hoje': avaliacoes_hoje[0] if avaliacoes_hoje else None,
         'avaliacoes_hoje': avaliacoes_hoje,
         'risco': risco,
-        'aniversarios': [{'nome': a.nome or 'Aluno sem nome',
+        'aniversarios': [{'nome': a.nome or 'Aluno sem nome', 'telefone': a.telefone or '',
                           'motivo': f"Completa {hoje.year - a.data_nascimento.year} anos hoje"}
                          for a in aniversariantes],
-        'renovacao': [{'nome': x['nome'], 'tom': 'red' if x['dias_atraso'] > 10 else 'blue',
+        'renovacao': [{'nome': x['nome'], 'tom': 'red' if x['dias_atraso'] > 10 else 'blue', 'telefone': x['telefone'],
                        'motivo': f"Plano {x['plano'].lower()} venceu há {x['dias_atraso']} dias"}
                       for x in pendentes if x['dias_atraso'] > 5],
     }

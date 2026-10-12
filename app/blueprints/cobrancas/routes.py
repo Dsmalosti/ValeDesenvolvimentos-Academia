@@ -103,6 +103,8 @@ def cancelar_pix(id):
 
 @cobrancas_blueprint.route('/lembrete', methods=['POST'])
 def lembrete_lote():
-    # Cobrança em lote pelo WhatsApp: entra com o módulo de mensagens.
-    flash('A cobrança pelo WhatsApp ainda não está disponível.', 'info')
-    return redirect(url_for('painel.index'))
+    # [back-16-mensagens] antes: só avisava "ainda não está disponível" e voltava ao painel. O WhatsApp não envia
+    # em lote sem a API paga: a cobrança de cada aluno atrasado está na fila de mensagens, com o texto pronto,
+    # e a pessoa toca em uma por uma.
+    flash('As cobranças atrasadas estão na fila abaixo, com o texto pronto. Toque em cada uma para abrir o WhatsApp.', 'info')
+    return redirect(url_for('mensagens.index'))

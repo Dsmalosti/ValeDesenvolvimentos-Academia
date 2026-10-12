@@ -145,7 +145,7 @@
           <td>{% if a.vencido %}<b class="bad">Venceu {{ a.vence }}</b>{% else %}{{ a.vence }}{% endif %}</td>
           <td>{{ chip_status(a.status) }}</td>
           <td class="col-actions"><span class="actions">
-            <button type="button" class="iconbtn iconbtn--green" data-toast="WhatsApp aberto para {{ a.nome.split()[0] }}." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>
+            {# [back-16-mensagens] antes: botão de demonstração. Agora abre a conversa do aluno; sem telefone, avisa. #}{% if a.telefone %}<a class="iconbtn iconbtn--green" href="https://wa.me/55{{ a.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener" aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</a>{% else %}<button type="button" class="iconbtn iconbtn--green" data-toast="{{ a.nome.split()[0] }} não tem telefone cadastrado." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>{% endif %}
           </span></td>
         </tr>
         {% endfor %}

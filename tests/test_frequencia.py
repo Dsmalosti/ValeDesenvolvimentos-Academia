@@ -208,7 +208,8 @@ def test_ausente_e_quem_tem_entrada_e_sumiu_ha_mais_de_15_dias(app, academia):
 
     assert painel["k"]["ausentes"] == 1
     assert [(x["aluno"]["nome"], x["dias"]) for x in painel["listas"]["ausentes"]] == [("Ana Souza", 20)]
-    assert {"nome": "Ana Souza", "tipo": "frequencia", "tom": "yellow", "motivo": "20 dias sem vir à academia"} in painel["alertas"]["risco"]
+    # [back-16-mensagens] o aviso passou a levar o telefone do aluno (o botão do WhatsApp virou link)
+    assert {"nome": "Ana Souza", "tipo": "frequencia", "tom": "yellow", "telefone": "11999990000", "motivo": "20 dias sem vir à academia"} in painel["alertas"]["risco"]
     assert painel["k"]["em_risco"] == 1 and nunca                              # quem nunca veio é "sem dado", não ausente
 
     html = como(app, academia["dono"]).get("/").get_data(as_text=True)

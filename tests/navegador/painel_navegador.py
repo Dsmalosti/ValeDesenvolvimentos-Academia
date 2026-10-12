@@ -165,6 +165,10 @@ with sync_playwright() as p:
             checa(f"[{nome}] rail lateral visível e sem barra de abas", pg.is_visible(".rail") and not pg.is_visible(".tabbar"))
             pg.click(".rail .navicon[aria-label='Mensagens']")
         pg.wait_for_url("**/mensagens", timeout=6000)
+        # [back-16-mensagens] antes: Mensagens era a seção "em construção" usada neste teste. Virou tela de verdade;
+        # a que sobrou sem backend no menu do painel é a central de notificações (o sino).
+        checa(f"[{nome}] menu 'Mensagens' abre a fila de mensagens", "fila de hoje" in pg.inner_text("body").lower() and pg.locator(".app .main").count() == 1)
+        pg.goto(BASE + "/notificacoes")
         checa(f"[{nome}] seção sem backend mostra 'Em construção' no layout novo",
               "Em construção" in pg.inner_text("#conteudo") and pg.locator(".app .main").count() == 1)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-4-em-construcao.png"))
