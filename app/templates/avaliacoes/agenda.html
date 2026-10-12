@@ -7,7 +7,8 @@
 {% from '_macros/ui.html' import avatar %}
 {% set nav_ativo = 'avaliacoes' %}
 {% set pagina_titulo = 'Avaliações físicas' %}
-{% set pagina_sub = 'Setembro · ' ~ stats.mes ~ ' agendadas' %}
+{# [back-15-avaliacoes] antes: o mês era fixo ('Setembro'). `stats.mes_nome` vem do servidor. #}
+{% set pagina_sub = (stats.mes_nome|default('Setembro')) ~ ' · ' ~ stats.mes ~ ' agendadas' %}
 {% set m_sub = pagina_sub %}
 {% set corpo_classe = 'page--narrow' %}
 {% block page_acoes %}<a class="btn btn-primary" href="{{ url_for('avaliacoes.agendar') }}">{{ icon('plus', 18) }}Agendar avaliação</a>{% endblock %}
@@ -26,7 +27,8 @@
       <a class="grow av-quem" href="{{ url_for('avaliacoes.aluno', id=i.aluno.id) }}">{{ avatar(i.aluno.nome, 'lg') }}<span><b>{{ i.aluno.nome }}</b><span class="av-sub"><span class="faint fs-12">{{ i.tipo }}</span><span class="chip chip--{{ i.chip[0] }} nowrap m-only">{{ i.chip[1] }}</span></span></span></a>
       {# celular: o status desce pra linha do tipo (acima) e o nome ganha a largura toda; desktop: status na coluna própria #}
       <span class="chip chip--{{ i.chip[0] }} nowrap d-only">{{ i.chip[1] }}</span>
-      {% if g.titulo.startswith('Hoje') %}<a class="btn btn-primary btn-sm nowrap av-ini" href="{{ url_for('avaliacoes.registrar', id=i.aluno.id, ag=i.id) }}" >Iniciar avaliação</a>{% endif %}</li>
+      {# [back-15-avaliacoes] `pode_avaliar` (bool): a recepção agenda, mas não registra a avaliação (dado de saúde). Sem a variável, o botão aparece como antes. #}
+      {% if g.titulo.startswith('Hoje') and pode_avaliar|default(true) %}<a class="btn btn-primary btn-sm nowrap av-ini" href="{{ url_for('avaliacoes.registrar', id=i.aluno.id, ag=i.id) }}" >Iniciar avaliação</a>{% endif %}</li>
     {% endfor %}
   </ul>
 </section>

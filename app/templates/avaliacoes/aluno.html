@@ -16,7 +16,7 @@
 {% block content %}
 {% if hist %}
 {% if grafico %}
-<section class="card card--pad" aria-labelledby="h-peso"><h2 class="ctitle" id="h-peso" style="font-size:17px">Peso em 2026</h2><div class="csub">{{ hist|length }} avaliações · {{ ('%.1f'|format(variacao))|replace('.', ',')|replace('-', '−') }} kg no período</div>
+<section class="card card--pad" aria-labelledby="h-peso">{# [back-15-avaliacoes] antes: o ano era fixo ('2026'). `grafico.periodo` vem do servidor ('2026' ou '2025 a 2026'). #}<h2 class="ctitle" id="h-peso" style="font-size:17px">Peso em {{ grafico.periodo|default('2026') }}</h2><div class="csub">{{ hist|length }} avaliações · {{ ('%.1f'|format(variacao))|replace('.', ',')|replace('-', '−') }} kg no período</div>
   <div class="chart" style="margin-top:10px" data-chart="linha" data-json='{{ {"labels": grafico.labels, "valores": grafico.valores, "titulo": "Peso do aluno em cada avaliação", "unidade": "kg", "casas": 1, "altura": 190, "todosRotulos": true}|tojson|forceescape }}'></div></section>
 {% endif %}
 <section class="card card--pad" aria-labelledby="h-todas"><h2 class="ctitle" id="h-todas" style="font-size:17px">Todas as avaliações</h2>

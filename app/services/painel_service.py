@@ -136,8 +136,13 @@ def montar_painel(hoje=None):
         'ano_delta': _pct(len(ativos), sum(1 for a in ativos if cadastro[a.id] is None or cadastro[a.id].year < ano)),
     }
 
+    # [back-15-avaliacoes] antes: 'avaliacao_hoje' era sempre None (o módulo não existia). Agora: a próxima avaliação
+    # marcada para hoje (para o aviso) e a lista de todas as de hoje (para o card do painel).
+    from app.services import avaliacao_service
+    avaliacoes_hoje = avaliacao_service.de_hoje_para_o_painel(hoje)
     alertas = {
-        'avaliacao_hoje': None,                                    # precisa do módulo de avaliações
+        'avaliacao_hoje': avaliacoes_hoje[0] if avaliacoes_hoje else None,
+        'avaliacoes_hoje': avaliacoes_hoje,
         'risco': risco,
         'aniversarios': [{'nome': a.nome or 'Aluno sem nome',
                           'motivo': f"Completa {hoje.year - a.data_nascimento.year} anos hoje"}

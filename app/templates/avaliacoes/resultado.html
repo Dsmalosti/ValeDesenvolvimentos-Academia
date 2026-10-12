@@ -27,6 +27,7 @@
 <section class="card card--pad" aria-labelledby="h-an"><h2 class="ctitle" id="h-an" style="margin-bottom:10px">Anotação do avaliador</h2>
   <p class="msg__txt" style="margin:0;font-size:13.5px">{{ e.nota or 'Sem anotação.' }}</p></section>
 <div class="row-flex gap-2"><a class="btn btn-green grow" href="{{ wa_url }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Enviar</a><button type="button" class="btn btn-ghost grow" data-toast="O PDF da avaliação é gerado pelo backend.">{{ icon('download', 16) }}Exportar PDF</button></div>
-<a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) if aluno.id in (1, 2, 3) else url_for('treinos.biblioteca') }}">{{ icon('clipboard', 18) }}Ajustar a ficha de treino</a>
+{# [back-15-avaliacoes] antes: só os alunos de id 1, 2 e 3 (os do exemplo) iam para a ficha. A rota da ficha já leva quem não tem ficha para a biblioteca. #}
+<a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">{{ icon('clipboard', 18) }}Ajustar a ficha de treino</a>
 <a class="btn btn-ghost btn-lg btn-block" href="{{ url_for('avaliacoes.agendar', aluno=aluno.id) }}">{{ icon('calendar', 18) }}Agendar a próxima</a>
 {% endblock %}

@@ -19,7 +19,6 @@ colunas (ver a migration b14).
 import re
 from collections import Counter
 from datetime import date, datetime, timedelta
-from urllib.parse import quote
 
 from flask_login import current_user
 from sqlalchemy import func
@@ -27,6 +26,7 @@ from sqlalchemy import func
 from app.dados_padrao import COMO_EXECUTAR_PADRAO, EXERCICIOS_PADRAO, GRUPOS, MODELOS, MUSCULOS_DO_GRUPO
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, exercicios_proprios, exercicios_visiveis, fichas_da_conta
+from app.helpers.whatsapp import link_do_whatsapp
 from app.models import Aluno, Exercicio, Ficha, Treino, TreinoExercicio, User
 
 LETRAS = ['A', 'B', 'C', 'D', 'E']       # uma ficha aceita até 5 treinos
@@ -431,16 +431,13 @@ def contexto_do_envio(aluno, ficha):
     primeiro_nome = (aluno.nome or 'aluno').split()[0]
     mensagem = (f'Oi {primeiro_nome}! Sua ficha de treino está pronta.\n\n{texto_da_ficha(aluno, ficha)}\n\n'
                 f'Qualquer dúvida é só chamar. — {current_user.conta.nome}')
-    telefone = re.sub(r'\D', '', aluno.telefone or '')
-    if telefone and len(telefone) <= 11:
-        # DDD + número (10 ou 11 dígitos) ganha o código do Brasil. Olhar o tamanho, e não se "começa com 55":
-        # 55 também é DDD (Santa Maria/RS), e o número de lá ficaria sem o código do país.
-        telefone = '55' + telefone
     itens = _itens(treinos[primeira])
     for item in itens:
         item.pop('_linha')
     return {'aluno': {'id': aluno.id, 'nome': aluno.nome or 'Aluno sem nome', 'telefone': aluno.telefone or 'sem telefone cadastrado'},
             'ficha': ficha_para_a_tela(ficha), 'msg': mensagem, 'letras': list(treinos),
-            'wa_url': f'https://wa.me/{telefone}?text={quote(mensagem)}',
+            # [back-15-avaliacoes] antes: a conta do código do país e o endereço eram montados aqui. Foram para
+            # helpers/whatsapp.py, que a avaliação física também usa. O resultado é o mesmo.
+            'wa_url': link_do_whatsapp(aluno.telefone, mensagem),
             'primeiro': {'nome': _nome_do_treino(treinos[primeira], primeira)}, 'exs': itens,
             'total_ex': sum(len(t.exercicios) for t in treinos.values()), 'so_texto': True}

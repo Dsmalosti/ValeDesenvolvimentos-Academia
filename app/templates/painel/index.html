@@ -76,7 +76,7 @@
     {{ kpi(brl(k.vencimentos_valor, 0), 'Vencimentos no mês · ' ~ k.vencimentos ~ ' alunos', 'calendar', 'blue', abre='dlg-vencem') }}
     {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência real · ' ~ k.inad_qtd ~ ' alunos', 'alert', 'red', 'atenção', 'red', href=url_for('alunos.lista', status='pendente')) }}
     {{ kpi(brl(k.ticket), 'Ticket médio por aluno', 'trend', 'teal', href=url_for('relatorios.admin')) }}
-    {% if academia.checkin_ativo %}{{ kpi(k.ausentes, 'Ausentes há mais de 15 dias', 'user-x', 'orange', abre='dlg-ausentes') }}{% elif alertas.avaliacoes_hoje_exemplo %}{# [back-04-painel] este card tem número e nomes FIXOS de exemplo; fica escondido até existir o módulo de avaliações #}<button type="button" class="card kpi" data-open="dlg-avaliacoes-hoje"><div class="kpi__top"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">2</div><div class="kpi__lbl">Avaliações de hoje</div></div></button>{% endif %}
+    {% if academia.checkin_ativo %}{{ kpi(k.ausentes, 'Ausentes há mais de 15 dias', 'user-x', 'orange', abre='dlg-ausentes') }}{% elif alertas.avaliacoes_hoje %}{# [back-15-avaliacoes] antes (back-04): card escondido, porque o número (2) e os nomes eram FIXOS de exemplo. Agora mostra as avaliações marcadas para hoje (`alertas.avaliacoes_hoje`); sem nenhuma, não aparece. #}<button type="button" class="card kpi" data-open="dlg-avaliacoes-hoje"><div class="kpi__top"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">{{ alertas.avaliacoes_hoje|length }}</div><div class="kpi__lbl">Avaliações de hoje</div></div></button>{% endif %}
     {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', ('+' if k.novas_delta >= 0 else '') ~ k.novas_delta, abre='dlg-novas') }}{# [back-04-painel] variação negativa não leva o '+' #}
   </div>
 </section>
@@ -154,20 +154,20 @@
   </div>
 </section>
 
-{% if alertas.avaliacoes_hoje_exemplo %}{# [back-04-painel] popup com nomes FIXOS de exemplo: escondido, junto com o card que o abre #}
+{% if alertas.avaliacoes_hoje %}{# [back-15-avaliacoes] antes (back-04): popup escondido, com nomes FIXOS de exemplo. Agora lista as avaliações de hoje. #}{% set avh = alertas.avaliacoes_hoje %}
 <dialog class="vt-dialog" id="dlg-avaliacoes-hoje" aria-labelledby="dlg-avh-t">
   <span class="vt-dialog__grip"></span>
   <div class="vt-dialog__head">
     <div class="row-flex gap-3" style="align-items:flex-start"><span class="tile tone-green">{{ icon('calendar-plus', 22) }}</span>
-      <div><h2 class="vt-dialog__title" id="dlg-avh-t">Avaliações de hoje</h2><div class="vt-dialog__sub">2 avaliações agendadas para hoje</div></div></div>
+      <div><h2 class="vt-dialog__title" id="dlg-avh-t">Avaliações de hoje</h2><div class="vt-dialog__sub">{{ avh|length }} {{ 'avaliação agendada' if avh|length == 1 else 'avaliações agendadas' }} para hoje</div></div></div>
     <button type="button" class="iconbtn iconbtn--soft" data-close aria-label="Fechar">{{ icon('close', 18) }}</button>
   </div>
   <div class="vt-dialog__body">
     <ul class="pop-list">
-      <li class="pop-item">{{ avatar('Camila Duarte', 'sm', 'green') }}<div class="grow"><b class="truncate" style="display:block">Camila Duarte</b><span class="pop-item__linha tone-txt-green">09:00 · Reavaliação de 90 dias · Confirmada</span></div>
-        <button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="Mensagem de WhatsApp aberta para Camila." aria-label="Chamar Camila no WhatsApp">{{ icon('chat', 20) }}</button></li>
-      <li class="pop-item">{{ avatar('Pedro Henrique', 'sm', 'yellow') }}<div class="grow"><b class="truncate" style="display:block">Pedro Henrique</b><span class="pop-item__linha tone-txt-yellow">14:30 · Primeira avaliação · A confirmar</span></div>
-        <button type="button" class="iconbtn iconbtn--green-fill iconbtn--lg" data-toast="Mensagem de WhatsApp aberta para Pedro." aria-label="Chamar Pedro no WhatsApp">{{ icon('chat', 20) }}</button></li>
+      {% for a in avh %}
+      <li class="pop-item">{{ avatar(a.nome, 'sm', a.tom) }}<div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha tone-txt-{{ a.tom }}">{{ a.hora }} · {{ a.tipo }} · {{ a.status }}</span></div>
+        <a class="iconbtn iconbtn--green-fill iconbtn--lg" href="https://wa.me/55{{ a.telefone }}" target="_blank" rel="noopener" aria-label="Chamar {{ a.nome.split()[0] }} no WhatsApp">{{ icon('chat', 20) }}</a></li>
+      {% endfor %}
     </ul>
   </div>
   <div class="vt-dialog__foot">

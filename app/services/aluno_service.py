@@ -110,6 +110,10 @@ class AlunoService:
         # [back-10-frequencia] o mesmo vale para quem tem entradas registradas
         if da_conta(Frequencia).filter_by(aluno_id=aluno.id).first():
             raise BusinessError("Este aluno tem entradas registradas e não pode ser excluído. Desative em vez de excluir.")
+        # [back-15-avaliacoes] e para quem tem avaliação física marcada ou feita
+        from app.models import AvaliacaoAgendada, AvaliacaoFisica
+        if da_conta(AvaliacaoFisica).filter_by(aluno_id=aluno.id).first() or da_conta(AvaliacaoAgendada).filter_by(aluno_id=aluno.id).first():
+            raise BusinessError("Este aluno tem avaliações físicas registradas e não pode ser excluído. Desative em vez de excluir.")
 
         BaseService.deletar(aluno)
 

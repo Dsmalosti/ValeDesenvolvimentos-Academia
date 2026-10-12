@@ -196,6 +196,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** arquivo novo `app/dados_padrao.py` (só dados: exercícios e modelos). `treinos/enviar.html` tem 3 ajustes marcados (imagem e PDF desabilitados). "Editar o modelo" e "Duplicar ficha" seguem como aviso do front. Comando novo `flask semear-catalogo`.
 - **Doc:** `docs/mudancas/back-14-treinos.md`
 
+## front-11-avaliacoes
+
+- **Sai de:** `back-14-treinos` · **PR:** a abrir → `back-14-treinos` · **Data:** 12/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `avaliacoes/` (agenda, agendar, aluno, registrar, resultado).
+- **Testes:** os 5 arquivos conferidos byte a byte com o Drive.
+
+## back-15-avaliacoes
+
+- **Sai de:** `front-11-avaliacoes` · **PR:** a abrir → `front-11-avaliacoes` · **Data:** 12/10/2026
+- **O que mudou:** agenda de avaliações (hoje, amanhã, semana, não realizadas); agendar e remarcar, sem dois alunos no mesmo horário do mesmo avaliador; assistente de quatro etapas com IMC e cintura/quadril calculados só no servidor; resultado com a comparação e botão do WhatsApp com o texto pronto; histórico com gráfico; cartão no perfil do aluno; aviso e card "Avaliações de hoje" no painel. Medidas só para dono e instrutor: a recepção agenda e é barrada no resto.
+- **Migration:** `b15d1e2f3a40_avaliacoes_fisicas.py`: cria `avaliacoes_agendadas` e `avaliacoes_fisicas`. **Depois do pull, `flask db upgrade`.**
+- **Testes:** `pytest` 397 de 397 (45 novos em `tests/test_avaliacoes.py`); migration num Postgres temporário, 16 checagens; navegador: avaliações 68 de 68 e as outras dez telas sem mudança; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** arquivo novo `app/helpers/whatsapp.py` (o endereço `wa.me`, que a ficha de treino também passou a usar). 10 ajustes marcados em templates (lista no doc). Ficaram de fora: fotos, PDF, cobrança da avulsa e percentual de gordura.
+- **Doc:** `docs/mudancas/back-15-avaliacoes.md`
+
 ## Onde parou (12/10/2026)
 
-Primeira parte da Fase B completa e enviada (alunos, planos, cobrança, frequência, relatórios, configurações e equipe), mais exercícios e fichas de treino (`back-14`). PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-14`** (10 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b14`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-11-avaliacoes` + `back-15-avaliacoes`, mensagens (por link do WhatsApp, D14), personal, depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates (agora também os 3 de `treinos/enviar.html`) e o `auth/nova_senha.html`; decidir "Editar o modelo"/"Duplicar ficha" e pôr o "Salvar ficha" no desktop; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).
+Primeira parte da Fase B completa e enviada (alunos, planos, cobrança, frequência, relatórios, configurações e equipe), mais exercícios e fichas de treino (`back-14`) e avaliação física (`back-15`). PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-15`** (12 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b15`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-12-mensagens` + `back-16-mensagens` (por link do WhatsApp, D14), personal, depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates (agora também os 3 de `treinos/enviar.html`) e o `auth/nova_senha.html`; decidir "Editar o modelo"/"Duplicar ficha" e pôr o "Salvar ficha" no desktop; avaliação: recepção vê medidas?, preço da avulsa, fotos, percentual de gordura; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).

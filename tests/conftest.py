@@ -31,7 +31,8 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Cobranca, Conta, Custo, Exercicio, Ficha, Frequencia, Pagamento, Plano, Treino, User  # noqa: E402
+from app.models import (Aluno, AvaliacaoAgendada, AvaliacaoFisica, Cobranca, Conta, Custo, Exercicio, Ficha, Frequencia, Pagamento, Plano,  # noqa: E402
+                        Treino, User)
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -172,6 +173,19 @@ def criar_ficha(aluno_id, nome="Ficha A"):
 
 def criar_treino(ficha_id, dia="segunda"):
     return _salvar(Treino(ficha_id=ficha_id, dia_semana=dia))
+
+
+def criar_agendamento(dono_id, aluno_id, dia, hora="09:00", avaliador_id=None, status="confirmada", tipo="primeira"):
+    """Um horário de avaliação física marcado para `dia` (um date). Devolve o id."""
+    return _salvar(AvaliacaoAgendada(conta_id=conta_de(dono_id), aluno_id=aluno_id, data=dia, hora=hora, tipo=tipo, status=status,
+                                     avaliador_id=avaliador_id or dono_id, cobranca="inclusa", criado_por_id=dono_id))
+
+
+def criar_avaliacao(dono_id, aluno_id, dia, peso=70, altura=170, **medidas):
+    """Uma avaliação física FEITA em `dia` (um date), com IMC e RCQ calculados como o sistema calcula. Devolve o id."""
+    from app.services.avaliacao_service import calcular_imc, calcular_rcq
+    return _salvar(AvaliacaoFisica(conta_id=conta_de(dono_id), aluno_id=aluno_id, data=dia, avaliador_id=dono_id, peso_kg=peso, altura_cm=altura,
+                                   imc=calcular_imc(peso, altura), rcq=calcular_rcq(medidas.get("cintura_cm"), medidas.get("quadril_cm")), **medidas))
 
 
 def contar(modelo, **filtros):

@@ -47,16 +47,18 @@
     <div class="field-group" style="margin-top:14px"><label class="label" for="f-observacao">Observação pra recepção</label><input class="input" id="f-observacao" name="observacao" value="{{ f.get('observacao', '') }}" placeholder="Pedir pra vir em jejum de 3h" maxlength="200"></div>
   </section>
 
-  <div class="note note--blue"><span class="tile tone-blue" style="width:36px;height:36px">{{ icon('bell', 18) }}</span><span><strong>Lembretes automáticos</strong>O aluno recebe um aviso na <b>véspera</b> e outro <b>no dia</b>. A recepção vê os dois no painel.</span></div>
+  {# [back-15-avaliacoes] `lembretes_automaticos` (bool): o sistema ainda não envia aviso sozinho, então a tela não promete. Sem a variável, o aviso aparece como antes. #}
+  {% if lembretes_automaticos is not defined or lembretes_automaticos %}<div class="note note--blue"><span class="tile tone-blue" style="width:36px;height:36px">{{ icon('bell', 18) }}</span><span><strong>Lembretes automáticos</strong>O aluno recebe um aviso na <b>véspera</b> e outro <b>no dia</b>. A recepção vê os dois no painel.</span></div>{% endif %}
 
   <section class="card card--pad" aria-labelledby="h-cob"><h2 class="ctitle" id="h-cob">Cobrança da avaliação</h2>
     <div class="csub" style="margin-bottom:12px">{% if plano_inclui %}O plano {{ aluno.plano }} de {{ aluno.nome.split()[0] }} inclui avaliação física.{% else %}O plano {{ aluno.plano }} de {{ aluno.nome.split()[0] }} não inclui avaliação física.{% endif %}</div>
     <div class="opcoes" data-opcoes data-alvo="h-cobranca" style="--cols:2" role="group" aria-labelledby="h-cob">
       <button type="button" class="opcao" data-valor="inclusa" data-e-cta="Agendar avaliação" aria-pressed="{{ 'true' if plano_inclui else 'false' }}">Inclusa no plano<span class="opcao-sub">sem cobrança</span></button>
-      <button type="button" class="opcao" data-valor="avulsa" data-e-cta="Agendar e receber {{ brl(preco) }}" aria-pressed="{{ 'false' if plano_inclui else 'true' }}">Avulsa<span class="opcao-sub">{{ brl(preco) }}</span></button>
+      {# [back-15-avaliacoes] `preco` pode vir vazio: o sistema ainda não tem onde o dono informa o preço da avaliação avulsa. Vazio, a opção diz "cobrada à parte" e o botão só agenda. #}
+      <button type="button" class="opcao" data-valor="avulsa" data-e-cta="{{ 'Agendar e receber ' ~ brl(preco) if preco else 'Agendar avaliação' }}" aria-pressed="{{ 'false' if plano_inclui else 'true' }}">Avulsa<span class="opcao-sub">{{ brl(preco) if preco else 'cobrada à parte' }}</span></button>
     </div><input type="hidden" id="h-cobranca" name="cobranca" value="{{ 'inclusa' if plano_inclui else 'avulsa' }}">
   </section>
-  <button class="btn btn-primary btn-lg btn-block" type="submit" data-e="cta">{{ 'Agendar avaliação' if plano_inclui else 'Agendar e receber ' ~ brl(preco) }}</button>
+  <button class="btn btn-primary btn-lg btn-block" type="submit" data-e="cta">{{ 'Agendar avaliação' if plano_inclui or not preco else 'Agendar e receber ' ~ brl(preco) }}</button>
 </form>
 {% endif %}
 {% endblock %}

@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | **Fase B, primeira parte, completa:** alunos, planos, cobrança, frequência, relatórios, configurações e equipe (criar conta, convite, troca de senha). **Segunda parte em andamento:** exercícios e fichas de treino prontos (`back-14`). O Adauto pediu, em 12/10/2026, para terminar tudo o que não depende dele nem do Diogo (D16). Faltam avaliações, mensagens e personal, a segurança, a LGPD e a produção. |
+| **Estado** | **Fase B, primeira parte, completa:** alunos, planos, cobrança, frequência, relatórios, configurações e equipe (criar conta, convite, troca de senha). **Segunda parte em andamento:** exercícios e fichas de treino (`back-14`) e avaliação física (`back-15`) prontos. O Adauto pediu, em 12/10/2026, para terminar tudo o que não depende dele nem do Diogo (D16). Faltam mensagens e personal, a segurança, a LGPD e a produção. |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -48,6 +48,8 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `back-13-equipe` | O dono cria a própria conta; convida recepção e instrutores por link (7 dias, uso único); troca papel e remove; troca de senha por link (1 hora). Envio de e-mail por SMTP, sem dependência nova, e tudo funciona sem ele. **Tem migration** (tabelas `convites` e `redefinicoes_senha`). | PR a abrir → `front-09-equipe` | Enviada; falta abrir o PR |
 | [x] | `front-10-treinos` | Templates de exercícios (lista, detalhe, formulário) e de fichas de treino (biblioteca, modelo, atribuir, ficha, catálogo, enviar), cópia fiel do Drive | PR a abrir → `back-13-equipe` | Enviada; falta abrir o PR |
 | [x] | `back-14-treinos` | Catálogo de exercícios (64 padrão + os da academia), 5 modelos prontos de ficha, usar o modelo com um ou vários alunos, editor da ficha por treino (A a E) e envio pelo WhatsApp com o texto pronto (link `wa.me`, custo zero). **Tem migration** (colunas em `exercicio`, `ficha`, `treino`, `treino_exercicio` e o catálogo padrão). | PR a abrir → `front-10-treinos` | Enviada; falta abrir o PR |
+| [x] | `front-11-avaliacoes` | Templates da avaliação física (agenda, agendar, histórico do aluno, registrar e resultado), cópia fiel do Drive | PR a abrir → `back-14-treinos` | Enviada; falta abrir o PR |
+| [x] | `back-15-avaliacoes` | Avaliação física: agenda, agendar e remarcar, assistente de quatro etapas com IMC e cintura/quadril calculados no servidor, resultado com comparação e envio pelo WhatsApp, histórico com gráfico, cartão no perfil e aviso no painel. Medidas só para dono e instrutor (dado de saúde). **Tem migration** (tabelas `avaliacoes_agendadas` e `avaliacoes_fisicas`). | PR a abrir → `front-11-avaliacoes` | Enviada; falta abrir o PR |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -85,7 +87,7 @@ Pelas decisões D1 e D8, os quatro entram: fichas, avaliação física e mensage
 | | Branches | O que é | Tarefas | Observação |
 |---|---|---|---|---|
 | [x] | `front-10-treinos` + `back-14-treinos` | Exercícios e fichas de treino dentro da página do aluno. | 5.5 | **Feito.** As tabelas antigas foram mantidas e ganharam colunas; as telas antigas continuam no ar. Imagem e PDF da ficha ficaram para depois (pedem biblioteca nova): por enquanto a ficha vai em texto. |
-| [ ] | `front-11-avaliacoes` + `back-15-avaliacoes` | Avaliação física: agendar, registrar, comparar. | 5.6 | A1 (dada). IMC e RCQ calculados no servidor; é medição, não diagnóstico. |
+| [x] | `front-11-avaliacoes` + `back-15-avaliacoes` | Avaliação física: agendar, registrar, comparar. | 5.6 | **Feito.** IMC e RCQ calculados no servidor; é medição, não diagnóstico. Fotos, PDF e a cobrança da avaliação avulsa ficaram de fora (ver achados). |
 | [ ] | `front-12-mensagens` + `back-16-mensagens` | Mensagens do dia pelo WhatsApp (link `wa.me`, custo zero). | 5.7 | A1 (dada). No lançamento o sistema **não envia sozinho**: ele monta o texto e abre o WhatsApp do aparelho, e a pessoa toca em enviar. Envio automático pede a API oficial do WhatsApp, que é paga por conversa e precisa de aprovação da Meta; fica para depois do lançamento. |
 | [ ] | `front-13-personal` + `back-17-personal` | Variante Personal Trainer: agenda de sessões e pacotes. | 5.11 | A1 (dada). Obrigatória: o lançamento inclui personal trainers (D1). Falta decidir se renovar o pacote soma o saldo que sobrou (D12). |
 
@@ -190,7 +192,11 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | Não havia tela para trocar o nome da academia | `contas.nome` | **Resolvido na `back-12-config`** |
 | Na migration da `back-06`, dois usuários antigos que eram da mesma academia viram duas contas | bancos locais | Juntar com um `UPDATE` no `conta_id`, se for o caso |
 | O front tem botões de **demonstração**, que só mostram um aviso e não fazem nada: "WhatsApp aberto para…", "Mensagens de parabéns enviadas", "Lembretes de renovação enviados" | `painel/index.html`, `_notificacao.html` | Cada um vira ação de verdade na branch do módulo (mensagens, cobrança) |
-| O card "Avaliações de hoje" do painel tem número e nomes fixos de exemplo no template. Está escondido | `painel/index.html` | Volta com dado de verdade na branch de avaliações |
+| O card "Avaliações de hoje" do painel tem número e nomes fixos de exemplo no template. Está escondido | `painel/index.html` | **Resolvido na `back-15-avaliacoes`:** mostra as avaliações do dia |
+| A recepção **não abre** as medidas da avaliação física (dado de saúde): só agenda. O front mostra os botões para todos | `avaliacao_service.py` (`PAPEIS_QUE_AVALIAM`) | Decisão do Adauto (e do advogado, na LGPD): manter ou liberar. É uma linha |
+| A avaliação **avulsa** não gera cobrança: não existe onde o dono informa o preço (o front mostra R$ 60,00 fixo de exemplo) | `avaliacoes/agendar.html`, Configurações | Adauto: campo de preço no front; depois, branch pequena de backend. Até lá, recebe-se pela diária avulsa |
+| As **fotos** da avaliação não são guardadas (o bloco está escondido). Falta decidir onde ficam os arquivos e o termo de autorização | `avaliacoes/registrar.html` | `back-18` (upload seguro) e `back-19` (LGPD); depende de D4 (hospedagem) |
+| O percentual de gordura pelas dobras não é calculado: as fórmulas usam sexo, que o cadastro do aluno não tem | `avaliacao_service.py` | Decisão do Adauto: incluir o campo no cadastro ou tirar a frase do front |
 | O gráfico "Alunos ativos por mês" era uma aproximação: quem tinha saído sumia de todos os meses | `painel_service.py` | **Resolvido na `back-11-relatorios`** para quem for desativado daqui em diante (coluna `alunos.data_inativacao`). Quem já estava inativo não tem data e continua fora |
 | O template do painel no repositório tem 6 ajustes que o do Drive não tem (lista em `docs/mudancas/back-04-painel.md`). O Adauto precisa levar para o Drive, senão a próxima cópia desfaz | `painel/index.html` | Adauto |
 | `/fichas/editar/<id>` dá erro 500: o template `treino_form.html` usa um campo que o formulário de ficha não tem. Já era assim antes; apareceu agora porque a varredura de rotas passou a rodar com dados | tela antiga de fichas | Continua: a `back-14-treinos` criou a tela nova de ficha e não tocou na antiga. Some quando o Diogo remover as telas antigas |
@@ -246,3 +252,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 12/10/2026 | `front-08-config` e `back-12-config` enviadas: configurações da academia, metas nos gráficos, modelos de mensagem, check-in ligável e inatividade automática. |
 | 12/10/2026 | `front-09-equipe` e `back-13-equipe` enviadas: criar conta, convite da equipe por link, trocar papel, remover e troca de senha. E-mail por SMTP sem dependência nova. Fecha a primeira parte da Fase B. |
 | 12/10/2026 | `front-10-treinos` e `back-14-treinos` enviadas: catálogo de exercícios, modelos prontos, ficha do aluno por treino (A a E) e envio pelo WhatsApp com o texto pronto. Sem dependência nova. |
+| 12/10/2026 | `front-11-avaliacoes` e `back-15-avaliacoes` enviadas: agenda, agendar, registrar em quatro etapas (IMC e RCQ no servidor), resultado, histórico, perfil e painel. Medidas restritas a dono e instrutor. Sem dependência nova. |

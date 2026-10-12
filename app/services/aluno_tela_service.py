@@ -20,7 +20,7 @@ from sqlalchemy import func
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, fichas_da_conta
 from app.models import Aluno, Ficha, Plano
-from app.services import cobranca_service, frequencia_service, treino_service
+from app.services import avaliacao_service, cobranca_service, frequencia_service, treino_service
 from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
 POR_PAGINA = 8
@@ -206,7 +206,8 @@ def contexto_do_perfil(aluno, hoje=None):
         'total_ano': cobranca_service.total_do_ano(pagamentos, hoje),
         # [back-10-frequencia] antes: sempre None. Continua None para quem nunca teve entrada ("sem dado").
         'freq': frequencia_service.frequencia_do(aluno, hoje) if current_user.conta.checkin_ativo else None,
-        'avaliacao': None,     # precisa do módulo de avaliações
+        # [back-15-avaliacoes] antes: sempre None. Continua None para quem nunca foi avaliado (o cartão não aparece).
+        'avaliacao': avaliacao_service.resumo_para_o_perfil(aluno, hoje),
         'ficha': {'treinos': [f'Treino {letra}' for letra in treino_service.treinos_da(ficha)] or [ficha.nome],
                   'atualizada': ficha_tela['atualizada'].split(' por ')[0],
                   'por': ficha_tela['atualizada'].split(' por ')[1] if ' por ' in ficha_tela['atualizada'] else current_user.conta.nome} if ficha else None,

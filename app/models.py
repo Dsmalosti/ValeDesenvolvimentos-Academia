@@ -422,12 +422,96 @@ class Pagamento(db.Model):
         return f'<Pagamento {self.id} cobranca={self.cobranca_id}>'
 
 
+# [back-15-avaliacoes] valores aceitos nas colunas de texto das duas tabelas abaixo (conferidos pela
+# aplicação, como nas cobranças, para dar para acrescentar um valor sem migration).
+AVALIACAO_PRIMEIRA, AVALIACAO_REAVALIACAO = 'primeira', 'reavaliacao'
+AGENDA_CONFIRMADA, AGENDA_A_CONFIRMAR, AGENDA_REMARCADA = 'confirmada', 'a_confirmar', 'remarcada'
+AGENDA_REALIZADA, AGENDA_CANCELADA = 'realizada', 'cancelada'
+AVALIACAO_INCLUSA, AVALIACAO_AVULSA = 'inclusa', 'avulsa'
 
 
+class AvaliacaoAgendada(db.Model):
+    """
+    [back-15-avaliacoes] Um horário marcado para avaliar um aluno. É só a AGENDA: as medidas ficam em
+    `AvaliacaoFisica`, criada quando a avaliação acontece (e este horário passa a `realizada`).
+    Remarcar não apaga: o horário antigo vira `remarcada` e nasce outro.
+    """
+    __tablename__ = 'avaliacoes_agendadas'
+    __table_args__ = (
+        db.Index('ix_avaliacoes_agendadas_conta_data', 'conta_id', 'data'),   # a agenda do dia e o painel
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)            # a academia
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False, index=True)
+    data = db.Column(db.Date, nullable=False)
+    hora = db.Column(db.String(5), nullable=False)                                           # "09:00"
+    tipo = db.Column(db.String(20), nullable=False, default=AVALIACAO_PRIMEIRA)              # primeira | reavaliacao
+    status = db.Column(db.String(20), nullable=False, default=AGENDA_CONFIRMADA)             # confirmada | a_confirmar | remarcada | realizada | cancelada
+    avaliador_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)     # quem vai avaliar
+    observacao = db.Column(db.String(200), nullable=True)                                    # recado para a recepção
+    cobranca = db.Column(db.String(10), nullable=False, default=AVALIACAO_INCLUSA)           # inclusa (no plano) | avulsa (cobrada à parte)
+    criado_por_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # passive_deletes='all': apagar o aluno não zera nem apaga a agenda dele em silêncio.
+    # Quem tem avaliação não pode ser excluído: AlunoService.excluir_aluno confere antes.
+    aluno = db.relationship('Aluno', backref=db.backref('avaliacoes_agendadas', lazy=True, passive_deletes='all'), lazy=True)
+    avaliador = db.relationship('User', foreign_keys=[avaliador_id], lazy=True)
+
+    def __repr__(self):
+        return f'<AvaliacaoAgendada aluno={self.aluno_id} {self.data} {self.hora}>'
 
 
+class AvaliacaoFisica(db.Model):
+    """
+    [back-15-avaliacoes] Uma avaliação física FEITA: anamnese, medidas, dobras e testes. Os nomes das
+    colunas são os `name` dos campos do formulário do front.
 
+    É MEDIDA, não diagnóstico: não existe campo de laudo. `imc` e `rcq` nunca vêm do formulário: o
+    servidor calcula ao salvar (services/avaliacao_service.py). São dados de saúde (sensíveis pela
+    LGPD): só o dono e os instrutores abrem (regra nas rotas).
+    """
+    __tablename__ = 'avaliacoes_fisicas'
+    __table_args__ = (
+        db.Index('ix_avaliacoes_fisicas_aluno_data', 'aluno_id', 'data'),    # o histórico do aluno
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)   # a academia
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
+    data = db.Column(db.Date, nullable=False)
+    avaliador_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)       # quem avaliou
+    agendamento_id = db.Column(db.Integer, db.ForeignKey('avaliacoes_agendadas.id'), nullable=True)
+    # anamnese
+    objetivo = db.Column(db.String(200), nullable=True)
+    restricoes = db.Column(db.Text, nullable=True)
+    medicamentos = db.Column(db.String(200), nullable=True)
+    liberacao_medica = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
+    # medidas
+    peso_kg = db.Column(db.Numeric(5, 2), nullable=False)
+    altura_cm = db.Column(db.Numeric(5, 1), nullable=False)
+    imc = db.Column(db.Numeric(4, 1), nullable=False)             # calculado: peso / altura²
+    cintura_cm = db.Column(db.Numeric(5, 1), nullable=True)
+    quadril_cm = db.Column(db.Numeric(5, 1), nullable=True)
+    rcq = db.Column(db.Numeric(4, 2), nullable=True)              # calculado: cintura / quadril (vazio se faltar uma das duas)
+    braco_d_cm = db.Column(db.Numeric(5, 1), nullable=True)
+    coxa_d_cm = db.Column(db.Numeric(5, 1), nullable=True)
+    torax_cm = db.Column(db.Numeric(5, 1), nullable=True)
+    panturrilha_cm = db.Column(db.Numeric(5, 1), nullable=True)
+    # dobras cutâneas, em milímetros
+    dobra_triceps = db.Column(db.Numeric(4, 1), nullable=True)
+    dobra_subescapular = db.Column(db.Numeric(4, 1), nullable=True)
+    dobra_suprailiaca = db.Column(db.Numeric(4, 1), nullable=True)
+    dobra_abdominal = db.Column(db.Numeric(4, 1), nullable=True)
+    dobra_coxa = db.Column(db.Numeric(4, 1), nullable=True)
+    # testes
+    teste_flexao = db.Column(db.Integer, nullable=True)           # repetições em 1 minuto
+    teste_abdominal = db.Column(db.Integer, nullable=True)        # repetições em 1 minuto
+    teste_flexibilidade = db.Column(db.Numeric(4, 1), nullable=True)   # sentar e alcançar, em cm
+    anotacao = db.Column(db.Text, nullable=True)                  # do avaliador; medida, nunca laudo
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+    aluno = db.relationship('Aluno', backref=db.backref('avaliacoes_fisicas', lazy=True, passive_deletes='all'), lazy=True)
+    avaliador = db.relationship('User', lazy=True)
 
-
-    
+    def __repr__(self):
+        return f'<AvaliacaoFisica aluno={self.aluno_id} {self.data}>'

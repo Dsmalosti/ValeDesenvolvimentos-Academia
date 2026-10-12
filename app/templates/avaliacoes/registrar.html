@@ -43,10 +43,13 @@
         {{ med('torax_cm', 'Tórax', 'cm', f.get('torax_cm', base.get('torax', ''))) }}{{ med('panturrilha_cm', 'Panturrilha', 'cm', f.get('panturrilha_cm', base.get('panturrilha', ''))) }}</div>
       <div class="calc-row"><span>Relação cintura/quadril</span><b class="num" data-rcq-previa>—</b></div>
     </section>
+    {# [back-15-avaliacoes] `fotos_ligadas` (bool): o servidor ainda não guarda as fotos (falta decidir onde ficam, e é dado sensível). Desligado, a tela não oferece o envio. Sem a variável, aparece como antes. #}
+    {% if fotos_ligadas is not defined or fotos_ligadas %}
     <section class="card card--pad"><h2 class="ctitle">Fotos de acompanhamento</h2><div class="csub" style="margin-bottom:12px">Frente, lado e costas — é o que mostra a evolução melhor que número</div>
       <div class="foto-slots">{% for k, r in [('frente', 'Frente'), ('lado', 'Lado'), ('costas', 'Costas')] %}<label class="foto-slot">{{ icon('camera', 20) }}<span>{{ r }}</span><input class="visually-hidden" type="file" name="foto_{{ k }}" accept="image/*" capture="environment"></label>{% endfor %}</div>
     </section>
     <div class="note"><span class="tile tone-slate" style="width:36px;height:36px">{{ icon('lock', 18) }}</span><span><strong>Foto é dado sensível</strong>Peça autorização do aluno por escrito. Só quem tem acesso à avaliação vê essas imagens.</span></div>
+    {% endif %}
     <div class="note"><span class="tile tone-yellow" style="width:36px;height:36px">{{ icon('alert', 18) }}</span><span><strong>Isso é medida, não diagnóstico</strong>A ficha registra número. Interpretação clínica é do médico — a academia não emite laudo.</span></div>
   </div>
 
