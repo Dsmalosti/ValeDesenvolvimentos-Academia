@@ -3,7 +3,7 @@
 
 Os nomes das funções e os endereços são os do contrato do front: 'config.index', 'config.salvar',
 'config.horario', 'config.mensagem', 'config.funcionalidade', 'config.metas', 'config.membro',
-'config.recebimento' e 'config.pix_alternar'. Antes desta branch só existia 'config.index', como
+'config.recebimento' e 'config.pix_alternar'. Antes da back-12 só existia 'config.index', como
 tela "em construção" em blueprints/pendentes.py.
 
 Quem pode o quê:
@@ -13,9 +13,10 @@ Quem pode o quê:
   - ver o recebimento: dono e recepção.
 As regras ficam em services/config_service.py.
 """
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, exigir_login_em, papel_requerido
+from app.services import acesso_service as acesso  # [back-13-equipe]
 from app.services import config_service as config
 
 config_blueprint = Blueprint('config', __name__, url_prefix='/configuracoes')
@@ -92,8 +93,32 @@ def metas():
 @config_blueprint.route('/equipe', methods=['POST'])
 @papel_requerido(*DONO)
 def membro():
-    # Convidar, trocar o papel e remover alguém da equipe entram na branch de equipe (back-13).
-    flash('Convidar e gerenciar a equipe ainda não está disponível.', 'info')
+    # [back-13-equipe] antes: só avisava "ainda não disponível". O formulário manda acao=convidar|papel|remover.
+    # `id` positivo é uma pessoa da equipe; negativo é um convite ainda não aceito (é como a lista os numera).
+    acao = request.form.get('acao')
+    numero = request.form.get('id', type=int)
+    try:
+        if acao == 'convidar':
+            convite, link, enviou = acesso.convidar(request.form.get('email'), request.form.get('papel'))
+            # O link só existe agora (o banco guarda o hash). Fica na sessão do dono para o botão "copiar link".
+            links = session.get('links_de_convite', {})
+            links[str(convite.id)] = link
+            session['links_de_convite'] = links
+            flash(f'Convite enviado para {convite.email}. Se preferir, copie o link e mande no WhatsApp.' if enviou
+                  else f'Convite criado para {convite.email}. Copie o link ao lado do nome e mande pelo WhatsApp.', 'success')
+        elif numero is not None and numero < 0:
+            acesso.cancelar_convite(-numero)
+            flash('Convite cancelado. O link deixou de valer.', 'success')
+        elif acao == 'remover':
+            membro = acesso.remover_da_equipe(numero)
+            flash(f'{membro.nome} foi removido da equipe e não consegue mais entrar.', 'success')
+        elif acao == 'papel':
+            acesso.trocar_papel(numero, request.form.get('papel'))
+            flash('Papel atualizado.', 'success')
+        else:
+            flash('Ação desconhecida.', 'error')
+    except acesso.AcessoInvalido as erro:
+        flash(str(erro), 'error')
     return _volta('equipe')
 
 

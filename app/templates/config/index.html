@@ -162,7 +162,8 @@
 <ul class="eq-list">
   {% for m in cfg.equipe %}{% set p = papeis[m.papel] %}
   <li>{{ avatar(m.nome, 'lg') }}<div class="grow"><b class="truncate" style="display:block">{{ m.nome }}</b><span class="faint fs-12 truncate" style="display:block">{% if m.convite %}Convite enviado · esperando criar a senha{% else %}{{ m.email }}{% endif %}</span></div>
-    {% if m.convite %}<button type="button" class="iconbtn" data-copiar="{{ m.convite }}" aria-label="Copiar link do convite de {{ m.email }}">{{ icon('link', 18) }}</button>{% endif %}
+    {# [back-13-equipe] antes: {% if m.convite %}. O link só existe para quem acabou de criar o convite (o banco guarda o hash); nos demais `convite` vem True e o botão de copiar não aparece #}
+    {% if m.convite is string %}<button type="button" class="iconbtn" data-copiar="{{ m.convite }}" aria-label="Copiar link do convite de {{ m.email }}">{{ icon('link', 18) }}</button>{% endif %}
     <span class="chip chip--{{ p[0] }}">{{ p[1] }}</span>
     {% if m.papel != 'proprietario' %}<button type="button" class="iconbtn" data-open="dlg-membro-{{ m.id }}" aria-label="Gerenciar {{ m.nome }}">{{ icon('more', 18) }}</button>{% else %}<span style="width:40px"></span>{% endif %}</li>
   {% endfor %}

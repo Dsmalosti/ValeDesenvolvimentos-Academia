@@ -236,6 +236,46 @@ def _marca_a_inativacao(aluno, novo, antigo, _iniciador):
         aluno.data_inativacao = datetime.now()
 
 
+class Convite(db.Model):
+    """
+    [back-13-equipe] Convite para alguém entrar na equipe de uma conta (recepção ou instrutor).
+    Vale 7 dias e só pode ser usado uma vez. O banco guarda o HASH do código do link
+    (`token_hash`), nunca o código: se o banco vazar, o link não vaza junto.
+    """
+    __tablename__ = 'convites'
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
+    email = db.Column(db.String(120), nullable=False)                 # o e-mail convidado: será o login da pessoa
+    papel = db.Column(db.String(20), nullable=False)                  # recepcao | instrutor (dono não se convida)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    criado_por_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    expira_em = db.Column(db.DateTime, nullable=False)
+    usado_em = db.Column(db.DateTime, nullable=True)                  # preenchido ao aceitar: é o que garante o uso único
+
+    conta = db.relationship('Conta', lazy=True)
+
+    def __repr__(self):
+        return f'<Convite {self.id} {self.papel}>'
+
+
+class RedefinicaoSenha(db.Model):
+    """
+    [back-13-equipe] Pedido de troca de senha ("esqueci a senha"). Vale 1 hora, uso único. Como no
+    convite, o banco guarda só o hash do código do link.
+    """
+    __tablename__ = 'redefinicoes_senha'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=False, index=True)
+    token_hash = db.Column(db.String(64), nullable=False, unique=True)
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    expira_em = db.Column(db.DateTime, nullable=False)
+    usado_em = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f'<RedefinicaoSenha usuario={self.usuario_id}>'
+
+
 class ModeloMensagem(db.Model):
     """
     [back-12-config] O texto de um modelo de mensagem de WhatsApp que a academia ALTEROU (cobrança,

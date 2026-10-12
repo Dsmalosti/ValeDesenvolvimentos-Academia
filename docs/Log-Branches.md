@@ -166,6 +166,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** a equipe aparece na tela, mas convidar, trocar papel e remover só avisam (é a `back-13`). "Ligar PIX" só avisa. A logo não é gravada. Dois templates têm 1 ajuste marcado cada.
 - **Doc:** `docs/mudancas/back-12-config.md`
 
+## front-09-equipe
+
+- **Sai de:** `back-12-config` · **PR:** a abrir → `back-12-config` · **Data:** 12/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `auth/criar_conta.html`, `auth/convite.html` e `auth/esqueci_senha.html`.
+- **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
+
+## back-13-equipe
+
+- **Sai de:** `front-09-equipe` · **PR:** a abrir → `front-09-equipe` · **Data:** 12/10/2026
+- **O que mudou:** o dono cria a própria conta em `/criar-conta` (academia ou personal) e já entra; convida recepção e instrutores por link (7 dias, uso único, só o hash no banco), troca o papel e remove (desativa, sem apagar); troca de senha por link (1 hora, uso único). Envio de e-mail por SMTP com a biblioteca padrão; sem configurar, o convite é copiado e o suporte gera o link de senha com `flask link-de-senha`.
+- **Migration:** `b13b9c0d1e20_convites_e_troca_de_senha.py`: cria `convites` e `redefinicoes_senha`. **Depois do pull, `flask db upgrade`.**
+- **Testes:** `pytest` 317 de 317 (31 novos em `tests/test_equipe.py`); migration num Postgres temporário, 13 checagens; navegador: equipe 34 de 34 (dono, convidado e visitante em navegadores separados) e as outras telas sem mudança; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** `auth/nova_senha.html` é novo e não veio do Drive. As telas públicas ainda não têm limite de tentativas (P0, `back-18`). O instrutor convidado vê "em construção" no painel. Arquivo novo `.env.example`, só com os nomes das variáveis.
+- **Doc:** `docs/mudancas/back-13-equipe.md`
+
 ## Onde parou (12/10/2026)
 
-Alunos, planos, cobrança, frequência, relatórios e configurações prontos e enviados. PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-12`** (6 branches). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b12`** (pedir o OK dele; backup antes; avisar da inatividade automática). A próxima é `front-09-equipe` + `back-13-equipe`: convite por link (o dono copia e manda pelo WhatsApp, já que o provedor de e-mail, D6, não foi decidido), trocar papel, remover da equipe, criar conta e "esqueci a senha". Depois treinos, avaliações, mensagens, personal, segurança, LGPD e produção. Pendências do Adauto: levar para o Drive os ajustes marcados de `cobranca/receber.html` (7), `alunos/detalhe.html` (1), `relatorios/admin.html` (13), `config/recebimento.html` (1) e `config/_metas.html` (1); D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
+Primeira parte da Fase B completa e enviada: alunos, planos, cobrança, frequência, relatórios, configurações e equipe. PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-13`** (8 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b13`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-10-treinos` + `back-14-treinos`, avaliações, mensagens (por link do WhatsApp, D14), personal, depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates e o `auth/nova_senha.html`; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).

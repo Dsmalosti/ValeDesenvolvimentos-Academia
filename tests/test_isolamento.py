@@ -14,7 +14,7 @@ from tests.conftest import (campo, contar, criar_aluno, criar_ficha, criar_plano
                             criar_usuario, logar, numero_do_card)
 
 # Páginas que existem para quem NÃO está logado. Qualquer outra rota tem que exigir login.
-ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_conta",
+ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_conta", "auth.convite", "auth.nova_senha",
                   "instrutores.login", "instrutores.cadastroInstrutor"}
 
 

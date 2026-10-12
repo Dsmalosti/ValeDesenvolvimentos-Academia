@@ -204,11 +204,7 @@ def test_so_o_dono_muda_a_academia_e_a_recepcao_so_as_mensagens(app, academia):
     assert da_conta_(academia, "nome") != "Invadida" and da_conta_(academia, "checkin_ativo") is False and contar(ModeloMensagem) == 0
 
 
-def test_gerenciar_equipe_ainda_nao_existe(app, academia):
-    resposta = como(app, academia["dono"]).post("/configuracoes/equipe", data={"acao": "remover", "id": str(academia["recepcao"])})
-    assert resposta.headers["Location"] == "/configuracoes?aba=equipe"
-    from app.models import User
-    assert contar(User, id=academia["recepcao"]) == 1
+# (convidar, trocar papel e remover da equipe: tests/test_equipe.py, da back-13)
 
 
 # ------------------------------------------------------------------ inatividade automática

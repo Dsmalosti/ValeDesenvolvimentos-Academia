@@ -59,3 +59,19 @@ def registrar_comandos(app):
         except ValueError as erro:
             raise click.ClickException(str(erro))
         click.echo(f'Conta "{academia}" criada. Dono: {usuario.email} (entra pela tela de login).')
+
+    @app.cli.command('link-de-senha')
+    @click.option('--email', prompt='E-mail de quem esqueceu a senha')
+    def link_de_senha(email):
+        """
+        [back-13-equipe] Gera um link de troca de senha (vale 1 hora, uso único) e mostra na tela, para o
+        suporte mandar à pessoa pelo WhatsApp enquanto o envio de e-mail não estiver configurado.
+        Precisa de SERVER_NAME (ou rodar com --host certo) para o link sair com o endereço do site.
+        """
+        from app.services import acesso_service
+        with app.test_request_context():
+            link = acesso_service.pedir_troca_de_senha(email, enviar=False)
+        if link is None:
+            raise click.ClickException('Não há conta ativa com este e-mail.')
+        click.echo('Link de troca de senha (vale 1 hora):')
+        click.echo(link)

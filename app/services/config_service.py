@@ -14,6 +14,7 @@ import re
 from datetime import date, timedelta
 from decimal import Decimal
 
+from flask import session
 from flask_login import current_user
 
 from app.extensions.database import db
@@ -63,11 +64,21 @@ def modelos_de_mensagem():
 
 
 def equipe():
-    """Quem tem acesso à conta, o dono primeiro. Só leitura por enquanto (convite: branch de equipe)."""
-    usuarios = da_conta(User).order_by(User.id).all()
+    """
+    Quem tem acesso à conta (o dono primeiro) e, depois, os convites que ainda esperam resposta.
+    [back-13-equipe] antes: listava todo usuário da conta. Agora deixa de fora quem foi removido (inativo)
+    e inclui os convites em aberto, com `id` NEGATIVO (é assim que a rota distingue pessoa de convite).
+    `convite` é o link, quando o dono acabou de criá-lo nesta sessão; senão True (o banco só guarda o hash).
+    """
+    from app.services import acesso_service              # importado aqui: ele também usa modelos desta tela
+    usuarios = da_conta(User).filter(User.ativo.is_(True)).order_by(User.id).all()
     usuarios.sort(key=lambda u: (u.papel != PAPEL_PROPRIETARIO, u.id))
-    return [{'id': u.id, 'nome': ' '.join(p for p in (u.nome, u.sobrenome) if p) or u.email, 'email': u.email, 'papel': u.papel}
-            for u in usuarios]
+    pessoas = [{'id': u.id, 'nome': ' '.join(p for p in (u.nome, u.sobrenome) if p) or u.email, 'email': u.email, 'papel': u.papel}
+               for u in usuarios]
+    links = session.get('links_de_convite', {})
+    for c in acesso_service.convites_abertos():
+        pessoas.append({'id': -c.id, 'nome': c.email.split('@')[0], 'email': c.email, 'papel': c.papel, 'convite': links.get(str(c.id), True)})
+    return pessoas
 
 
 def _cfg():

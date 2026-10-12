@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase B em andamento: **alunos**, **planos**, **cobrança**, **frequência**, **relatórios** e **configurações** prontos. O Adauto pediu, em 12/10/2026, para terminar tudo o que não depende dele nem do Diogo (D16). A próxima é a que estiver sem marca na Fase B. |
+| **Estado** | **Fase B, primeira parte, completa:** alunos, planos, cobrança, frequência, relatórios, configurações e equipe (criar conta, convite, troca de senha). O Adauto pediu, em 12/10/2026, para terminar tudo o que não depende dele nem do Diogo (D16). Faltam os outros módulos (treinos, avaliações, mensagens, personal), a segurança, a LGPD e a produção. |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -44,6 +44,8 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `back-11-relatorios` | Painel administrativo: faturamento por forma, ponto de equilíbrio com custos fixos, fechamento, lançamentos com filtro e CSV, mapa de movimento, retenção, churn e alunos em risco. **Tem migration** (tabela `custos`, `alunos.data_inativacao`). | PR a abrir → `front-07-relatorios` | Enviada; falta abrir o PR |
 | [x] | `front-08-config` | Templates das configurações do front novo (tela, metas, recebimento e o parcial de aparência), cópia fiel do Drive | PR a abrir → `back-11-relatorios` | Enviada; falta abrir o PR |
 | [x] | `back-12-config` | Configurações: dados da academia, horário, ligar e desligar o check-in, inatividade automática, metas nos gráficos, modelos de mensagem e tela de recebimento. **Tem migration** (10 colunas em `contas`, tabela `modelos_mensagem`). | PR a abrir → `front-08-config` | Enviada; falta abrir o PR |
+| [x] | `front-09-equipe` | Templates de criar conta, convite e esqueci a senha, cópia fiel do Drive | PR a abrir → `back-12-config` | Enviada; falta abrir o PR |
+| [x] | `back-13-equipe` | O dono cria a própria conta; convida recepção e instrutores por link (7 dias, uso único); troca papel e remove; troca de senha por link (1 hora). Envio de e-mail por SMTP, sem dependência nova, e tudo funciona sem ele. **Tem migration** (tabelas `convites` e `redefinicoes_senha`). | PR a abrir → `front-09-equipe` | Enviada; falta abrir o PR |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -72,7 +74,7 @@ Cada tela são duas branches: a `front-NN` (templates) e a `back-NN` que sai del
 | [x] | `front-06-frequencia` + `back-10-frequencia` | Registrar a entrada do aluno em um toque; ver quem sumiu há mais de 15 dias; exportar. | 5.3 | Aluno sem nenhuma entrada aparece como "sem dado", não como "0 acessos". Ligar e desligar o check-in persiste. | A1 (dada) |
 | [x] | `front-07-relatorios` + `back-11-relatorios` | Fechamento do mês: recebido por forma de pagamento, inadimplência, custos e ponto de equilíbrio, exportação em CSV. Só dono e recepção. | 5.8 | Os totais batem com os cards do painel e com a soma dos pagamentos de teste. | A1 (dada) |
 | [x] | `front-08-config` + `back-12-config` | Dados da academia, horário, metas, modelos de mensagem, recebimento e funcionalidades ligadas. | 5.9 | Cada aba salva e o valor aparece nas outras telas (nome da academia no cabeçalho, meta no painel). | A1 (dada) |
-| [ ] | `front-09-equipe` + `back-13-equipe` | O dono convida a recepção e os instrutores; a pessoa cria a senha pelo link; "esqueci a senha". | 5.10 | Convite vencido ou já usado dá 404; o convidado entra já na conta certa e com o papel certo. | A1 e A6 (dadas); D6 |
+| [x] | `front-09-equipe` + `back-13-equipe` | O dono convida a recepção e os instrutores; a pessoa cria a senha pelo link; "esqueci a senha". | 5.10 | Convite vencido ou já usado dá 404; o convidado entra já na conta certa e com o papel certo. | A1 e A6 (dadas); D6 |
 
 ### Os outros módulos: todos entram no lançamento
 
@@ -133,7 +135,7 @@ Decisões de negócio ou de conta externa. As quatro primeiras o Adauto quer dec
 |---|---|---|---|---|
 | D4 | **Hospedagem e banco de produção:** onde o backend e o Postgres vão rodar e quanto dá para gastar por mês. Como o sistema será gratuito nos 2 primeiros meses, esse custo sai do bolso. | `back-20-producao`, o ambiente e o texto da política de privacidade | Levantar 2 ou 3 opções com preço antes de decidir | Antes da Fase D |
 | D5 | **Domínio** do sistema (ex.: `app.valetec.com.br`). | Cookies seguros, link do convite, e-mails, e mais tarde o login com digital | Registrar já: demora a propagar e é barato | Antes da Fase D |
-| D6 | **Provedor de e-mail** para convite, confirmação de cadastro e "esqueci a senha". Ficou mais urgente: com os clientes se cadastrando sozinhos (D9), sem e-mail ninguém recupera a senha. | `back-13-equipe` | Escolher junto com o domínio | Antes de `back-13` |
+| D6 | **Provedor de e-mail** para convite, confirmação de cadastro e "esqueci a senha". Ficou mais urgente: com os clientes se cadastrando sozinhos (D9), sem e-mail ninguém recupera a senha. | `back-13-equipe` | Escolher junto com o domínio | Antes de `back-13` **Atualização de 12/10/2026:** a `back-13` já envia por qualquer provedor com SMTP; decidir o provedor virou só preencher 5 variáveis de ambiente (`.env.example`). Sem elas o sistema funciona com link copiado e comando do suporte. |
 | D12 | **Personal:** renovar um pacote de sessões soma o saldo que sobrou do pacote anterior, ou o saldo antigo se perde? | `back-17-personal` | Perguntar aos personais que vão testar | Antes de `back-17` |
 | D13 | **Dados de quem oferece o Vale Tec** para os termos: nome ou razão social, CNPJ, cidade, e-mail de contato e canal de suporte. | Publicar os termos | Lista completa em `docs/legal/LEIA-ME.md` | Antes do lançamento |
 
@@ -209,6 +211,10 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | A logo da academia não é gravada (o servidor ignora o arquivo) | `config/routes.py` | Depois do lançamento, com a foto do aluno |
 | Recepção e instrutor veem os formulários que só o dono pode salvar (recebem "sem permissão" ao salvar) | `config/index.html` (front) | Ajuste do Adauto no front: esconder por papel |
 | Os templates `config/recebimento.html` e `config/_metas.html` do repositório têm 1 ajuste marcado cada | front | **Adauto:** levar para o Drive |
+| **As telas públicas (criar conta, convite, esqueci a senha, senha nova) não têm limite de tentativas** | `auth/routes.py` | **P0 para o lançamento:** `back-18-seguranca` (Flask-Limiter, já autorizado) |
+| Trocar a senha não derruba as sessões abertas daquela conta em outros aparelhos | `acesso_service.py` | `back-18-seguranca`, com o prazo de validade da sessão |
+| `auth/nova_senha.html` foi criado no repositório: o front não tinha a tela de criar a senha nova | front | **Adauto:** revisar o visual e levar para o Drive. Também os ajustes marcados de `config/index.html` (1) e `auth/esqueci_senha.html` (1) |
+| O e-mail do dono não é confirmado depois de criar a conta | `acesso_service.py` | Depois de D6 (provedor de e-mail) |
 
 ## Registro de atualizações
 
@@ -233,3 +239,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 12/10/2026 | `front-06-frequencia` e `back-10-frequencia` enviadas: check-in, ausentes, assiduidade e bloqueio de acesso. Regra central: quem não tem entrada registrada é "sem dado", nunca "0". |
 | 12/10/2026 | `front-07-relatorios` e `back-11-relatorios` enviadas: painel administrativo com dados de verdade, custos fixos e data de inativação do aluno. Regra: número que o banco não sustenta aparece como "sem dado". |
 | 12/10/2026 | `front-08-config` e `back-12-config` enviadas: configurações da academia, metas nos gráficos, modelos de mensagem, check-in ligável e inatividade automática. |
+| 12/10/2026 | `front-09-equipe` e `back-13-equipe` enviadas: criar conta, convite da equipe por link, trocar papel, remover e troca de senha. E-mail por SMTP sem dependência nova. Fecha a primeira parte da Fase B. |
