@@ -93,7 +93,12 @@ def gerar(aluno, plano, hoje=None):
         db.session.add(cobranca)
     cobranca.tipo, cobranca.plano_id, cobranca.valor = tipo, plano.id, plano.valor
     cobranca.data_inicio, cobranca.data_vencimento = inicio, fim
+    # [back-17-personal] na conta de personal a compra dá SESSÕES ao aluno: a quantidade fica congelada na cobrança,
+    # como o valor. Na academia o plano não tem quantidade e a coluna fica vazia (nada muda).
+    cobranca.quantidade_sessoes = plano.quantidade_sessoes
     db.session.commit()
+    from app.services import pacote_service
+    pacote_service.esquecer()       # o saldo guardado nesta requisição não vale mais
     return cobranca
 
 
@@ -181,6 +186,14 @@ def para_a_tela(cobranca, forma_sugerida=None):
     else:
         contexto_txt, contexto_curto = 'Diária avulsa, entrada de caixa rápida', 'Diária avulsa'
     quitada = 'Diária recebida' if cobranca.tipo == COBRANCA_DIARIA else 'Mensalidade quitada'
+    # [back-17-personal] cobrança de PACOTE (conta de personal): mesma tela, outro texto. Somem "dias" e "vencimento".
+    de_pacote = cobranca.quantidade_sessoes is not None and cobranca.tipo != COBRANCA_DIARIA
+    if de_pacote:
+        if cobranca.tipo == COBRANCA_MATRICULA:
+            contexto_txt, contexto_curto = f"{nome} acabou de comprar o {plano.nome if plano else 'pacote'}, falta receber", 'Pacote vendido, falta receber'
+        else:
+            contexto_txt, contexto_curto = f'Renovação do pacote de {nome}, falta receber', 'Renovação do pacote, falta receber'
+        quitada = 'Pacote quitado'
     if forma_sugerida not in FORMAS_DE_PAGAMENTO:
         forma_sugerida = aluno.forma_pagamento if (aluno and aluno.forma_pagamento in FORMAS_DE_PAGAMENTO) else None
     return {
@@ -190,11 +203,12 @@ def para_a_tela(cobranca, forma_sugerida=None):
         'aluno_id': cobranca.aluno_id,
         'nome': nome,
         'plano': plano.nome if plano else 'Diária avulsa',
-        'dias': int(plano.duracao_dias) if plano else None,
+        'termo': 'pacote' if de_pacote else None,           # [back-17-personal] o template troca "mensalidade" por "pacote"
+        'dias': int(plano.duracao_dias) if (plano and not de_pacote) else None,
         'valor': float(pagamento.valor_pago if pagamento else cobranca.valor),
         'valor_txt': reais_txt(cobranca.valor),
         'inicio': _dmy(cobranca.data_inicio),
-        'vence': _dmy(cobranca.data_vencimento),
+        'vence': None if de_pacote else _dmy(cobranca.data_vencimento),
         'forma': pagamento.forma if pagamento else forma_sugerida,
         'origem': pagamento.origem_confirmacao if pagamento else None,
         'confirmado_em': pagamento.data_pagamento.strftime('%Hh%M') if pagamento else None,

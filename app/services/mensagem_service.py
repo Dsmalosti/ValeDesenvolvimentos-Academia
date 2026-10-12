@@ -29,13 +29,16 @@ from app.helpers.conta import DONO_E_RECEPCAO, da_conta
 from app.helpers.dinheiro import reais_txt
 from app.helpers.whatsapp import link_do_whatsapp
 from app.models import MENSAGEM_ANIVERSARIO, MENSAGEM_AVALIACAO, MENSAGEM_COBRANCA, Aluno, AvaliacaoAgendada, MensagemEnviada
-from app.services import avaliacao_service, config_service
+from app.services import agenda_service, avaliacao_service, config_service, pacote_service
 from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
 DIAS_ENTRE_COBRANCAS = 3
 # (tipo, rótulo do filtro, ícone, cor) na ordem em que aparecem
 TIPOS = [(MENSAGEM_ANIVERSARIO, 'Aniversários', 'gift', 'blue'), (MENSAGEM_AVALIACAO, 'Avaliações de amanhã', 'calendar-plus', 'teal'),
          (MENSAGEM_COBRANCA, 'Cobranças atrasadas', 'dollar', 'red')]
+# [back-17-personal] na conta de personal trainer a véspera é da SESSÃO (a agenda dele), e não da avaliação física
+MENSAGEM_SESSAO = 'sessao'
+TIPOS_DO_PERSONAL = [TIPOS[0], (MENSAGEM_SESSAO, 'Sessões de amanhã', 'calendar-plus', 'teal'), TIPOS[2]]
 
 
 def ve_cobrancas():
@@ -88,10 +91,16 @@ def fila(hoje=None):
         if _faz_aniversario(aluno.data_nascimento, hoje):
             entra(MENSAGEM_ANIVERSARIO, aluno, aluno.id, f'Completa {hoje.year - aluno.data_nascimento.year} anos hoje')
 
-    # 2) véspera da avaliação física
-    ultima_data = avaliacao_service._ultima_data_por_aluno()
-    marcadas = (da_conta(AvaliacaoAgendada).filter(AvaliacaoAgendada.status.in_(avaliacao_service.ABERTOS), AvaliacaoAgendada.data == amanha)
-                .order_by(AvaliacaoAgendada.hora, AvaliacaoAgendada.id).all())
+    personal = pacote_service.e_personal()
+    # 2) véspera: na conta de personal, a sessão de amanhã; na academia, a avaliação física de amanhã
+    if personal:
+        nomes_dos_locais = {l['chave']: l['nome'].lower() for l in agenda_service.locais()}
+        for sessao in agenda_service.de_amanha(hoje):
+            entra(MENSAGEM_SESSAO, sessao.aluno, sessao.id, f"Sessão amanhã às {sessao.hora} · {nomes_dos_locais.get(sessao.local, 'local')}",
+                  data=amanha.strftime('%d/%m'), hora=sessao.hora, local=nomes_dos_locais.get(sessao.local, 'local combinado'))
+    ultima_data = {} if personal else avaliacao_service._ultima_data_por_aluno()
+    marcadas = [] if personal else (da_conta(AvaliacaoAgendada).filter(AvaliacaoAgendada.status.in_(avaliacao_service.ABERTOS), AvaliacaoAgendada.data == amanha)
+                                    .order_by(AvaliacaoAgendada.hora, AvaliacaoAgendada.id).all())
     for marcada in marcadas:
         if marcada.aluno.ativo:
             entra(MENSAGEM_AVALIACAO, marcada.aluno, marcada.id,
@@ -107,7 +116,7 @@ def fila(hoje=None):
                 continue          # já foi cobrado ontem ou anteontem: volta à fila depois
             valor = f"R$ {reais_txt(linha['valor'])}"
             venceu = linha['vence'] if linha['vence_data'] else None
-            entra(MENSAGEM_COBRANCA, aluno, aluno.id, (f'Venceu {venceu}' if venceu else 'Cobrança em aberto') + f' · {valor}',
+            entra(MENSAGEM_COBRANCA, aluno, aluno.id, (f'Venceu {venceu}' if venceu else ('Pacote em aberto' if personal else 'Cobrança em aberto')) + f' · {valor}',
                   valor=valor, data=venceu or 'data combinada', plano=linha['plano'], dias=linha['dias_atraso'])
     return itens
 
@@ -115,7 +124,8 @@ def fila(hoje=None):
 def contexto_da_tela(hoje=None):
     """Variáveis de mensagens/index.html."""
     itens = fila(hoje)
-    tipos = [(tipo, rotulo, icone, cor, sum(1 for i in itens if i['tipo'] == tipo)) for tipo, rotulo, icone, cor in TIPOS
+    tipos = [(tipo, rotulo, icone, cor, sum(1 for i in itens if i['tipo'] == tipo))
+             for tipo, rotulo, icone, cor in (TIPOS_DO_PERSONAL if pacote_service.e_personal() else TIPOS)
              if tipo != MENSAGEM_COBRANCA or ve_cobrancas()]
     # `lembretes_auto` faz a tela dizer que a fila "sai sozinha às 9h". Isso só existe com a API oficial do WhatsApp (paga,
     # fica para depois do lançamento), então hoje é sempre False, esteja a chave de Configurações ligada ou não:

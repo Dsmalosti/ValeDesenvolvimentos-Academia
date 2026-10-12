@@ -13,11 +13,12 @@ Quem pode o quê:
   - ver o recebimento: dono e recepção.
 As regras ficam em services/config_service.py.
 """
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, exigir_login_em, papel_requerido
 from app.services import acesso_service as acesso  # [back-13-equipe]
 from app.services import config_service as config
+from app.services import agenda_service, pacote_service, personal_service  # [back-17-personal]
 
 config_blueprint = Blueprint('config', __name__, url_prefix='/configuracoes')
 exigir_login_em(config_blueprint)   # toda rota daqui exige login, inclusive as futuras
@@ -29,7 +30,11 @@ def _volta(aba, ancora=''):
 
 @config_blueprint.route('')
 def index():
-    return render_template('config/index.html', **config.contexto(request.args.get('aba')))
+    aba = request.args.get('aba')
+    if pacote_service.e_personal():
+        # [back-17-personal] conta de personal: outra tela (sem equipe, horário e check-in; com perfil e locais de atendimento)
+        return render_template('personal/config.html', **personal_service.contexto_das_configuracoes(config.contexto(aba), aba))
+    return render_template('config/index.html', **config.contexto(aba))
 
 
 @config_blueprint.route('/academia', methods=['POST'])
@@ -37,12 +42,34 @@ def index():
 def salvar():
     # O formulário também manda o arquivo da logo; ele é ignorado por enquanto (envio de imagem
     # fica para depois do lançamento, junto com a foto do aluno).
+    if pacote_service.e_personal():
+        # [back-17-personal] na conta de personal este formulário é o do perfil do profissional (nome, CPF, CREF...)
+        try:
+            personal_service.salvar_perfil(request.form)
+            flash('Seus dados foram salvos.', 'success')
+        except personal_service.PerfilInvalido as erro:
+            flash(str(erro), 'error')
+        return _volta('perfil')
     try:
         config.salvar_academia(request.form)
         flash('Dados da academia salvos.', 'success')
     except config.ConfigInvalida as erro:
         flash(str(erro), 'error')
     return _volta('academia')
+
+
+@config_blueprint.route('/locais', methods=['POST'])
+@papel_requerido(*DONO)
+def locais():
+    # [back-17-personal] locais de atendimento do personal (os ligados aparecem em "Marcar sessão"). Rota nova.
+    if not pacote_service.e_personal():
+        abort(404)
+    try:
+        agenda_service.salvar_locais(request.form)
+        flash('Locais de atendimento salvos. Eles aparecem na hora de marcar sessão.', 'success')
+    except agenda_service.SessaoInvalida as erro:
+        flash(str(erro), 'error')
+    return _volta('locais')
 
 
 @config_blueprint.route('/horario', methods=['POST'])

@@ -114,6 +114,10 @@ class AlunoService:
         from app.models import AvaliacaoAgendada, AvaliacaoFisica
         if da_conta(AvaliacaoFisica).filter_by(aluno_id=aluno.id).first() or da_conta(AvaliacaoAgendada).filter_by(aluno_id=aluno.id).first():
             raise BusinessError("Este aluno tem avaliações físicas registradas e não pode ser excluído. Desative em vez de excluir.")
+        # [back-17-personal] e para quem tem sessão na agenda do personal (o saldo do pacote depende delas)
+        from app.models import Sessao
+        if da_conta(Sessao).filter_by(aluno_id=aluno.id).first():
+            raise BusinessError("Este aluno tem sessões na agenda e não pode ser excluído. Desative em vez de excluir.")
 
         BaseService.deletar(aluno)
 

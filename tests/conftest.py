@@ -17,7 +17,7 @@ import os
 import sys
 import tempfile
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 sys.dont_write_bytecode = True  # o repositório versiona .pyc; não gerar novos ao testar
 
@@ -32,7 +32,7 @@ from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
 from app.models import (Aluno, AvaliacaoAgendada, AvaliacaoFisica, Cobranca, Conta, Custo, Exercicio, Ficha, Frequencia, Pagamento, Plano,  # noqa: E402
-                        Treino, User)
+                        Sessao, Treino, User)
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -186,6 +186,42 @@ def criar_avaliacao(dono_id, aluno_id, dia, peso=70, altura=170, **medidas):
     from app.services.avaliacao_service import calcular_imc, calcular_rcq
     return _salvar(AvaliacaoFisica(conta_id=conta_de(dono_id), aluno_id=aluno_id, data=dia, avaliador_id=dono_id, peso_kg=peso, altura_cm=altura,
                                    imc=calcular_imc(peso, altura), rcq=calcular_rcq(medidas.get("cintura_cm"), medidas.get("quadril_cm")), **medidas))
+
+
+def criar_personal(email="paulo@teste.local", nome="Paulo"):
+    """Um personal trainer: a conta (modelo 'personal') e o usuário dono dela. Devolve o id do usuário."""
+    return criar_usuario(email, nome=nome, conta=criar_conta(nome=f"{nome} Rocha", modelo="personal"))
+
+
+def criar_pacote(dono_id, nome="Pacote 8", sessoes=8, valor=960, ativo=True):
+    """Um pacote de sessões (na conta de personal, o "plano"). Devolve o id."""
+    return _salvar(Plano(nome=nome, valor=valor, duracao_dias=90, quantidade_sessoes=sessoes, descricao="", ativo=ativo,
+                         instrutor_id=dono_id, conta_id=conta_de(dono_id)))
+
+
+def criar_compra(dono_id, aluno_id, pacote_id, paga=True, quando=None):
+    """A compra de um pacote pelo aluno: a cobrança (com as sessões) e, se `paga`, o pagamento. `quando` é um datetime. Devolve o id da cobrança."""
+    with _APP.app_context():
+        pacote = db.session.get(Plano, pacote_id)
+        quando = quando or datetime.utcnow()
+        cobranca = Cobranca(conta_id=conta_de(dono_id), aluno_id=aluno_id, plano_id=pacote_id, tipo="matricula", valor=pacote.valor,
+                            data_inicio=quando.date(), data_vencimento=quando.date() + timedelta(days=90), status="paga" if paga else "pendente",
+                            instrutor_id=dono_id, quantidade_sessoes=pacote.quantidade_sessoes, data_geracao=quando)
+        db.session.add(cobranca)
+        db.session.flush()
+        if paga:
+            db.session.add(Pagamento(conta_id=cobranca.conta_id, cobranca_id=cobranca.id, forma="pix", valor_pago=pacote.valor, data_pagamento=quando,
+                                     origem_confirmacao="manual", confirmado_por_instrutor_id=dono_id))
+        db.session.commit()
+        return cobranca.id
+
+
+def criar_sessao(dono_id, aluno_id, dia, hora="09:00", status="agendada", abateu=None, repete="unica", local="estudio", duracao=60):
+    """Uma sessão na agenda do personal em `dia` (um date). Concluída abate do saldo, a não ser que `abateu=False`. Devolve o id."""
+    concluida = status == "concluida"
+    return _salvar(Sessao(conta_id=conta_de(dono_id), aluno_id=aluno_id, instrutor_id=dono_id, data=dia, hora=hora, duracao=duracao, local=local,
+                          repete=repete, status=status, abateu=concluida if abateu is None else abateu,
+                          concluida_em=datetime.utcnow() if concluida else None))
 
 
 def contar(modelo, **filtros):

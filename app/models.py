@@ -51,6 +51,11 @@ class Conta(db.Model):
     inatividade_dias = db.Column(db.Integer, nullable=False, default=60, server_default='60')
     inatividade_conferida_em = db.Column(db.Date, nullable=True)    # último dia em que a regra rodou para esta conta
     lembretes_ligados = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
+    # [back-17-personal] Só a conta de personal trainer usa (modelo == 'personal'): o profissional é pessoa física.
+    cpf = db.Column(db.String(14), nullable=True)
+    cref = db.Column(db.String(20), nullable=True)                  # registro no conselho, ex.: 012345-G/SP
+    # Locais de atendimento LIGADOS, separados por vírgula ("estudio,casa"). Vazio = todos ligados.
+    locais_ativos = db.Column(db.String(60), nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -133,6 +138,9 @@ class Plano(db.Model):
     # É o campo "Avaliação física inclusa" do formulário do front. Por enquanto só é guardado;
     # quem vai usar é o módulo de avaliações.
     avaliacoes_incluidas = db.Column(db.Integer, nullable=False, default=0, server_default='0')
+    # [back-17-personal] Na conta de personal o "plano" é um PACOTE DE SESSÕES: este é o número que manda (o saldo que
+    # o aluno ganha ao comprar). `duracao_dias` continua existindo e vira só a validade do pacote. Na academia fica vazio.
+    quantidade_sessoes = db.Column(db.Integer, nullable=True)
     # chave estrangeira para o instrutor (academia) dono deste plano
     # OBS: nullable=True por enquanto, só até preenchermos os registros
     # antigos. Depois trocamos para nullable=False (passo 4 do plano).
@@ -382,6 +390,9 @@ class Cobranca(db.Model):
     status = db.Column(db.String(20), nullable=False, default=COBRANCA_PENDENTE)      # pendente | paga | cancelada
     data_geracao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)   # QUEM criou a cobrança
+    # [back-17-personal] Quantas sessões esta compra dá ao aluno, congelado quando a cobrança nasce (como o valor).
+    # Só na conta de personal; na academia fica vazio. O saldo do aluno é a soma disto menos as sessões que abateram.
+    quantidade_sessoes = db.Column(db.Integer, nullable=True)
 
     # passive_deletes='all': ao apagar um aluno, o SQLAlchemy NÃO zera sozinho o aluno_id das cobranças
     # dele (o padrão seria esse, e a cobrança viraria uma "diária avulsa" sem dono). Quem tem cobrança
@@ -551,3 +562,44 @@ class MensagemEnviada(db.Model):
 
     def __repr__(self):
         return f'<MensagemEnviada {self.tipo} aluno={self.aluno_id} {self.data}>'
+
+
+# [back-17-personal] valores aceitos nas colunas de texto de `sessoes` (conferidos pela aplicação)
+SESSAO_AGENDADA, SESSAO_CONCLUIDA, SESSAO_CANCELADA = 'agendada', 'concluida', 'cancelada'
+SESSAO_UNICA, SESSAO_SEMANAL = 'unica', 'semanal'
+LOCAIS_DE_ATENDIMENTO = ('estudio', 'casa', 'parque', 'online')
+CONTA_PERSONAL = 'personal'
+
+
+class Sessao(db.Model):
+    """
+    [back-17-personal] Uma sessão de treino marcada na AGENDA do personal trainer. Na conta de personal ela faz o
+    papel que o check-in faz na academia: em vez de entrada na catraca, sessão marcada.
+
+    Regra do saldo: só sessão CONCLUÍDA consome o pacote, e só se o aluno tinha saldo na hora (`abateu`).
+    Cancelada não consome. Regras em services/pacote_service.py e services/agenda_service.py.
+    """
+    __tablename__ = 'sessoes'
+    __table_args__ = (
+        db.Index('ix_sessoes_conta_data', 'conta_id', 'data'),       # a agenda do dia
+        db.Index('ix_sessoes_aluno_status', 'aluno_id', 'status'),   # o saldo do aluno
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)             # a conta do personal
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)     # quem dá a sessão
+    data = db.Column(db.Date, nullable=False)
+    hora = db.Column(db.String(5), nullable=False)                                           # "07:30"
+    duracao = db.Column(db.Integer, nullable=False, default=60)                              # em minutos
+    local = db.Column(db.String(20), nullable=False, default='estudio')                      # estudio | casa | parque | online
+    repete = db.Column(db.String(10), nullable=False, default=SESSAO_UNICA)                  # unica | semanal
+    status = db.Column(db.String(20), nullable=False, default=SESSAO_AGENDADA)               # agendada | concluida | cancelada
+    abateu = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())  # consumiu 1 sessão do saldo?
+    concluida_em = db.Column(db.DateTime, nullable=True)
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # Quem tem sessão não pode ser excluído (AlunoService.excluir_aluno confere antes): o saldo depende delas.
+    aluno = db.relationship('Aluno', backref=db.backref('sessoes', lazy=True, passive_deletes='all'), lazy=True)
+
+    def __repr__(self):
+        return f'<Sessao aluno={self.aluno_id} {self.data} {self.hora} {self.status}>'

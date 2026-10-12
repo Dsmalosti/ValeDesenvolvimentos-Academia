@@ -74,12 +74,12 @@
   <div class="kpi-grid">
     {{ kpi(k.ativos, 'Alunos ativos', 'users', 'green', '+' ~ k.ativos_delta ~ ' no mês', href=url_for('alunos.lista', status='ativos')) }}
     {{ kpi(k.inativos, 'Alunos inativos', 'user-x', 'slate', href=url_for('alunos.lista', status='inativo')) }}
-    {{ kpi(brl(k.faturamento, 0), 'Faturamento do mês' ~ (' · ' ~ k.fat_meta_pct ~ '% da meta' if k.fat_meta_pct is not none else ''), 'dollar', 'yellow', '+' ~ k.fat_delta ~ '%', href=url_for('relatorios.admin')) }}
+    {{ kpi(brl(k.faturamento, 0), 'Faturamento do mês' ~ (' · ' ~ k.fat_meta_pct ~ '% da meta' if k.fat_meta_pct is not none else ''), 'dollar', 'yellow', (('+' if k.fat_delta >= 0 else '') ~ k.fat_delta ~ '%') if k.fat_delta is not none else None, href=url_for('relatorios.admin')) }}{# [back-17-personal] variação negativa não leva o '+', e sem mês anterior não há variação (mesmo ajuste do painel da academia) #}
     <button type="button" class="card kpi" data-open="dlg-pacotes-acabando"><div class="kpi__top"><span class="tile tone-blue">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">{{ k.pacotes_acabando }}</div><div class="kpi__lbl">Pacotes acabando</div></div></button>
     {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência real · ' ~ k.inad_qtd ~ ' alunos', 'alert', 'red', 'atenção', 'red', href=url_for('alunos.lista', status='pendente')) }}
     {{ kpi(brl(k.ticket), 'Ticket médio por aluno', 'trend', 'teal', abre='dlg-ticket') }}
     {{ kpi(sessoes_hoje, 'Sessões hoje', 'calendar', 'orange', href=url_for('agenda.index')) }}
-    {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', '+' ~ k.novas_delta, abre='dlg-novas') }}
+    {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', ('+' if k.novas_delta >= 0 else '') ~ k.novas_delta, abre='dlg-novas') }}{# [back-17-personal] variação negativa não leva o '+' #}
   </div>
 </section>
 
@@ -101,8 +101,8 @@
 <div class="painel-grid">
 <section class="card card--pad" aria-labelledby="h-serie">
   <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
-    <div><h2 class="ctitle" id="h-serie" style="font-size:16px">Alunos ativos por mês</h2><div class="csub">{{ serie.periodo }} · <span class="nowrap-frase">meta de {{ serie.meta }} em amarelo</span></div></div>
-    <div class="row-flex gap-3"><span class="chip chip--green d-only">+{{ k.ano_delta }}% no ano</span><a class="fw-7 row-flex gap-1" style="font-size:13px;white-space:nowrap" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos {{ icon('chevron-right', 16) }}</a></div>
+    <div><h2 class="ctitle" id="h-serie" style="font-size:16px">Alunos ativos por mês</h2><div class="csub">{{ serie.periodo }}{% if serie.meta %} · <span class="nowrap-frase">meta de {{ serie.meta }} em amarelo</span>{% endif %}{# [back-17-personal] sem meta cadastrada, a frase some #}</div></div>
+    <div class="row-flex gap-3">{% if k.ano_delta is not none %}<span class="chip chip--green d-only">{{ '+' if k.ano_delta >= 0 }}{{ k.ano_delta }}% no ano</span>{% endif %}{# [back-17-personal] sem base para comparar, o selo some #}<a class="fw-7 row-flex gap-1" style="font-size:13px;white-space:nowrap" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos {{ icon('chevron-right', 16) }}</a></div>
   </div>
   <div class="chart" style="margin-top:12px" data-chart="linha" data-json='{{ {"labels": serie.labels, "valores": serie.valores, "meta": serie.meta, "unidade": "alunos", "titulo": "Alunos ativos por mês", "metaPct": true, "link": url_for("alunos.lista", status="ativos"), "linkRotulo": "ver alunos ativos"}|tojson|forceescape }}'></div>
 </section>
@@ -144,7 +144,7 @@
           <td>{% if a.ativo and a.pacote.saldo <= 1 %}<b class="bad">{{ a.vence_txt }}</b>{% else %}{{ a.vence_txt }}{% endif %}</td>
           <td>{{ chip_status(a.status) }}</td>
           <td class="col-actions"><span class="actions">
-            <button type="button" class="iconbtn iconbtn--green" data-toast="WhatsApp aberto para {{ a.nome.split()[0] }}." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>
+            {# [back-17-personal] antes: botão de demonstração (só mostrava "WhatsApp aberto para..."). Agora abre a conversa do aluno; sem telefone, avisa. Mesmo ajuste do painel da academia (back-16). #}{% if a.telefone %}<a class="iconbtn iconbtn--green" href="https://wa.me/55{{ a.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener" aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</a>{% else %}<button type="button" class="iconbtn iconbtn--green" data-toast="{{ a.nome.split()[0] }} não tem telefone cadastrado." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>{% endif %}
           </span></td>
         </tr>
         {% endfor %}

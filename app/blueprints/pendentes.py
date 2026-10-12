@@ -33,7 +33,7 @@ PENDENTES = [
     # [back-10-frequencia] 'frequencia.index' saiu daqui: agora é rota de verdade em blueprints/frequencia/routes.py.
     # [back-15-avaliacoes] 'avaliacoes.agenda', 'avaliacoes.agendar' e 'avaliacoes.registrar' saíram daqui: agora são
     # rotas de verdade em blueprints/avaliacoes/routes.py.
-    ('agenda',     'index',          '/agenda',                                ['GET'],  'Agenda'),
+    # [back-17-personal] 'agenda.index' saiu daqui: agora é rota de verdade em blueprints/agenda/routes.py.
     # ações que o painel envia por formulário (POST): avisam e voltam para o painel
     # [back-09-cobranca] 'cobrancas.diaria' e 'cobrancas.lembrete_lote' saíram daqui: agora são rotas de
     # verdade em blueprints/cobrancas/routes.py.

@@ -7,6 +7,7 @@ from app.models import Aluno, PAPEL_INSTRUTOR
 from app.services import aluno_tela_service as telas  # [back-07-alunos] regras das telas novas
 from app.services import cobranca_service as cobrancas  # [back-09-cobranca] cobrança, renovação e extrato
 from app.services import frequencia_service as frequencia  # [back-10-frequencia] bloquear acesso e busca do popup
+from app.services import pacote_service  # [back-17-personal] renovar pacote na conta de personal
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -271,9 +272,20 @@ def renovar(id):
             flash(str(erro), 'error')
             return redirect(url_for('alunos.renovar', id=id))
         if request.form.get('acao') == 'sem_cobrar':
-            flash('Matrícula renovada. A cobrança fica em aberto.', 'success')
+            if pacote_service.e_personal():
+                # [back-17-personal] renovar pacote: o aviso fala do saldo, e não de matrícula
+                flash(f"Pacote renovado: {pacote_service.saldo_txt(pacote_service.pacote_do(aluno)['saldo'])}. A cobrança fica em aberto.", 'success')
+            else:
+                flash('Matrícula renovada. A cobrança fica em aberto.', 'success')
             return redirect(url_for('alunos.detalhe', id=id))
         return redirect(url_for('cobrancas.receber', id=cobranca.id, forma=aluno.forma_pagamento))
+    if pacote_service.e_personal():
+        # [back-17-personal] conta de personal: renovar é comprar um pacote novo; a tela mostra o novo saldo (o que sobrou soma)
+        pacotes = pacote_service.pacotes_para_renovar(aluno)
+        if not pacotes:
+            flash('Cadastre um pacote ativo antes de renovar.', 'warning')
+            return redirect(url_for('planos.lista'))
+        return render_template('personal/renovar.html', aluno=telas.contexto_do_perfil(aluno)['aluno'], pacotes=pacotes, plano_atual_id=aluno.plano_id)
     planos = cobrancas.planos_para_renovar(aluno)
     if not planos:
         flash('Cadastre um plano ativo antes de renovar.', 'warning')

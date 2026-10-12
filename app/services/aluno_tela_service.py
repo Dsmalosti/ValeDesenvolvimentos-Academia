@@ -195,6 +195,9 @@ def contexto_do_perfil(aluno, hoje=None):
         'observacoes': aluno.observacoes or '',
         'acesso_liberado': bool(aluno.acesso_liberado),     # [back-10-frequencia] antes: sempre True
     })
+    if 'pacote' in perfil:
+        # [back-17-personal] conta de personal: no lugar da data de vencimento, o saldo do pacote
+        perfil['vence_completo'] = perfil['vence_txt'].capitalize()
 
     # [back-14-treinos] antes: procurava a ficha aqui e mostrava os treinos pelo dia da semana. Agora usa a mesma
     # "ficha em uso" da tela de fichas, com os treinos por letra e quem mexeu por último.

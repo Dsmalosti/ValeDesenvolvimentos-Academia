@@ -60,7 +60,12 @@ def _conta():
 def modelos_de_mensagem():
     """Os modelos da conta: o texto que ela gravou ou, se nunca mexeu, o padrão."""
     proprios = {m.tipo: m.texto for m in da_conta(ModeloMensagem).all()}
-    return [{'tipo': tipo, 'nome': nome, 'cor': cor, 'texto': proprios.get(tipo, padrao)} for tipo, nome, cor, padrao in MODELOS_PADRAO]
+    # [back-17-personal] na conta de personal dois textos PADRÃO mudam (ele cobra pacote e fala na primeira pessoa).
+    # O texto que a conta gravou continua valendo acima de qualquer padrão.
+    from app.services import pacote_service, personal_service
+    do_personal = personal_service.MODELOS_PADRAO if pacote_service.e_personal() else {}
+    return [{'tipo': tipo, 'nome': nome, 'cor': cor, 'texto': proprios.get(tipo, do_personal.get(tipo, padrao))}
+            for tipo, nome, cor, padrao in MODELOS_PADRAO]
 
 
 def equipe():

@@ -5,6 +5,7 @@ from app.blueprints.planos.form import PlanoForm
 from app.models import Plano
 from app.services.plano_service import PlanoService
 from app.services import plano_tela_service as telas  # [back-08-planos] regras das telas novas
+from app.services import pacote_service  # [back-17-personal] conta de personal: plano vira pacote
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -107,10 +108,24 @@ def _plano_da_conta(id):
     return da_conta(Plano).filter_by(id=id).first_or_404()
 
 
+# [back-17-personal] Na conta de personal trainer o "plano" é um PACOTE DE SESSÕES: mesmas rotas, mesma tabela, outros
+# templates (personal/pacotes.html e personal/pacote_form.html) e outra palavra nos avisos. Antes: sempre os de plano.
+def _tpl_lista():
+    return 'personal/pacotes.html' if pacote_service.e_personal() else 'planos/lista.html'
+
+
+def _tpl_form():
+    return 'personal/pacote_form.html' if pacote_service.e_personal() else 'planos/form.html'
+
+
+def _termo():
+    return 'Pacote' if pacote_service.e_personal() else 'Plano'
+
+
 @planos_blueprint.route('')
 def lista():
     # o instrutor consulta os planos, mas o serviço não entrega a ele os valores de faturamento
-    return render_template('planos/lista.html', **telas.contexto_da_lista(request.args))
+    return render_template(_tpl_lista(), **telas.contexto_da_lista(request.args))
 
 
 def _salvar(plano=None):
@@ -118,15 +133,15 @@ def _salvar(plano=None):
     valores, erros = telas.validar(request.form, plano)
     if erros:
         flash(telas.aviso_dos_erros(erros), 'error')
-        return render_template('planos/form.html', plano=telas.do_formulario(valores, request.form, plano),
+        return render_template(_tpl_form(), plano=telas.do_formulario(valores, request.form, plano),
                                erros=erros, modo='editar' if plano else 'novo')
     if plano:
         telas.atualizar(plano, valores)
-        flash('Plano salvo.', 'success')
+        flash(f'{_termo()} salvo.', 'success')
     else:
         telas.criar(valores)
-        flash('Plano criado. Ele já aparece na hora de matricular.' if valores['ativo']
-              else 'Plano criado como inativo. Ative para ele aparecer na hora de matricular.', 'success')
+        flash(f'{_termo()} criado. Ele já aparece na hora de matricular.' if valores['ativo']
+              else f'{_termo()} criado como inativo. Ative para ele aparecer na hora de matricular.', 'success')
     return redirect(url_for('planos.lista'))
 
 
@@ -135,7 +150,7 @@ def _salvar(plano=None):
 def novo():
     if request.method == 'POST':
         return _salvar()
-    return render_template('planos/form.html', plano={}, erros={}, modo='novo')
+    return render_template(_tpl_form(), plano={}, erros={}, modo='novo')
 
 
 @planos_blueprint.route('/<int:id>/editar', methods=['GET', 'POST'])
@@ -144,7 +159,7 @@ def editar(id):
     plano = _plano_da_conta(id)
     if request.method == 'POST':
         return _salvar(plano)
-    return render_template('planos/form.html', plano=telas.linha_do_plano(plano), erros={}, modo='editar')
+    return render_template(_tpl_form(), plano=telas.linha_do_plano(plano), erros={}, modo='editar')
 
 
 @planos_blueprint.route('/<int:id>/alternar', methods=['POST'])
@@ -152,5 +167,5 @@ def editar(id):
 def alternar(id):
     # Pausar NÃO apaga: o plano some do cadastro de aluno e continua em quem já está nele.
     plano = telas.alternar(_plano_da_conta(id))
-    flash(f"Plano {plano.nome} {'reativado' if plano.ativo else 'inativado'}.", 'success')
+    flash(f"{_termo()} {plano.nome} {'reativado' if plano.ativo else 'inativado'}.", 'success')
     return redirect(url_for('planos.lista'))

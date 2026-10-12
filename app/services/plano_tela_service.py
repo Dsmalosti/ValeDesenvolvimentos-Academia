@@ -21,9 +21,11 @@ from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta
 from app.helpers.dinheiro import ler_reais
 from app.models import PAPEL_INSTRUTOR, Plano
+from app.services import pacote_service        # [back-17-personal]
 from app.services.painel_service import planos_com_faturamento
 
 MAX_DIAS = 1095                 # 3 anos; é o mesmo limite do campo no formulário do front
+MAX_SESSOES = 100               # [back-17-personal] o mesmo limite do campo "Quantidade de sessões" do front
 MAX_DESCRICAO = 500
 VALOR_MAXIMO = Decimal('99999999.99')   # o que cabe na coluna Numeric(10, 2)
 AVALIACOES = (0, 1, 2, 4)       # opções do campo "Avaliação física inclusa" do front
@@ -49,6 +51,10 @@ def _linha(plano, numeros, posicao):
         'pct': n.get('pct', 0),                  # quanto isso representa do faturamento do mês
         'tom': TONS[posicao % len(TONS)],
         'cor_barra': CORES_BARRA[posicao % len(CORES_BARRA)],
+        # [back-17-personal] na conta de personal o plano é um pacote de sessões (na academia estes três ficam vazios)
+        'quantidade_sessoes': plano.quantidade_sessoes,
+        'valor_sessao': round(float(plano.valor or 0) / plano.quantidade_sessoes, 2) if plano.quantidade_sessoes else 0.0,
+        'avulso': pacote_service.e_avulso(plano),
     }
 
 
@@ -93,10 +99,13 @@ def validar(formulario, plano=None):
     conveniência: quem garante a regra é esta função.
     """
     erros, v = {}, {}
+    # [back-17-personal] na conta de personal o formulário é o de PACOTE: vem `quantidade_sessoes` e não vem `duracao_dias`
+    pacote = pacote_service.e_personal()
+    termo = 'pacote' if pacote else 'plano'
 
     v['nome'] = ' '.join((formulario.get('nome') or '').split())
     if not v['nome']:
-        erros['nome'] = 'Dê um nome ao plano.'
+        erros['nome'] = f'Dê um nome ao {termo}.'
     elif len(v['nome']) > 100:
         erros['nome'] = 'O nome pode ter no máximo 100 letras.'
     else:
@@ -105,7 +114,7 @@ def validar(formulario, plano=None):
         if plano is not None:
             repetido = repetido.filter(Plano.id != plano.id)
         if repetido.first():
-            erros['nome'] = 'Já existe um plano com este nome.'
+            erros['nome'] = f'Já existe um {termo} com este nome.'
 
     try:
         v['valor'] = _valor(formulario.get('valor'))
@@ -118,7 +127,16 @@ def validar(formulario, plano=None):
         erros['valor'] = 'Informe o valor em reais, como 149,90.'
 
     dias = (formulario.get('duracao_dias') or '').strip()
-    if dias.isdigit() and 1 <= int(dias) <= MAX_DIAS:
+    if pacote:
+        # o formulário de pacote não pergunta a validade: mantém a do pacote em edição, ou usa a padrão
+        v['duracao_dias'] = int(plano.duracao_dias) if plano is not None else pacote_service.VALIDADE_PADRAO_DIAS
+        sessoes = (formulario.get('quantidade_sessoes') or '').strip()
+        if sessoes.isdigit() and 1 <= int(sessoes) <= MAX_SESSOES:
+            v['quantidade_sessoes'] = int(sessoes)
+        else:
+            v['quantidade_sessoes'] = 0
+            erros['quantidade_sessoes'] = f'A quantidade vai de 1 a {MAX_SESSOES} sessões.'
+    elif dias.isdigit() and 1 <= int(dias) <= MAX_DIAS:
         v['duracao_dias'] = int(dias)
     else:
         v['duracao_dias'] = 0
@@ -144,6 +162,8 @@ def do_formulario(valores, formulario, plano=None):
     """O que a pessoa digitou, de volta para a tela quando há erro (com os números do plano, se for edição)."""
     dados = linha_do_plano(plano) if plano is not None else {}
     dados.update({k: valores[k] for k in ('nome', 'duracao_dias', 'descricao', 'ativo')})
+    if 'quantidade_sessoes' in valores:           # [back-17-personal]
+        dados['quantidade_sessoes'] = valores['quantidade_sessoes'] or None
     dados['valor'] = float(valores['valor'])
     if 'avaliacoes_incluidas' in formulario:
         dados['avaliacoes_incluidas'] = formulario.get('avaliacoes_incluidas') or '0'

@@ -66,7 +66,7 @@ def linha_do_aluno(aluno, vencimento, hoje, em_aberto=None):
         vence_txt = 'Cobrança em aberto' if em_aberto else 'Sem pagamento registrado'
     # atraso: conta a partir do vencimento; para quem nunca pagou, a partir do começo do período em aberto
     desde = vencimento if venceu else (em_aberto.data_inicio if devendo else None)
-    return {
+    linha = {
         'id': aluno.id,
         'nome': aluno.nome or 'Aluno sem nome',
         'cpf': aluno.cpf or '',
@@ -84,3 +84,21 @@ def linha_do_aluno(aluno, vencimento, hoje, em_aberto=None):
         'dias_atraso': (hoje - desde).days if (vencido and desde) else 0,
         'status': status,
     }
+    return _com_pacote(aluno, linha, em_aberto, hoje)
+
+
+def _com_pacote(aluno, linha, em_aberto, hoje):
+    """
+    [back-17-personal] Na conta de personal trainer não existe "vencimento": o aluno compra SESSÕES. A linha ganha o
+    `pacote` (com o saldo), o texto do saldo entra no lugar do "vence em" e o aluno só fica PENDENTE quando tem
+    cobrança em aberto (o pacote passar da validade não é dívida). Na conta de academia a linha volta como veio.
+    """
+    from app.services import pacote_service     # importado aqui: o pacote_service também usa os modelos desta tela
+    if not pacote_service.e_personal():
+        return linha
+    pacote = pacote_service.pacote_do(aluno)
+    devendo = bool(aluno.ativo and em_aberto and em_aberto.data_inicio <= hoje)
+    linha.update({'pacote': pacote, 'vence_txt': pacote_service.situacao_txt(aluno, pacote), 'vence': '—', 'vence_data': None,
+                  'vencido': devendo, 'dias_atraso': (hoje - em_aberto.data_inicio).days if devendo else 0,
+                  'status': 'inativo' if not aluno.ativo else ('pendente' if devendo else 'ativo')})
+    return linha
