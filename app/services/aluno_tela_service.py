@@ -20,7 +20,7 @@ from sqlalchemy import func
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, fichas_da_conta
 from app.models import Aluno, Ficha, Plano
-from app.services import cobranca_service, frequencia_service
+from app.services import cobranca_service, frequencia_service, treino_service
 from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
 POR_PAGINA = 8
@@ -196,8 +196,10 @@ def contexto_do_perfil(aluno, hoje=None):
         'acesso_liberado': bool(aluno.acesso_liberado),     # [back-10-frequencia] antes: sempre True
     })
 
-    ficha = (fichas_da_conta().filter(Ficha.aluno_id == aluno.id, Ficha.ativo.is_(True))
-             .order_by(Ficha.data_criacao.desc()).first())
+    # [back-14-treinos] antes: procurava a ficha aqui e mostrava os treinos pelo dia da semana. Agora usa a mesma
+    # "ficha em uso" da tela de fichas, com os treinos por letra e quem mexeu por último.
+    ficha = treino_service.ficha_do(aluno)
+    ficha_tela = treino_service.ficha_para_a_tela(ficha) if ficha else None
     return {
         'aluno': perfil,
         'pagamentos': pagamentos,
@@ -205,9 +207,9 @@ def contexto_do_perfil(aluno, hoje=None):
         # [back-10-frequencia] antes: sempre None. Continua None para quem nunca teve entrada ("sem dado").
         'freq': frequencia_service.frequencia_do(aluno, hoje) if current_user.conta.checkin_ativo else None,
         'avaliacao': None,     # precisa do módulo de avaliações
-        'ficha': {'treinos': [DIAS.get(t.dia_semana, t.dia_semana or 'Treino') for t in ficha.treinos] or [ficha.nome],
-                  'atualizada': _dmy(ficha.data_criacao.date() if ficha.data_criacao else None) or '—',
-                  'por': current_user.conta.nome} if ficha else None,
+        'ficha': {'treinos': [f'Treino {letra}' for letra in treino_service.treinos_da(ficha)] or [ficha.nome],
+                  'atualizada': ficha_tela['atualizada'].split(' por ')[0],
+                  'por': ficha_tela['atualizada'].split(' por ')[1] if ' por ' in ficha_tela['atualizada'] else current_user.conta.nome} if ficha else None,
     }
 
 

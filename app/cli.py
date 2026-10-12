@@ -60,6 +60,12 @@ def registrar_comandos(app):
             raise click.ClickException(str(erro))
         click.echo(f'Conta "{academia}" criada. Dono: {usuario.email} (entra pela tela de login).')
 
+    @app.cli.command('semear-catalogo')
+    def semear_catalogo():
+        """[back-14-treinos] Grava no banco os exercícios do catálogo padrão que estiverem faltando (não duplica)."""
+        from app.services.treino_service import semear_catalogo_padrao
+        click.echo(f'Catálogo padrão conferido: {semear_catalogo_padrao()} exercício(s) criado(s).')
+
     @app.cli.command('link-de-senha')
     @click.option('--email', prompt='E-mail de quem esqueceu a senha')
     def link_de_senha(email):

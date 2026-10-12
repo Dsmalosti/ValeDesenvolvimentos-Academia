@@ -187,7 +187,8 @@ with sync_playwright() as p:
         pg.wait_for_url("**/planos", timeout=6000)
         checa(f"[{nome}] menu 'Planos' abre a lista nova de planos", "Mensal" in pg.content() and pg.locator(".app .main").count() == 1)
         pg.goto(BASE + "/exercicios")
-        checa(f"[{nome}] /exercicios leva à tela antiga de exercícios (ponte)", pg.url.endswith("/exercicios/listar/"))
+        # [back-14-treinos] antes era uma ponte para a tela antiga (/exercicios/listar/); agora é o catálogo do front novo
+        checa(f"[{nome}] /exercicios abre o catálogo novo de exercícios", pg.url.endswith("/exercicios") and pg.locator(".app .main").count() == 1)
 
         # --- sair ---
         pg.goto(BASE + "/")

@@ -153,6 +153,7 @@ class Exercicio(db.Model):
     grupo_muscular = db.Column(db.String(50))
     descricao = db.Column(db.Text)
     video_url = db.Column(db.String(200))
+    equipamento = db.Column(db.String(60), nullable=True)   # [back-14-treinos] barra, halteres, máquina... (campo do formulário do front)
     ativo = db.Column(db.Boolean, default=True)
     # [back-06-contas-e-papeis] antes o exercício não tinha dono: era um catálogo único que qualquer
     # academia logada via, editava e apagava. Agora: conta_id vazio = catálogo padrão do sistema
@@ -172,6 +173,13 @@ class Ficha(db.Model):
     observacoes = db.Column(db.Text)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     ativo = db.Column(db.Boolean, default=True)
+    # [back-14-treinos] colunas da tela nova de ficha. A ficha em uso de um aluno é a ATIVA mais recente.
+    objetivo = db.Column(db.String(200), nullable=True)
+    rascunho = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())   # nasce rascunho ao vir de um modelo; "Salvar ficha" tira
+    modelo = db.Column(db.String(40), nullable=True)            # de qual modelo pronto ela nasceu (chave em app/dados_padrao.py)
+    valida_ate = db.Column(db.Date, nullable=True)
+    atualizada_em = db.Column(db.DateTime, nullable=True)
+    atualizada_por_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)   # quem mexeu por último
 
     # relacionamento com aluno
     aluno = db.relationship("Aluno", backref="fichas")
@@ -190,6 +198,10 @@ class Treino(db.Model):
     ficha_id = db.Column(db.Integer, db.ForeignKey('ficha.id'), nullable=False)
 
     dia_semana = db.Column(db.String(20), nullable=True)
+    # [back-14-treinos] a tela nova organiza os treinos por LETRA (A a E) e nome ("Peito e costas"),
+    # e não por dia da semana. Treino antigo, sem letra, ganha uma pela ordem de criação.
+    letra = db.Column(db.String(1), nullable=True)
+    nome = db.Column(db.String(100), nullable=True)
 
     # cada treino tem vários exercícios
     exercicios = db.relationship(
@@ -218,6 +230,9 @@ class TreinoExercicio(db.Model):
     repeticoes = db.Column(db.String(50), nullable=False)
     carga = db.Column(db.String(50))
     observacoes = db.Column(db.Text)
+    # [back-14-treinos] descanso entre as séries ("60s") e a posição da linha dentro do treino
+    descanso = db.Column(db.String(20), nullable=True)
+    ordem = db.Column(db.Integer, nullable=False, default=0, server_default='0')
 
     def __repr__(self):
         return f"<TreinoExercicio {self.exercicio.nome}>"

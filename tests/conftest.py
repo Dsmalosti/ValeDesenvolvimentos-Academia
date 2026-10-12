@@ -153,6 +153,13 @@ def ligar_checkin(conta_id, ligado=True):
         db.session.commit()
 
 
+def semear_catalogo():
+    """Grava o catálogo padrão de exercícios (os modelos de ficha dependem dele). Devolve quantos criou."""
+    from app.services.treino_service import semear_catalogo_padrao
+    with _APP.app_context():
+        return semear_catalogo_padrao()
+
+
 def criar_exercicio(nome="Supino", dono_id=None):
     """Sem `dono_id`, o exercício é do catálogo padrão (todo mundo usa, ninguém edita)."""
     return _salvar(Exercicio(nome=nome, grupo_muscular="peito", ativo=True,

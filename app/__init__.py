@@ -73,12 +73,14 @@ def create_app():
     from app.blueprints.frequencia.routes import frequencia_blueprint  # [back-10-frequencia]
     from app.blueprints.relatorios.routes import relatorios_blueprint  # [back-11-relatorios]
     from app.blueprints.config.routes import config_blueprint  # [back-12-config]
+    from app.blueprints.treinos.routes import treinos_blueprint  # [back-14-treinos]
     from app.blueprints.pendentes import blueprints_pendentes
     app.register_blueprint(painel_blueprint)
     app.register_blueprint(cobrancas_blueprint)  # [back-09-cobranca]
     app.register_blueprint(frequencia_blueprint)  # [back-10-frequencia]
     app.register_blueprint(relatorios_blueprint)  # [back-11-relatorios]
     app.register_blueprint(config_blueprint)  # [back-12-config]
+    app.register_blueprint(treinos_blueprint)  # [back-14-treinos]
     for blueprint_pendente in blueprints_pendentes():
         app.register_blueprint(blueprint_pendente)
 

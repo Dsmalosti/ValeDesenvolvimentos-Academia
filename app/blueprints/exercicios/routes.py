@@ -1,9 +1,10 @@
 from app.extensions.database import db
-from flask import Blueprint,render_template, url_for, request, redirect, flash
+from flask import Blueprint,render_template, url_for, request, redirect, flash, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app.blueprints.exercicios.form import ExercicioForm
 from app.models import Exercicio
 from app.services.exercicio_service import ExercicioService
+from app.services import treino_service as treinos  # [back-14-treinos] regras das telas novas
 from app.exceptions import BusinessError
 from app.helpers.conta import exercicios_proprios, exercicios_visiveis, exigir_login_em
 
@@ -89,8 +90,55 @@ def excluirExercicio(exercicio_id):
 
 
 # ---------------------------------------------------------------------------
-# [back-04-painel] PONTE TEMPORÁRIA para o front novo (veja a explicação em alunos/routes.py).
+# [back-14-treinos] TELAS DE EXERCÍCIOS DO FRONT NOVO (templates/exercicios/).
+# Os nomes das funções e os endereços são os do contrato do front: 'exercicios.lista',
+# 'exercicios.detalhe', 'exercicios.novo' e 'exercicios.editar'.
+# Antes (back-04), 'lista' era só uma ponte para a tela antiga (/exercicios/listar/); as outras
+# três não existiam com estes nomes. As rotas ANTIGAS, lá em cima, continuam funcionando.
+# As regras ficam em services/treino_service.py.
 # ---------------------------------------------------------------------------
 @exercicios_blueprint.route('')
 def lista():
-    return redirect(url_for('exercicios.listarExercicios'))
+    return render_template('exercicios/lista.html', **treinos.contexto_da_lista_de_exercicios(request.args))
+
+
+@exercicios_blueprint.route('/<int:id>')
+def detalhe(id):
+    exercicio = treinos.exercicio_visivel(id) or abort(404)
+    return render_template('exercicios/detalhe.html', e=treinos.detalhe_do_exercicio(exercicio))
+
+
+def _formulario(exercicio=None):
+    """Tela e gravação do formulário de exercício (novo e editar)."""
+    opcoes = [(g, g) for g in treinos.GRUPOS]
+    modo = 'editar' if exercicio else 'novo'
+    if request.method == 'POST':
+        valores, erros = treinos.validar_exercicio(request.form)
+        if erros:
+            flash('Revise os campos destacados.', 'error')
+            return render_template('exercicios/form.html', e=dict(valores, id=exercicio.id if exercicio else None), erros=erros,
+                                   grupos_opcoes=opcoes, modo=modo)
+        treinos.salvar_exercicio(valores, exercicio)
+        flash('Exercício salvo.', 'success')
+        return redirect(url_for('exercicios.lista'))
+    dados = treinos.detalhe_do_exercicio(exercicio) if exercicio else {}
+    if dados:
+        dados['equipamento'] = exercicio.equipamento or ''
+    return render_template('exercicios/form.html', e=dados, erros={}, grupos_opcoes=opcoes, modo=modo)
+
+
+@exercicios_blueprint.route('/novo', methods=['GET', 'POST'])
+def novo():
+    return _formulario()
+
+
+@exercicios_blueprint.route('/<int:id>/editar', methods=['GET', 'POST'])
+def editar(id):
+    exercicio = treinos.exercicio_proprio(id)
+    if exercicio is None:
+        # Existe, mas é do catálogo padrão (que toda academia usa e ninguém altera)? Avisa. Senão, 404.
+        if treinos.exercicio_visivel(id) is None:
+            abort(404)
+        flash('Este exercício é do catálogo padrão e não pode ser alterado. Crie um exercício seu em "Novo exercício".', 'info')
+        return redirect(url_for('exercicios.detalhe', id=id))
+    return _formulario(exercicio)

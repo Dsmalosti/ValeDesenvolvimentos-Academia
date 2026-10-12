@@ -181,6 +181,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** `auth/nova_senha.html` é novo e não veio do Drive. As telas públicas ainda não têm limite de tentativas (P0, `back-18`). O instrutor convidado vê "em construção" no painel. Arquivo novo `.env.example`, só com os nomes das variáveis.
 - **Doc:** `docs/mudancas/back-13-equipe.md`
 
+## front-10-treinos
+
+- **Sai de:** `back-13-equipe` · **PR:** a abrir → `back-13-equipe` · **Data:** 12/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `exercicios/` (lista, detalhe, form) e `treinos/` (biblioteca, modelo, atribuir, ficha, _catalogo, enviar).
+- **Testes:** os 9 arquivos conferidos byte a byte com o Drive.
+
+## back-14-treinos
+
+- **Sai de:** `front-10-treinos` · **PR:** a abrir → `front-10-treinos` · **Data:** 12/10/2026
+- **O que mudou:** catálogo de exercícios (64 padrão, que ninguém edita, mais os da academia), com busca, filtro, detalhe, novo e editar; 5 modelos prontos de ficha; usar o modelo com um ou vários alunos; editor da ficha por treino (A a E): ajustar, adicionar pelo catálogo, tirar, criar treino, salvar, excluir; enviar pelo WhatsApp com o texto da ficha pronto (link `wa.me`, custo zero) e baixar em texto. As telas antigas de exercício e ficha continuam no ar, sem alteração.
+- **Migration:** `b14c0d1e2f30_treinos_e_catalogo_padrao.py`: acrescenta colunas em `exercicio`, `ficha`, `treino` e `treino_exercicio`, dá letra aos treinos que já existem e grava o catálogo padrão. **Depois do pull, `flask db upgrade`.**
+- **Testes:** `pytest` 352 de 352 (36 novos em `tests/test_treinos.py`); migration num Postgres temporário, 25 checagens; navegador: treinos 79 de 79 e as outras nove telas sem mudança; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** arquivo novo `app/dados_padrao.py` (só dados: exercícios e modelos). `treinos/enviar.html` tem 3 ajustes marcados (imagem e PDF desabilitados). "Editar o modelo" e "Duplicar ficha" seguem como aviso do front. Comando novo `flask semear-catalogo`.
+- **Doc:** `docs/mudancas/back-14-treinos.md`
+
 ## Onde parou (12/10/2026)
 
-Primeira parte da Fase B completa e enviada: alunos, planos, cobrança, frequência, relatórios, configurações e equipe. PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-13`** (8 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b13`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-10-treinos` + `back-14-treinos`, avaliações, mensagens (por link do WhatsApp, D14), personal, depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates e o `auth/nova_senha.html`; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).
+Primeira parte da Fase B completa e enviada (alunos, planos, cobrança, frequência, relatórios, configurações e equipe), mais exercícios e fichas de treino (`back-14`). PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-14`** (10 branches, na ordem). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b14`** (pedir o OK dele; backup antes; avisar da inatividade automática da `b12`). Próximas, na ordem do roadmap: `front-11-avaliacoes` + `back-15-avaliacoes`, mensagens (por link do WhatsApp, D14), personal, depois `back-18-seguranca` (limite de tentativas é P0), `back-19-lgpd` (D15) e `back-20-producao`. Pendências do Adauto: levar para o Drive os ajustes marcados nos templates (agora também os 3 de `treinos/enviar.html`) e o `auth/nova_senha.html`; decidir "Editar o modelo"/"Duplicar ficha" e pôr o "Salvar ficha" no desktop; D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e provedor de e-mail (D4, D5, D6).

@@ -202,9 +202,7 @@ def test_perfil_de_outra_academia_da_404(app, academia):
                         ("POST", "/alunos/{}/inativar"), ("POST", "/alunos/{}/excluir"), ("POST", "/alunos/{}/acesso"),
                         ("GET", "/alunos/{}/ficha")]:
         resposta = como(app, outro).open(url.format(academia["ana"]), method=metodo, data=formulario(academia))
-        assert resposta.status_code in (404, 302), f"{metodo} {url}"
-        if resposta.status_code == 302:                       # só a ponte da ficha redireciona; e para a lista, sem achar nada
-            assert resposta.headers["Location"] == "/fichas/listar/"
+        assert resposta.status_code == 404
     assert campo(Aluno, academia["ana"], "nome") == "Ana Souza" and campo(Aluno, academia["ana"], "ativo") is True
 
 
@@ -216,11 +214,9 @@ def test_instrutor_ve_o_aluno_mas_nao_os_pagamentos(app, academia):
     assert "R$ 432,00" in do_dono
 
 
-def test_botao_da_ficha_leva_a_ficha_do_aluno(app, academia):
-    dono = como(app, academia["dono"])
-    assert dono.get(f"/alunos/{academia['ana']}/ficha").headers["Location"] == "/fichas/listar/"
-    ficha = criar_ficha(academia["ana"])
-    assert dono.get(f"/alunos/{academia['ana']}/ficha").headers["Location"] == f"/fichas/detalhes/{ficha}"
+def test_botao_da_ficha_sem_ficha_leva_a_escolher_um_modelo(app, academia):
+    # (a tela da ficha em si é testada em tests/test_treinos.py, da back-14)
+    assert como(app, academia["dono"]).get(f"/alunos/{academia['ana']}/ficha").headers["Location"] == "/treinos"
 
 
 # ------------------------------------------------------------------ edição, inativar, excluir
