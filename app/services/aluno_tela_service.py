@@ -20,7 +20,7 @@ from sqlalchemy import func
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, fichas_da_conta
 from app.models import Aluno, Ficha, Plano
-from app.services import cobranca_service
+from app.services import cobranca_service, frequencia_service
 from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
 POR_PAGINA = 8
@@ -193,8 +193,7 @@ def contexto_do_perfil(aluno, hoje=None):
         'forma': aluno.forma_pagamento or '',
         'forma_txt': FORMAS.get(aluno.forma_pagamento, 'Não informada'),
         'observacoes': aluno.observacoes or '',
-        # bloquear e liberar acesso na recepção faz parte do módulo de frequência, que ainda não existe
-        'acesso_liberado': True,
+        'acesso_liberado': bool(aluno.acesso_liberado),     # [back-10-frequencia] antes: sempre True
     })
 
     ficha = (fichas_da_conta().filter(Ficha.aluno_id == aluno.id, Ficha.ativo.is_(True))
@@ -203,7 +202,8 @@ def contexto_do_perfil(aluno, hoje=None):
         'aluno': perfil,
         'pagamentos': pagamentos,
         'total_ano': cobranca_service.total_do_ano(pagamentos, hoje),
-        'freq': None,          # precisa do módulo de frequência
+        # [back-10-frequencia] antes: sempre None. Continua None para quem nunca teve entrada ("sem dado").
+        'freq': frequencia_service.frequencia_do(aluno, hoje) if current_user.conta.checkin_ativo else None,
         'avaliacao': None,     # precisa do módulo de avaliações
         'ficha': {'treinos': [DIAS.get(t.dia_semana, t.dia_semana or 'Treino') for t in ficha.treinos] or [ficha.nome],
                   'atualizada': _dmy(ficha.data_criacao.date() if ficha.data_criacao else None) or '—',

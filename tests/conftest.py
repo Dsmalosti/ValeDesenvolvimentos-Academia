@@ -31,7 +31,7 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Cobranca, Conta, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
+from app.models import Aluno, Cobranca, Conta, Exercicio, Ficha, Frequencia, Pagamento, Plano, Treino, User  # noqa: E402
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -134,6 +134,18 @@ def criar_cobranca_em_aberto(dono_id, aluno_id, valor, inicio, fim, tipo="matric
         aluno = db.session.get(Aluno, aluno_id)
         return _salvar(Cobranca(conta_id=aluno.conta_id, aluno_id=aluno_id, plano_id=aluno.plano_id, tipo=tipo, valor=valor,
                                 data_inicio=inicio, data_vencimento=fim, status="pendente", instrutor_id=dono_id))
+
+
+def criar_entrada(dono_id, aluno_id, quando, origem="recepcao"):
+    """Uma entrada (check-in) do aluno em `quando` (um datetime). Devolve o id."""
+    return _salvar(Frequencia(conta_id=conta_de(dono_id), aluno_id=aluno_id, data_hora_entrada=quando, origem=origem, instrutor_id=dono_id))
+
+
+def ligar_checkin(conta_id, ligado=True):
+    """Liga ou desliga o serviço de check-in de uma conta (nos testes as contas nascem com ele desligado)."""
+    with _APP.app_context():
+        db.session.get(Conta, conta_id).checkin_ativo = ligado
+        db.session.commit()
 
 
 def criar_exercicio(nome="Supino", dono_id=None):

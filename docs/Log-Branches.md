@@ -121,6 +121,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** o template `cobranca/receber.html` do repositório tem 7 ajustes marcados para o PIX manual que o do Drive não tem. Excluir aluno com cobrança passou a ser recusado pela aplicação (antes era o banco). PIX automático, estorno e cobrança em lote pelo WhatsApp não existem ainda. Em produção o servidor precisa estar no fuso de Brasília.
 - **Doc:** `docs/mudancas/back-09-cobranca.md`
 
+## front-06-frequencia
+
+- **Sai de:** `back-09-cobranca` · **PR:** a abrir → `back-09-cobranca` · **Data:** 12/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `frequencia/index.html`, `frequencia/_sugestoes.html` e `alunos/_linhas_acesso.html`.
+- **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
+
+## back-10-frequencia
+
+- **Sai de:** `front-06-frequencia` · **PR:** a abrir → `front-06-frequencia` · **Data:** 12/10/2026
+- **O que mudou:** check-in em um toque (busca ao vivo por nome ou CPF), quem está na academia agora, entradas por hora, planilha do dia; card "Ausentes há mais de 15 dias" e alunos em risco por frequência no painel; assiduidade no perfil; bloquear e liberar acesso (coluna `alunos.acesso_liberado`). Quem não tem entrada registrada é "sem dado", nunca "0".
+- **Migration:** `b10e6f7a8b90_frequencias_e_acesso.py`: cria `frequencias`, acrescenta `alunos.acesso_liberado` e liga o check-in nas contas do modelo academia. **Depois do pull, `flask db upgrade`.**
+- **Testes:** `pytest` 236 de 236 (24 novos em `tests/test_frequencia.py`); migration num Postgres temporário, 14 checagens; navegador: frequência 31 de 31, cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** `alunos/detalhe.html` tem 1 ajuste marcado ("Sem dado"). Não há registro de saída: "na academia agora" é quem entrou há menos de 90 minutos. Mensalidade atrasada não barra a entrada; o botão Bloquear, sim. Decisão pendente do Adauto: como medir assiduidade.
+- **Doc:** `docs/mudancas/back-10-frequencia.md`
+
 ## Onde parou (12/10/2026)
 
-Alunos, planos e cobrança prontos e enviados (PRs #17 a #22). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar a `b09d5e6f7a80`** (pedir o OK dele; fazer backup antes). O Adauto pediu, em 12/10, para terminar tudo o que não depende dele nem do Diogo (D16 no roadmap): seguir a Fase B na ordem, depois segurança, LGPD e produção. Decisões dele que mudam o desenho das próximas: mensagens gratuitas por link do WhatsApp (D14) e LGPD funcionando no sistema (D15). Pendências dele: levar para o Drive os 7 ajustes do `cobranca/receber.html`, D12, D13, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
+Alunos, planos, cobrança e frequência prontos e enviados. PRs #17 a #22 abertos; **faltam os PRs de `front-06-frequencia` e `back-10-frequencia`**. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09d5e6f7a80` e `b10e6f7a8b90`** (pedir o OK dele; backup antes). Seguindo o pedido de 12/10 (D16), a próxima é `front-07-relatorios` + `back-11-relatorios`, depois config, equipe, treinos, avaliações, mensagens, personal, segurança, LGPD e produção. Pendências do Adauto: levar para o Drive os 7 ajustes do `cobranca/receber.html` e o ajuste do `alunos/detalhe.html`, D12, D13, assiduidade, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).

@@ -104,9 +104,12 @@ class AlunoService:
         # [back-09-cobranca] antes: quem barrava a exclusão de aluno com pagamento era o banco, porque
         # `pagamentos.aluno_id` era obrigatório. A cobrança aceita aluno vazio (por causa da diária avulsa),
         # então a conferência passou a ser feita aqui, de propósito.
-        from app.models import Cobranca
+        from app.models import Cobranca, Frequencia
         if da_conta(Cobranca).filter_by(aluno_id=aluno.id).first():
             raise BusinessError("Este aluno tem cobranças ou pagamentos registrados e não pode ser excluído. Desative em vez de excluir.")
+        # [back-10-frequencia] o mesmo vale para quem tem entradas registradas
+        if da_conta(Frequencia).filter_by(aluno_id=aluno.id).first():
+            raise BusinessError("Este aluno tem entradas registradas e não pode ser excluído. Desative em vez de excluir.")
 
         BaseService.deletar(aluno)
 

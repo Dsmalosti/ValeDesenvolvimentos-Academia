@@ -6,6 +6,7 @@ from app.services.aluno_service import AlunoService
 from app.models import Aluno, PAPEL_INSTRUTOR
 from app.services import aluno_tela_service as telas  # [back-07-alunos] regras das telas novas
 from app.services import cobranca_service as cobrancas  # [back-09-cobranca] cobrança, renovação e extrato
+from app.services import frequencia_service as frequencia  # [back-10-frequencia] bloquear acesso e busca do popup
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -225,9 +226,12 @@ def excluir(id):
 @alunos_blueprint.route('/<int:id>/acesso', methods=['POST'])
 @papel_requerido(*DONO_E_RECEPCAO)
 def acesso(id):
-    # Bloquear e liberar o acesso na recepção faz parte do módulo de frequência, que ainda não existe.
-    _aluno_da_conta(id)
-    flash('Bloquear e liberar acesso ainda não está disponível.', 'info')
+    # [back-10-frequencia] antes: só avisava que a função ainda não existia. Agora troca alunos.acesso_liberado,
+    # que o check-in confere antes de registrar a entrada.
+    aluno = frequencia.alternar_acesso(_aluno_da_conta(id))
+    flash(f"Acesso de {aluno.nome} {'liberado' if aluno.acesso_liberado else 'bloqueado'} na recepção.", 'success')
+    # volta para o perfil, e não para o endereço que o navegador informa: redirecionar para onde o
+    # navegador manda abriria brecha para levar o usuário a outro site
     return redirect(url_for('alunos.detalhe', id=id))
 
 
@@ -238,7 +242,7 @@ def acesso(id):
 # foi ligada, o endpoint existe só para levar à tela antiga equivalente. Nenhuma ponte mexe em
 # dado, e cada uma vira a tela de verdade na branch do seu assunto.
 # [back-07-alunos] lista, novo, detalhe e buscar deixaram de ser pontes (são as rotas acima).
-# [back-09-cobranca] pagamentos e renovar também viraram telas de verdade. Sobra a da frequência.
+# [back-09-cobranca] pagamentos e renovar viraram telas de verdade; [back-10-frequencia] a busca de acesso também.
 # ---------------------------------------------------------------------------
 @alunos_blueprint.route('/<int:id>/pagamentos')
 @papel_requerido(*DONO_E_RECEPCAO)   # extrato é dinheiro: instrutor não vê
@@ -279,6 +283,10 @@ def renovar(id):
 
 
 @alunos_blueprint.route('/acesso/busca')
+@papel_requerido(*DONO_E_RECEPCAO)
 def acesso_busca():
     # busca do popup "Bloquear ou liberar acesso": devolve só um pedaço de HTML para o popup
-    return '<p class="faint" style="margin:0">A busca para bloquear acesso ainda não está disponível.</p>'
+    # [back-10-frequencia] antes: devolvia um aviso fixo de "ainda não disponível"
+    q = (request.args.get('q') or '').strip()
+    resultados = frequencia.buscar(q) if len(q) >= 2 else []
+    return render_template('alunos/_linhas_acesso.html', resultados=resultados, q=q)

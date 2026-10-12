@@ -92,7 +92,15 @@
   </div>
 
   <div class="detalhe-col">
-    {% if academia.checkin_ativo %}
+    {# [back-10-frequencia] antes: {% if academia.checkin_ativo %}. Aluno que nunca teve entrada registrada chega com
+       freq vazio: é "sem dado", e mostrar "0% de assiduidade" seria afirmar uma coisa que não foi medida. #}
+    {% if academia.checkin_ativo and not freq %}
+    <section class="card card--pad card--freq" aria-labelledby="h-freq-vazio">
+      <h2 class="ctitle" id="h-freq-vazio">Frequência</h2>
+      <p class="muted fs-13" style="margin:6px 0 0">Sem dado: nenhuma entrada registrada ainda.</p>
+    </section>
+    {% endif %}
+    {% if academia.checkin_ativo and freq %}
     <section class="card card--pad card--freq" aria-labelledby="h-freq">
       <h2 class="ctitle" id="h-freq">Frequência</h2>
       <div class="row-flex gap-2" style="align-items:baseline;margin-top:6px"><span class="num" style="font-size:30px;font-weight:700">{{ freq.pct }}%</span><span class="muted fs-13">de assiduidade nos últimos 30 dias</span></div>

@@ -20,10 +20,12 @@ O que ainda NÃO dá para calcular, e por isso vem vazio:
 from collections import defaultdict
 from datetime import date
 
+from flask_login import current_user
 from sqlalchemy.orm import joinedload
 
 from app.helpers.conta import da_conta
 from app.models import Aluno, Pagamento, Plano
+from app.services import frequencia_service  # [back-10-frequencia]
 # [back-07-alunos] a regra de vencimento e de status saiu daqui para o situacao_service,
 # para o painel e as telas de alunos usarem a mesma.
 from app.services.situacao_service import (cobrancas_em_aberto_da_conta, data_curta as _dm,
@@ -92,6 +94,18 @@ def montar_painel(hoje=None):
 
     serie = _serie_ativos(ativos, cadastro, hoje)
 
+    # [back-10-frequencia] Ausentes: alunos ativos cuja ÚLTIMA entrada foi há mais de 15 dias. Só existe com o check-in
+    # ligado. `sem_vir` é None quando a conta ainda não tem nenhuma entrada registrada: aí o card mostra "—"
+    # (sem dado), e não 0. Quem nunca teve entrada não aparece como ausente pelo mesmo motivo.
+    sem_vir = frequencia_service.dias_sem_vir(hoje) if current_user.conta.checkin_ativo else None
+    ausentes = sorted(({'aluno': linhas[a.id], 'dias': sem_vir[a.id]} for a in ativos
+                       if sem_vir and sem_vir.get(a.id, 0) > frequencia_service.DIAS_AUSENTE), key=lambda x: -x['dias'])
+    # em risco = quem está com pagamento atrasado + quem sumiu
+    risco = [{'nome': x['nome'], 'tipo': 'pagamento', 'tom': 'red',
+              'motivo': f"Pagamento atrasado há {x['dias_atraso']} dia{'s' if x['dias_atraso'] != 1 else ''}"} for x in pendentes]
+    risco += [{'nome': x['aluno']['nome'], 'tipo': 'frequencia', 'tom': 'yellow',
+               'motivo': f"{x['dias']} dias sem vir à academia"} for x in ausentes]
+
     k = {
         'ativos': len(ativos),
         'ativos_delta': sum(1 for a in ativos if _mesmo_mes(cadastro[a.id], ano, mes)),
@@ -104,11 +118,13 @@ def montar_painel(hoje=None):
         'inadimplencia': sum(x['valor'] for x in pendentes),
         'inad_qtd': len(pendentes),
         'ticket': (faturamento / len(ativos)) if ativos else 0.0,
-        'ausentes': None,                                          # precisa do módulo de frequência
+        # [back-10-frequencia] antes: sempre None. Agora: o número; "—" com check-in ligado e nenhuma entrada
+        # registrada ainda; None com o check-in desligado (o card nem aparece).
+        'ausentes': len(ausentes) if sem_vir is not None else ('—' if current_user.conta.checkin_ativo else None),
         'novas': len(novas),
         'novas_delta': len(novas) - novas_mes_anterior,
         'aniversarios': len(aniversariantes),
-        'em_risco': len(pendentes),
+        'em_risco': len(risco),                                    # [back-10-frequencia] antes: len(pendentes)
         'notificacoes': 0,                                         # módulo ainda não criado
         # crescimento no ano: ativos de hoje contra os que já estavam cadastrados na virada do ano
         'ano_delta': _pct(len(ativos), sum(1 for a in ativos if cadastro[a.id] is None or cadastro[a.id].year < ano)),
@@ -116,9 +132,7 @@ def montar_painel(hoje=None):
 
     alertas = {
         'avaliacao_hoje': None,                                    # precisa do módulo de avaliações
-        'risco': [{'nome': x['nome'], 'tipo': 'pagamento', 'tom': 'red',
-                   'motivo': f"Pagamento atrasado há {x['dias_atraso']} dia{'s' if x['dias_atraso'] != 1 else ''}"}
-                  for x in pendentes],
+        'risco': risco,
         'aniversarios': [{'nome': a.nome or 'Aluno sem nome',
                           'motivo': f"Completa {hoje.year - a.data_nascimento.year} anos hoje"}
                          for a in aniversariantes],
@@ -129,7 +143,7 @@ def montar_painel(hoje=None):
 
     listas = {
         'vencem': vencem,
-        'ausentes': [],
+        'ausentes': ausentes,                                      # [back-10-frequencia] antes: sempre vazia
         'novas': [{'aluno': linhas[a.id], 'data': _dm(cadastro[a.id])} for a in novas],
     }
 

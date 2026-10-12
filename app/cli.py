@@ -29,7 +29,9 @@ def criar_conta_com_dono(nome_academia, nome, sobrenome, email, senha, modelo='a
     if User.query.filter(db.func.lower(User.email) == email).first():
         raise ValueError('Já existe um usuário com este e-mail.')
 
-    conta = Conta(nome=nome_academia.strip(), modelo=modelo)
+    # [back-10-frequencia] antes: toda conta nascia com o check-in desligado. Academia nasce com ele ligado (a tela de
+    # frequência só aparece assim); personal, desligado. Dá para trocar depois em Configurações.
+    conta = Conta(nome=nome_academia.strip(), modelo=modelo, checkin_ativo=(modelo == 'academia'))
     db.session.add(conta)
     db.session.flush()   # gera o id da conta sem fechar a transação
     usuario = User(nome=nome, sobrenome=sobrenome, email=email, conta_id=conta.id, papel=PAPEL_PROPRIETARIO,

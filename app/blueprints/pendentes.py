@@ -30,7 +30,7 @@ PENDENTES = [
     ('relatorios', 'index',          '/relatorios',                            ['GET'],  'Relatórios'),
     ('relatorios', 'admin',          '/relatorios/painel',                     ['GET'],  'Administrativo'),
     ('mensagens',  'index',          '/mensagens',                             ['GET'],  'Mensagens'),
-    ('frequencia', 'index',          '/frequencia',                            ['GET'],  'Frequência'),
+    # [back-10-frequencia] 'frequencia.index' saiu daqui: agora é rota de verdade em blueprints/frequencia/routes.py.
     ('avaliacoes', 'agenda',         '/avaliacoes',                            ['GET'],  'Avaliações físicas'),
     ('avaliacoes', 'agendar',        '/avaliacoes/agendar',                    ['GET'],  'Agendar avaliação'),
     ('avaliacoes', 'registrar',      '/alunos/<int:id>/avaliacoes/nova',       ['GET'],  'Registrar avaliação'),

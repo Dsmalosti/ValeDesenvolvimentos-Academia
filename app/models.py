@@ -81,6 +81,9 @@ class Aluno(db.Model):
     dia_vencimento = db.Column(db.Integer, nullable=True)        # dia do mês em que a mensalidade vence, de 1 a 28
     forma_pagamento = db.Column(db.String(20), nullable=True)    # pix | debito | credito | dinheiro (a preferida do aluno)
     observacoes = db.Column(db.Text, nullable=True)              # restrição médica, objetivo, indicação...
+    # [back-10-frequencia] o botão "Bloquear" da recepção: com falso, o check-in recusa a entrada deste aluno.
+    # Não mexe em matrícula nem em cobrança. O nome é o que o front usa (aluno.acesso_liberado).
+    acesso_liberado = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
     # chave extrangeira para plano
     plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=True)
     # chave estrangeira para o instrutor (academia) dono deste aluno
@@ -198,6 +201,31 @@ class TreinoExercicio(db.Model):
 
     def __repr__(self):
         return f"<TreinoExercicio {self.exercicio.nome}>"
+
+
+class Frequencia(db.Model):
+    """
+    [back-10-frequencia] Uma linha para cada ENTRADA de aluno na academia (check-in).
+
+    Não existe coluna "presente sim/não": faltar é não ter linha. Por isso quem nunca teve entrada
+    registrada é "sem dado", e não "0 acessos" (regras em services/frequencia_service.py).
+    """
+    __tablename__ = 'frequencias'
+    __table_args__ = (
+        db.Index('ix_frequencias_conta_entrada', 'conta_id', 'data_hora_entrada'),   # a tela do dia e o painel
+        db.Index('ix_frequencias_aluno_entrada', 'aluno_id', 'data_hora_entrada'),   # o perfil do aluno
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)          # a academia
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
+    data_hora_entrada = db.Column(db.DateTime, nullable=False)
+    origem = db.Column(db.String(20), nullable=False, default='recepcao')                 # recepcao | app
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)  # QUEM registrou
+
+    aluno = db.relationship('Aluno', backref=db.backref('frequencias', lazy=True, passive_deletes='all'), lazy=True)
+
+    def __repr__(self):
+        return f'<Frequencia aluno={self.aluno_id} {self.data_hora_entrada}>'
 
 
 # [back-09-cobranca] valores aceitos nas colunas de texto das duas tabelas abaixo. São conferidos
