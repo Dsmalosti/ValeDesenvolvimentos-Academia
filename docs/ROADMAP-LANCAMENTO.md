@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase B em andamento: **alunos**, **planos**, **cobrança** e **frequência** prontos. O Adauto pediu, em 12/10/2026, para terminar tudo o que não depende dele nem do Diogo (D16). A próxima é a que estiver sem marca na Fase B. |
+| **Estado** | Fase B em andamento: **alunos**, **planos**, **cobrança**, **frequência** e **relatórios** prontos. O Adauto pediu, em 12/10/2026, para terminar tudo o que não depende dele nem do Diogo (D16). A próxima é a que estiver sem marca na Fase B. |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -40,6 +40,8 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `back-09-cobranca` | Cobrança de verdade: tabelas `cobrancas` e `pagamentos` (esquema aprovado pelo Diogo), receber em PIX, débito, crédito ou dinheiro com confirmação manual, renovar, diária avulsa e extrato. **Tem migration, e ela converte a tabela de pagamentos.** | [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` | Aguardando revisão do Diogo (o PR nasceu como proposta de esquema; o código entrou depois do OK dele) |
 | [x] | `front-06-frequencia` | Templates da frequência do front novo (tela de check-in, sugestões e o popup de acesso), cópia fiel do Drive | PR a abrir → `back-09-cobranca` | Enviada; falta abrir o PR |
 | [x] | `back-10-frequencia` | Check-in em um toque, quem está na academia, ausentes há mais de 15 dias no painel, assiduidade no perfil, planilha do dia, bloquear e liberar acesso. **Tem migration** (tabela `frequencias`, `alunos.acesso_liberado`, check-in ligado nas academias). | PR a abrir → `front-06-frequencia` | Enviada; falta abrir o PR |
+| [x] | `front-07-relatorios` | Templates do painel administrativo e da tela antiga de relatórios, cópia fiel do Drive | PR a abrir → `back-10-frequencia` | Enviada; falta abrir o PR |
+| [x] | `back-11-relatorios` | Painel administrativo: faturamento por forma, ponto de equilíbrio com custos fixos, fechamento, lançamentos com filtro e CSV, mapa de movimento, retenção, churn e alunos em risco. **Tem migration** (tabela `custos`, `alunos.data_inativacao`). | PR a abrir → `front-07-relatorios` | Enviada; falta abrir o PR |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -66,7 +68,7 @@ Cada tela são duas branches: a `front-NN` (templates) e a `back-NN` que sai del
 | [x] | `front-04-planos` + `back-08-planos` | Criar, editar, pausar e reativar planos. Valor digitado como `R$ 1.234,56`. | 4.1, 4.3, 5.4 | Feito. Limites em `docs/mudancas/back-08-planos.md`: a variante Personal (pacotes) fica para a `back-17`; o faturamento do cartão conta para o plano em que o aluno está hoje. | A1 (dada) |
 | [x] | `front-05-cobranca` + `back-09-cobranca` | Receber a mensalidade: matrícula, renovação (recalcula vencimento e valor), confirmação em PIX, débito, crédito ou dinheiro, diária avulsa, histórico de pagamentos do aluno. No lançamento o PIX é **manual** (a recepção confere e confirma). | 5.2 | Matricular → cobrar → confirmar nas 4 formas → valor certo no painel. Cada pagamento guarda quem confirmou e como. | A1 (dada); reconciliar com a tabela `pagamentos` que o Diogo já criou; D3 |
 | [x] | `front-06-frequencia` + `back-10-frequencia` | Registrar a entrada do aluno em um toque; ver quem sumiu há mais de 15 dias; exportar. | 5.3 | Aluno sem nenhuma entrada aparece como "sem dado", não como "0 acessos". Ligar e desligar o check-in persiste. | A1 (dada) |
-| [ ] | `front-07-relatorios` + `back-11-relatorios` | Fechamento do mês: recebido por forma de pagamento, inadimplência, custos e ponto de equilíbrio, exportação em CSV. Só dono e recepção. | 5.8 | Os totais batem com os cards do painel e com a soma dos pagamentos de teste. | A1 (dada) |
+| [x] | `front-07-relatorios` + `back-11-relatorios` | Fechamento do mês: recebido por forma de pagamento, inadimplência, custos e ponto de equilíbrio, exportação em CSV. Só dono e recepção. | 5.8 | Os totais batem com os cards do painel e com a soma dos pagamentos de teste. | A1 (dada) |
 | [ ] | `front-08-config` + `back-12-config` | Dados da academia, horário, metas, modelos de mensagem, recebimento e funcionalidades ligadas. | 5.9 | Cada aba salva e o valor aparece nas outras telas (nome da academia no cabeçalho, meta no painel). | A1 (dada) |
 | [ ] | `front-09-equipe` + `back-13-equipe` | O dono convida a recepção e os instrutores; a pessoa cria a senha pelo link; "esqueci a senha". | 5.10 | Convite vencido ou já usado dá 404; o convidado entra já na conta certa e com o papel certo. | A1 e A6 (dadas); D6 |
 
@@ -183,7 +185,7 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | Na migration da `back-06`, dois usuários antigos que eram da mesma academia viram duas contas | bancos locais | Juntar com um `UPDATE` no `conta_id`, se for o caso |
 | O front tem botões de **demonstração**, que só mostram um aviso e não fazem nada: "WhatsApp aberto para…", "Mensagens de parabéns enviadas", "Lembretes de renovação enviados" | `painel/index.html`, `_notificacao.html` | Cada um vira ação de verdade na branch do módulo (mensagens, cobrança) |
 | O card "Avaliações de hoje" do painel tem número e nomes fixos de exemplo no template. Está escondido | `painel/index.html` | Volta com dado de verdade na branch de avaliações |
-| O gráfico "Alunos ativos por mês" é uma aproximação: o banco não guarda quando um aluno foi inativado, então quem saiu não aparece nos meses passados | `painel_service.py` | Precisa de uma coluna com a data da inativação. Não entrou na `back-07-alunos` para não misturar assuntos; vai na `back-11`, de relatórios, que é quem mais depende desse histórico |
+| O gráfico "Alunos ativos por mês" era uma aproximação: quem tinha saído sumia de todos os meses | `painel_service.py` | **Resolvido na `back-11-relatorios`** para quem for desativado daqui em diante (coluna `alunos.data_inativacao`). Quem já estava inativo não tem data e continua fora |
 | O template do painel no repositório tem 6 ajustes que o do Drive não tem (lista em `docs/mudancas/back-04-painel.md`). O Adauto precisa levar para o Drive, senão a próxima cópia desfaz | `painel/index.html` | Adauto |
 | `/fichas/editar/<id>` dá erro 500: o template `treino_form.html` usa um campo que o formulário de ficha não tem. Já era assim antes; apareceu agora porque a varredura de rotas passou a rodar com dados | tela antiga de fichas | `back-14-treinos`, que troca a tela. Se o Diogo quiser corrigir antes, é pequeno |
 | No front novo não há botão para **reativar** um aluno desativado. Hoje só pela tela antiga (`/alunos/listar/`) | `alunos/detalhe.html` | Decisão do Adauto: se quiser o botão, entra no front e numa branch pequena de backend |
@@ -198,6 +200,9 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | Arquivos antigos de pagamento sem uso (`pagamentos/form.py`, 3 templates, `pagamento_service.py`) | `app/blueprints/pagamentos/` | Apagar quando o layout antigo sair (com o OK do Diogo) |
 | Como medir **assiduidade**: hoje é "dias em que veio, sobre 30" (3 vezes por semana dá cerca de 43%) | `frequencia_service.py` | Decisão do Adauto: manter, ou medir contra uma meta de vezes por semana |
 | O check-in foi ligado em toda conta do modelo academia e ainda não há tela para desligar | `contas.checkin_ativo` | `back-12-config` |
+| O template `relatorios/admin.html` do repositório tem **13 ajustes marcados** (textos presos a "setembro", casos sem dado, "faltou" em vez de "sobrou") | `relatorios/admin.html` | **Adauto:** levar para o front do Drive (lista em `docs/mudancas/back-11-relatorios.md`) |
+| Excel e PDF do fechamento não existem: os botões avisam que por enquanto sai CSV | `relatorios/routes.py` | Depois do primeiro cliente (pedem bibliotecas novas) |
+| Os pesos da nota de risco de cancelamento são um ponto de partida | `relatorio_service.py` | Decisão do Adauto, depois de ver com dados de verdade |
 
 ## Registro de atualizações
 
@@ -220,3 +225,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | PRs abertos: #21 (`front-05`) e #22 (`back-09`, só a proposta de esquema da cobrança). |
 | 12/10/2026 | O Diogo deu OK nas 6 perguntas da cobrança. Decisões novas do Adauto: PIX do MVP só com confirmação manual (D3), mensagens gratuitas (D14), LGPD pronta no sistema (D15), terminar tudo o que não depende deles (D16). `back-09-cobranca` enviada com o código: modelo, migration que converte os pagamentos, receber, renovar, diária e extrato. |
 | 12/10/2026 | `front-06-frequencia` e `back-10-frequencia` enviadas: check-in, ausentes, assiduidade e bloqueio de acesso. Regra central: quem não tem entrada registrada é "sem dado", nunca "0". |
+| 12/10/2026 | `front-07-relatorios` e `back-11-relatorios` enviadas: painel administrativo com dados de verdade, custos fixos e data de inativação do aluno. Regra: número que o banco não sustenta aparece como "sem dado". |

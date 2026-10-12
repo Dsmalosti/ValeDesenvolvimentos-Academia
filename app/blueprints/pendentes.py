@@ -27,8 +27,8 @@ def tela_em_construcao(titulo):
 # (blueprint, função, endereço, métodos, nome da tela)
 PENDENTES = [
     ('config',     'index',          '/configuracoes',                         ['GET'],  'Configurações'),
-    ('relatorios', 'index',          '/relatorios',                            ['GET'],  'Relatórios'),
-    ('relatorios', 'admin',          '/relatorios/painel',                     ['GET'],  'Administrativo'),
+    # [back-11-relatorios] 'relatorios.index' e 'relatorios.admin' saíram daqui: agora são rotas de verdade em
+    # blueprints/relatorios/routes.py.
     ('mensagens',  'index',          '/mensagens',                             ['GET'],  'Mensagens'),
     # [back-10-frequencia] 'frequencia.index' saiu daqui: agora é rota de verdade em blueprints/frequencia/routes.py.
     ('avaliacoes', 'agenda',         '/avaliacoes',                            ['GET'],  'Avaliações físicas'),

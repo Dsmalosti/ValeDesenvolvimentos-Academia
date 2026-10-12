@@ -136,6 +136,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** `alunos/detalhe.html` tem 1 ajuste marcado ("Sem dado"). Não há registro de saída: "na academia agora" é quem entrou há menos de 90 minutos. Mensalidade atrasada não barra a entrada; o botão Bloquear, sim. Decisão pendente do Adauto: como medir assiduidade.
 - **Doc:** `docs/mudancas/back-10-frequencia.md`
 
+## front-07-relatorios
+
+- **Sai de:** `back-10-frequencia` · **PR:** a abrir → `back-10-frequencia` · **Data:** 12/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `relatorios/admin.html` e `relatorios/index.html`.
+- **Testes:** os 2 arquivos conferidos byte a byte com o Drive.
+
+## back-11-relatorios
+
+- **Sai de:** `front-07-relatorios` · **PR:** a abrir → `front-07-relatorios` · **Data:** 12/10/2026
+- **O que mudou:** o menu "Administrativo" mostra faturamento por forma, receita de 12 meses, ponto de equilíbrio contra os custos fixos (cadastrados na própria tela), fechamento, lançamentos com filtro e CSV, mapa de movimento, retenção, churn e alunos em risco. O banco passou a guardar quando cada aluno é desativado (`alunos.data_inativacao`, preenchida sozinha). O gráfico de ativos do painel passou a contar quem saiu depois.
+- **Migration:** `b11f7a8b9c00_custos_e_data_de_inativacao.py`: cria `custos` e acrescenta `alunos.data_inativacao`. **Depois do pull, `flask db upgrade`.**
+- **Testes:** `pytest` 257 de 257 (21 novos em `tests/test_relatorios.py`); migration num Postgres temporário, 12 checagens; navegador: relatórios 28 de 28, frequência 31 de 31, cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** `relatorios/admin.html` tem 13 ajustes marcados que o Drive não tem. Excel e PDF não existem (só CSV). Retenção e churn começam como "sem dado": só contam quem for desativado daqui em diante. `/relatorios` leva ao painel administrativo.
+- **Doc:** `docs/mudancas/back-11-relatorios.md`
+
 ## Onde parou (12/10/2026)
 
-Alunos, planos, cobrança e frequência prontos e enviados. PRs #17 a #22 abertos; **faltam os PRs de `front-06-frequencia` e `back-10-frequencia`**. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09d5e6f7a80` e `b10e6f7a8b90`** (pedir o OK dele; backup antes). Seguindo o pedido de 12/10 (D16), a próxima é `front-07-relatorios` + `back-11-relatorios`, depois config, equipe, treinos, avaliações, mensagens, personal, segurança, LGPD e produção. Pendências do Adauto: levar para o Drive os 7 ajustes do `cobranca/receber.html` e o ajuste do `alunos/detalhe.html`, D12, D13, assiduidade, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
+Alunos, planos, cobrança, frequência e relatórios prontos e enviados. PRs #17 a #22 abertos; **faltam os PRs de `front-06`, `back-10`, `front-07` e `back-11`**. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09`, `b10` e `b11`** (pedir o OK dele; backup antes). A próxima é `front-08-config` + `back-12-config` (dados da academia, horário, metas, modelos de mensagem, recebimento, ligar e desligar o check-in), depois equipe, treinos, avaliações, mensagens, personal, segurança, LGPD e produção. Pendências do Adauto: levar para o Drive os ajustes de `cobranca/receber.html` (7), `alunos/detalhe.html` (1) e `relatorios/admin.html` (13); D12, D13, assiduidade, pesos da nota de risco, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).

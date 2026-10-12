@@ -34,18 +34,25 @@
 <div class="adm-grid">
   <section class="card card--pad c7" aria-labelledby="h-forma">
     <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
-      <div><h2 class="ctitle" id="h-forma"><span class="d-only">Faturamento por forma de pagamento</span><span class="m-only">Faturamento por pagamento</span></h2><div class="csub" style="margin-bottom:14px">{{ brl(recebido, 0) }} recebidos em setembro</div></div>
-      <span class="chip chip--green d-only">{{ variacao }}</span>
+      <div><h2 class="ctitle" id="h-forma"><span class="d-only">Faturamento por forma de pagamento</span><span class="m-only">Faturamento por pagamento</span></h2><div class="csub" style="margin-bottom:14px">{# [back-11-relatorios] antes: "recebidos em setembro", com o mês fixo #}{{ brl(recebido, 0) }} recebidos {{ periodo_txt }}</div></div>
+      {# [back-11-relatorios] antes: o selo aparecia sempre; sem período anterior para comparar ele fica de fora #}
+      {% if variacao %}<span class="chip chip--green d-only">{{ variacao }}</span>{% endif %}
     </div>
-    {{ stackbar(formas, 'Faturamento por forma de pagamento') }}
+    {# [back-11-relatorios] antes: a barra aparecia sempre; sem nada recebido ela não tem o que mostrar #}
+    {% if recebido %}{{ stackbar(formas, 'Faturamento por forma de pagamento') }}{% else %}<p class="muted fs-13" style="margin:0">Nenhum pagamento recebido {{ periodo_txt }}.</p>{% endif %}
   </section>
 
   <section class="card card--pad c5" aria-labelledby="h-eq">
     <h2 class="ctitle" id="h-eq">Ponto de equilíbrio</h2>
     <div class="csub">Quanto falta pra pagar a conta do mês</div>
     <div class="big-num">{{ brl(recebido, 0) }}</div>
-    <div class="fw-7 fs-13 tone-txt-teal">{{ brl(sobra, 0) }} acima do mínimo<span class="d-only"> ({{ brl(minimo, 0) }})</span></div>
+    {# [back-11-relatorios] antes: sempre "acima do mínimo" e sempre com o medidor. Agora diz "abaixo" quando falta, e pede os custos quando não há nenhum #}
+    {% if not minimo %}
+    <p class="muted fs-13" style="margin:8px 0 0">Cadastre os custos fixos do mês, logo abaixo, para ver quanto falta para pagar a conta.</p>
+    {% else %}
+    <div class="fw-7 fs-13 {{ 'tone-txt-teal' if sobra >= 0 else 'tone-txt-red' }}">{{ brl(sobra|abs, 0) }} {{ 'acima' if sobra >= 0 else 'abaixo' }} do mínimo<span class="d-only"> ({{ brl(minimo, 0) }})</span></div>
     {{ gauge((recebido / gauge_max * 100)|round(1), [(minimo / gauge_max * 100, 'red-bg'), (22, 'yellow-bg'), (100 - minimo / gauge_max * 100 - 22, 'teal-bg')], 'R$ 0', brl(gauge_max, 0), 'Faturamento de ' ~ brl(recebido, 0) ~ ' contra mínimo de ' ~ brl(minimo, 0)) }}
+    {% endif %}
   </section>
 
   <section class="card card--pad c7" aria-labelledby="h-graf">
@@ -61,7 +68,8 @@
     <h2 class="ctitle" id="h-ticket">Ticket médio por aluno</h2>
     <div class="csub">Faturamento dividido pelos alunos ativos</div>
     <div class="big-num">{{ brl(ticket) }}</div>
-    <div class="fw-7 fs-13 tone-txt-teal">{{ ticket_delta }}</div>
+    {# [back-11-relatorios] antes: a linha aparecia sempre; sem mês anterior para comparar ela fica de fora #}
+    {% if ticket_delta %}<div class="fw-7 fs-13 tone-txt-teal">{{ ticket_delta }}</div>{% endif %}
   </section>
 
   {% if academia.checkin_ativo %}
@@ -92,9 +100,12 @@
   <section class="card card--pad {{ 'c12' if not academia.checkin_ativo else 'c5' }}" aria-labelledby="h-ret">
     <h2 class="ctitle" id="h-ret">Quanto tempo o aluno fica</h2>
     <div class="csub">% que continua ativo depois de X dias de matrícula</div>
+    {# [back-11-relatorios] antes: o gráfico aparecia sempre. Sem histórico suficiente ele chega vazio e a tela diz "sem dado" #}
+    {% if not retencao.valores %}<p class="muted fs-13" style="margin:10px 0 0">Sem dado ainda: o gráfico aparece quando houver alunos matriculados há mais de 30 dias.</p>{% else %}
     <div class="chart" style="margin-top:10px" data-chart="linha"
       data-json='{{ {"labels": retencao.labels, "valores": retencao.valores, "meta": retencao.meta, "titulo": "Retenção do aluno por dias de matrícula", "unidade": "% ativos", "sufixo": "%", "altura": 220, "todosRotulos": true}|tojson|forceescape }}'></div>
     <div class="chart-cap">dias desde a matrícula</div>
+    {% endif %}
   </section>
 
   <section class="card card--pad c5" aria-labelledby="h-comp">
@@ -106,6 +117,8 @@
         <div class="dumb__track" role="img" aria-label="{{ c.nome }}: de {{ n1(c.ant, c.casas) }}{{ c.unidade }} para {{ n1(c.atu, c.casas) }}{{ c.unidade }}">
           <i class="dumb__seg" style="left:{{ [c.p_ant, c.p_atu]|min }}%;width:{{ (c.p_ant - c.p_atu)|abs }}%"></i>
           <i class="dumb__dot dumb__dot--ant" style="left:{{ c.p_ant }}%"></i><i class="dumb__dot dumb__dot--atu" style="left:{{ c.p_atu }}%"></i></div></li>
+      {# [back-11-relatorios] linha nova: sem dois meses de história não há o que comparar #}
+      {% else %}<li class="muted fs-13">Sem dado ainda: a comparação aparece quando houver um mês anterior com histórico.</li>
       {% endfor %}
     </ul>
     <div class="row-flex gap-4 fs-12 faint" style="margin-top:6px"><span class="row-flex gap-2"><i class="dumb__dot dumb__dot--ant" style="position:static;translate:none"></i>mês anterior</span><span class="row-flex gap-2"><i class="dumb__dot dumb__dot--atu" style="position:static;translate:none"></i>este mês</span></div>
@@ -124,6 +137,8 @@
         <span class="risco__score">{{ r.score }}</span>
         <a class="btn btn-green btn-sm" href="https://wa.me/55{{ r.aluno.telefone|replace('(', '')|replace(')', '')|replace('-', '')|replace(' ', '') }}" target="_blank" rel="noopener" aria-label="Chamar {{ r.aluno.nome }} no WhatsApp">{{ icon('chat', 15) }}Chamar</a>
       </li>
+      {# [back-11-relatorios] linha nova: ninguém em risco #}
+      {% else %}<li class="muted fs-13">Ninguém com nota abaixo de 50 agora.</li>
       {% endfor %}
     </ul>
   </section>
@@ -145,25 +160,29 @@
 
   <section class="card card--pad c5" aria-labelledby="h-fecha">
     <h2 class="ctitle" id="h-fecha">Fechamento do mês</h2>
-    <div class="csub" style="margin-bottom:10px">Setembro de 2026</div>
+    {# [back-11-relatorios] antes: "Setembro de 2026", fixo #}
+    <div class="csub" style="margin-bottom:10px">{{ mes_txt }}</div>
     <div class="fecha-row"><span>Recebido</span><b class="tone-txt-teal">{{ brl(recebido, 0) }}</b></div>
     <div class="fecha-row"><span>Ainda a receber</span><b>{{ brl(a_receber, 0) }}</b></div>
     <div class="fecha-row"><span>Em atraso</span><b class="tone-txt-red">{{ brl(em_atraso, 0) }}</b></div>
-    <div class="fecha-row"><span>Custos fixos</span><b>−&nbsp;{{ brl(custos_total, 0) }}</b></div>
+    {# [back-11-relatorios] antes: custos_total (o de um mês). `minimo` é o custo do período escolhido, que é o que entra na conta de baixo #}
+    <div class="fecha-row"><span>Custos fixos</span><b>−&nbsp;{{ brl(minimo, 0) }}</b></div>
     <hr class="divider" style="margin:10px 0">
-    <div class="total-row" style="padding-top:4px"><span>Sobrou no mês</span><b class="tone-txt-teal" style="font-size:24px">{{ brl(sobra, 0) }}</b></div>
+    {# [back-11-relatorios] antes: sempre "Sobrou no mês", em verde, mesmo quando faltava #}
+    <div class="total-row" style="padding-top:4px"><span>{{ 'Sobrou' if sobra >= 0 else 'Faltou' }}</span><b class="{{ 'tone-txt-teal' if sobra >= 0 else 'tone-txt-red' }}" style="font-size:24px">{{ brl(sobra|abs, 0) }}</b></div>
     <div class="row-flex gap-2">
       <a class="btn btn-ghost grow" href="{{ url_for('relatorios.exportar', formato='xlsx') }}">{{ icon('download', 16) }}Excel</a>
       <a class="btn btn-ghost grow" href="{{ url_for('relatorios.exportar', formato='pdf') }}">{{ icon('file', 16) }}PDF</a>
       <a class="btn btn-ghost grow" href="{{ url_for('relatorios.exportar', formato='csv') }}" download>{{ icon('download', 16) }}CSV</a>
     </div>
-    <p class="faint fs-12" style="margin:14px 0 0">Último fechamento: {{ ultimo_fechamento }}.</p>
+    {# [back-11-relatorios] antes: a linha aparecia sempre. O sistema ainda não guarda quando o fechamento foi baixado #}
+    {% if ultimo_fechamento %}<p class="faint fs-12" style="margin:14px 0 0">Último fechamento: {{ ultimo_fechamento }}.</p>{% endif %}
   </section>
 
   {# ---- lançamentos: tabela (desktop) e lista (mobile) — incorporado da tela de Relatórios ---- #}
   <section class="card card--flush c12" aria-labelledby="h-lanc">
     <div class="row-flex" style="justify-content:space-between;padding:20px 24px 16px;gap:12px">
-      <h2 class="ctitle" id="h-lanc" style="font-size:16px">Lançamentos de setembro</h2>
+      <h2 class="ctitle" id="h-lanc" style="font-size:16px">{# [back-11-relatorios] antes: "de setembro", fixo #}Lançamentos {{ periodo_de }}</h2>
       <div class="row-flex gap-2">
         <button type="button" class="btn btn-ghost btn-sm" data-open="dlg-filtro">{{ icon('filter', 16) }}Filtrar{% if filtro.forma or filtro.situacao %} <span class="chip chip--blue" style="margin-left:4px">{{ (1 if filtro.forma else 0) + (1 if filtro.situacao else 0) }}</span>{% endif %}</button>
         <a class="btn btn-ghost btn-sm" href="{{ url_for('relatorios.exportar', formato='csv', forma=filtro.forma, situacao=filtro.situacao) }}" download aria-label="Exportar lançamentos em CSV">{{ icon('download', 16) }}<span class="d-only">Exportar</span></a>

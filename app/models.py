@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from sqlalchemy import event
 from app.extensions.database import db
 from app.extensions.admin import login_manager
 from flask_login import UserMixin
@@ -84,6 +86,10 @@ class Aluno(db.Model):
     # [back-10-frequencia] o botão "Bloquear" da recepção: com falso, o check-in recusa a entrada deste aluno.
     # Não mexe em matrícula nem em cobrança. O nome é o que o front usa (aluno.acesso_liberado).
     acesso_liberado = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
+    # [back-11-relatorios] quando o aluno foi desativado (vazia para quem está ativo). É preenchida e apagada
+    # sozinha sempre que `ativo` muda (função _marca_a_inativacao, logo depois da classe). Sem ela não dá
+    # para saber quanto tempo um aluno ficou, nem quantos saíram em cada mês.
+    data_inativacao = db.Column(db.DateTime, nullable=True)
     # chave extrangeira para plano
     plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=True)
     # chave estrangeira para o instrutor (academia) dono deste aluno
@@ -201,6 +207,34 @@ class TreinoExercicio(db.Model):
 
     def __repr__(self):
         return f"<TreinoExercicio {self.exercicio.nome}>"
+
+
+@event.listens_for(Aluno.ativo, 'set', active_history=True)
+def _marca_a_inativacao(aluno, novo, antigo, _iniciador):
+    """
+    [back-11-relatorios] Guarda a data em que o aluno deixou de ser ativo, e apaga quando ele volta.
+    Fica aqui, e não em cada rota, porque `ativo` muda em vários lugares (desativar, o botão de
+    status da tela antiga, a reativação ao pagar): assim nenhum deles esquece.
+    """
+    if novo:
+        aluno.data_inativacao = None
+    elif antigo is True:            # só na passagem de ativo para inativo (aluno criado já inativo não tem data)
+        aluno.data_inativacao = datetime.now()
+
+
+class Custo(db.Model):
+    """
+    [back-11-relatorios] Custo fixo mensal da academia (aluguel, folha, energia...). A soma dos custos de
+    uma conta é o "mínimo" do ponto de equilíbrio do painel administrativo.
+    """
+    __tablename__ = 'custos'
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
+    descricao = db.Column(db.String(100), nullable=False)
+    valor = db.Column(db.Numeric(10, 2), nullable=False)          # por mês
+
+    def __repr__(self):
+        return f'<Custo {self.descricao}>'
 
 
 class Frequencia(db.Model):

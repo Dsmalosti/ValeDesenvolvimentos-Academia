@@ -18,7 +18,7 @@ O que ainda NÃO dá para calcular, e por isso vem vazio:
     cadastrados até o fim daquele mês. Quem saiu no meio do caminho não aparece.
 """
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 
 from flask_login import current_user
 from sqlalchemy.orm import joinedload
@@ -92,7 +92,7 @@ def montar_painel(hoje=None):
     aniversariantes = [a for a in ativos if a.data_nascimento
                        and (a.data_nascimento.day, a.data_nascimento.month) == (hoje.day, hoje.month)]
 
-    serie = _serie_ativos(ativos, cadastro, hoje)
+    serie = _serie_ativos(alunos, cadastro, hoje)   # [back-11-relatorios] antes: só os ativos de hoje
 
     # [back-10-frequencia] Ausentes: alunos ativos cuja ÚLTIMA entrada foi há mais de 15 dias. Só existe com o check-in
     # ligado. `sem_vir` é None quando a conta ainda não tem nenhuma entrada registrada: aí o card mostra "—"
@@ -159,8 +159,17 @@ def montar_painel(hoje=None):
     }
 
 
-def _serie_ativos(ativos, cadastro, hoje):
-    """Gráfico "Alunos ativos por mês": os últimos meses, do mais antigo para o atual."""
+def _fim_do_mes(ano, mes):
+    return date(ano + (mes == 12), mes % 12 + 1, 1) - timedelta(days=1)
+
+
+def _serie_ativos(alunos, cadastro, hoje):
+    """
+    Gráfico "Alunos ativos por mês": os últimos meses, do mais antigo para o atual.
+    [back-11-relatorios] antes: contava só os alunos ativos HOJE, e quem tinha saído sumia de todos os meses.
+    Agora conta também quem foi desativado depois do fim daquele mês (a data fica em
+    alunos.data_inativacao). Quem já estava inativo antes desta branch não tem data e continua fora.
+    """
     meses = []
     ano, mes = hoje.year, hoje.month
     for _ in range(MESES_NO_GRAFICO):
@@ -171,8 +180,10 @@ def _serie_ativos(ativos, cadastro, hoje):
     valores = []
     for a, m in meses:
         # cadastrados até o fim do mês (a, m); aluno sem data de cadastro conta em todos
-        valores.append(sum(1 for al in ativos
-                           if cadastro[al.id] is None or (cadastro[al.id].year, cadastro[al.id].month) <= (a, m)))
+        fim = _fim_do_mes(a, m)
+        valores.append(sum(1 for al in alunos
+                           if (al.ativo or (al.data_inativacao is not None and al.data_inativacao.date() > fim))
+                           and (cadastro[al.id] is None or (cadastro[al.id].year, cadastro[al.id].month) <= (a, m))))
 
     primeiro, ultimo = meses[0], meses[-1]
     periodo = f"{MESES[primeiro[1] - 1].capitalize()} a {MESES[ultimo[1] - 1]} de {ultimo[0]}"

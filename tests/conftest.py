@@ -31,7 +31,7 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Cobranca, Conta, Exercicio, Ficha, Frequencia, Pagamento, Plano, Treino, User  # noqa: E402
+from app.models import Aluno, Cobranca, Conta, Custo, Exercicio, Ficha, Frequencia, Pagamento, Plano, Treino, User  # noqa: E402
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -139,6 +139,11 @@ def criar_cobranca_em_aberto(dono_id, aluno_id, valor, inicio, fim, tipo="matric
 def criar_entrada(dono_id, aluno_id, quando, origem="recepcao"):
     """Uma entrada (check-in) do aluno em `quando` (um datetime). Devolve o id."""
     return _salvar(Frequencia(conta_id=conta_de(dono_id), aluno_id=aluno_id, data_hora_entrada=quando, origem=origem, instrutor_id=dono_id))
+
+
+def criar_custo(dono_id, descricao, valor):
+    """Um custo fixo mensal da academia de `dono_id`. Devolve o id."""
+    return _salvar(Custo(conta_id=conta_de(dono_id), descricao=descricao, valor=valor))
 
 
 def ligar_checkin(conta_id, ligado=True):
