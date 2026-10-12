@@ -69,8 +69,10 @@ def create_app():
     # [back-04-painel] painel do front novo, e as seções que ainda não têm backend
     # (cada uma responde "em construção" até a tela de verdade entrar).
     from app.blueprints.painel.routes import painel_blueprint
+    from app.blueprints.cobrancas.routes import cobrancas_blueprint  # [back-09-cobranca]
     from app.blueprints.pendentes import blueprints_pendentes
     app.register_blueprint(painel_blueprint)
+    app.register_blueprint(cobrancas_blueprint)  # [back-09-cobranca]
     for blueprint_pendente in blueprints_pendentes():
         app.register_blueprint(blueprint_pendente)
 

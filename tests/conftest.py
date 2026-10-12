@@ -31,7 +31,7 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Conta, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
+from app.models import Aluno, Cobranca, Conta, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -109,9 +109,31 @@ def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=N
     return _salvar(aluno)
 
 
-def criar_pagamento(dono_id, aluno_id, valor, pago_em, vence_em):
-    return _salvar(Pagamento(aluno_id=aluno_id, instrutor_id=dono_id, conta_id=conta_de(dono_id), valor=valor, forma_pagamento="pix",
-                             data_pagamento=pago_em, data_vencimento=vence_em))
+def criar_pagamento(dono_id, aluno_id, valor, pago_em, vence_em, forma="pix"):
+    """
+    Um pagamento já recebido: cria a cobrança (paga, do plano atual do aluno, cobrindo de `pago_em`
+    até `vence_em`) e o pagamento que a quitou, confirmado por `dono_id`. Devolve o id do pagamento.
+    """
+    with _APP.app_context():
+        aluno = db.session.get(Aluno, aluno_id)
+        cobranca = Cobranca(conta_id=aluno.conta_id, aluno_id=aluno_id, plano_id=aluno.plano_id, tipo="renovacao", valor=valor,
+                            data_inicio=pago_em, data_vencimento=vence_em, status="paga", instrutor_id=dono_id)
+        db.session.add(cobranca)
+        db.session.flush()
+        pagamento = Pagamento(conta_id=aluno.conta_id, cobranca_id=cobranca.id, forma=forma, valor_pago=valor,
+                              data_pagamento=datetime(pago_em.year, pago_em.month, pago_em.day, 12, 0),
+                              origem_confirmacao="manual", confirmado_por_instrutor_id=dono_id)
+        db.session.add(pagamento)
+        db.session.commit()
+        return pagamento.id
+
+
+def criar_cobranca_em_aberto(dono_id, aluno_id, valor, inicio, fim, tipo="matricula"):
+    """Uma cobrança ainda não paga (o "cobrar depois"). Devolve o id da cobrança."""
+    with _APP.app_context():
+        aluno = db.session.get(Aluno, aluno_id)
+        return _salvar(Cobranca(conta_id=aluno.conta_id, aluno_id=aluno_id, plano_id=aluno.plano_id, tipo=tipo, valor=valor,
+                                data_inicio=inicio, data_vencimento=fim, status="pendente", instrutor_id=dono_id))
 
 
 def criar_exercicio(nome="Supino", dono_id=None):

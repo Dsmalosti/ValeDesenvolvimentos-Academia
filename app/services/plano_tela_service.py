@@ -12,7 +12,6 @@ quando desligado (é assim que caixa de seleção funciona em formulário).
 Os números de cada cartão (alunos, faturamento do mês e participação) vêm do painel_service, para
 a tela de Planos e o gráfico "De onde vem o faturamento" do painel nunca discordarem.
 """
-import re
 from decimal import Decimal
 
 from flask_login import current_user
@@ -20,6 +19,7 @@ from sqlalchemy import func
 
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta
+from app.helpers.dinheiro import ler_reais
 from app.models import PAPEL_INSTRUTOR, Plano
 from app.services.painel_service import planos_com_faturamento
 
@@ -30,8 +30,6 @@ AVALIACOES = (0, 1, 2, 4)       # opções do campo "Avaliação física inclusa
 # Cor da etiqueta e da barra de cada cartão, na ordem em que os planos aparecem (as do front).
 TONS = ['blue', 'teal', 'orange', 'yellow', 'slate']
 CORES_BARRA = ['blue', 'teal', 'orange', 'yellow-chart', 'slate']
-# "1.234,56", "1234,56", "1234" ou "149,9": milhar com ponto (opcional) e centavos com vírgula
-_VALOR_BR = re.compile(r'(\d{1,3}(\.\d{3})+|\d+)(,\d{1,2})?')
 
 
 # ------------------------------------------------------------------ lista
@@ -84,13 +82,8 @@ def linha_do_plano(plano):
 
 
 # ------------------------------------------------------------------ formulário
-def _valor(texto):
-    """'1.234,56' -> Decimal('1234.56'). Levanta ValueError se não estiver no formato brasileiro."""
-    texto = (texto or '').replace('R$', '').strip()
-    if not _VALOR_BR.fullmatch(texto):
-        # Não "adivinha" formatos: aceitar "149.90" tirando o ponto gravaria R$ 14.990,00.
-        raise ValueError(texto)
-    return Decimal(texto.replace('.', '').replace(',', '.'))
+# [back-09-cobranca] a leitura de "1.234,56" foi para helpers/dinheiro.py, para a cobrança usar a mesma.
+_valor = ler_reais
 
 
 def validar(formulario, plano=None):

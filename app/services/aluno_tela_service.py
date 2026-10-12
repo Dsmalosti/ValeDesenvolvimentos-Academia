@@ -19,8 +19,9 @@ from sqlalchemy import func
 
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, fichas_da_conta
-from app.models import Aluno, Ficha, Pagamento, Plano
-from app.services.situacao_service import linha_do_aluno, vencimentos_da_conta
+from app.models import Aluno, Ficha, Plano
+from app.services import cobranca_service
+from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
 POR_PAGINA = 8
 MAX_OBSERVACOES = 1000   # o banco aceitaria qualquer tamanho; o limite evita texto gigante na tela
@@ -63,8 +64,9 @@ def _dmy(d):
 def _alunos_com_situacao(hoje):
     """Todos os alunos da conta, do mais novo para o mais antigo, já no formato das telas."""
     vencimento = vencimentos_da_conta()
+    em_aberto = cobrancas_em_aberto_da_conta()   # [back-09-cobranca] quem tem cobrança em aberto também é pendente
     alunos = da_conta(Aluno).order_by(Aluno.data_cadastro.desc(), Aluno.id.desc()).all()
-    return [linha_do_aluno(a, vencimento.get(a.id), hoje) for a in alunos]
+    return [linha_do_aluno(a, vencimento.get(a.id), hoje, em_aberto.get(a.id)) for a in alunos]
 
 
 def _casa_com_a_busca(linha, q):
@@ -178,10 +180,11 @@ def exportar_csv(argumentos):
 def contexto_do_perfil(aluno, hoje=None):
     """Variáveis de alunos/detalhe.html para um aluno que já se sabe ser da conta."""
     hoje = hoje or date.today()
-    pagamentos = (da_conta(Pagamento).filter_by(aluno_id=aluno.id)
-                  .order_by(Pagamento.data_pagamento.desc(), Pagamento.id.desc()).all())
-    vencimento = max((p.data_vencimento for p in pagamentos), default=None)
-    perfil = linha_do_aluno(aluno, vencimento, hoje)
+    # [back-09-cobranca] antes: lia a tabela de pagamentos direto. O vencimento agora vem das cobranças
+    # pagas, e a lista de pagamentos (com quem confirmou) vem do cobranca_service.
+    pagamentos = cobranca_service.pagamentos_do(aluno)
+    vencimento = cobranca_service.vencimento_do(aluno)
+    perfil = linha_do_aluno(aluno, vencimento, hoje, cobranca_service.em_aberto_do(aluno))
     inicio = aluno.data_inicio or (aluno.data_cadastro.date() if aluno.data_cadastro else None)
     perfil.update({
         'inicio': _dmy(inicio) or '—',
@@ -198,9 +201,8 @@ def contexto_do_perfil(aluno, hoje=None):
              .order_by(Ficha.data_criacao.desc()).first())
     return {
         'aluno': perfil,
-        'pagamentos': [{'data': _dmy(p.data_pagamento), 'forma': FORMAS.get(p.forma_pagamento, p.forma_pagamento or '—'),
-                        'valor': float(p.valor), 'origem': 'manual', 'quem': '', 'status': 'pago'} for p in pagamentos],
-        'total_ano': sum(float(p.valor) for p in pagamentos if p.data_pagamento.year == hoje.year),
+        'pagamentos': pagamentos,
+        'total_ano': cobranca_service.total_do_ano(pagamentos, hoje),
         'freq': None,          # precisa do módulo de frequência
         'avaliacao': None,     # precisa do módulo de avaliações
         'ficha': {'treinos': [DIAS.get(t.dia_semana, t.dia_semana or 'Treino') for t in ficha.treinos] or [ficha.nome],

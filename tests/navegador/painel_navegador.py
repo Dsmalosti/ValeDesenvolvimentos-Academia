@@ -34,7 +34,8 @@ from werkzeug.serving import make_server  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Conta, Aluno, Pagamento, Plano, User  # noqa: E402
+from app.models import Conta, Aluno, Plano, User  # noqa: E402
+from tests.navegador._base import pagamento_recebido  # noqa: E402
 
 EMAIL, SENHA = "marina@valetec.com", "Senha-de-teste-123"
 resultados = []
@@ -77,8 +78,7 @@ def montar_app():
             db.session.flush()
             if dias_pag is not None:
                 pago = hoje - timedelta(days=dias_pag)
-                db.session.add(Pagamento(aluno_id=aluno.id, instrutor_id=dona.id, conta_id=conta.id, valor=planos[p].valor, forma_pagamento="pix",
-                                         data_pagamento=pago, data_vencimento=pago + timedelta(days=planos[p].duracao_dias)))
+                pagamento_recebido(db, aluno, dona, planos[p].valor, pago, pago + timedelta(days=planos[p].duracao_dias))
         db.session.commit()
     return app
 

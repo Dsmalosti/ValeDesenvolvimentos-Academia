@@ -97,7 +97,7 @@ def test_nada_da_outra_conta_foi_tocado_depois_das_tentativas(logado_como_a, con
 
 
 @pytest.mark.parametrize("url", ["/alunos/listar/", "/planos/listar/", "/fichas/listar/",
-                                 "/instrutores/lista/", "/pagamentos/situacao/"])
+                                 "/instrutores/lista/"])   # /pagamentos/situacao/ virou atalho para /alunos (back-09)
 def test_listas_so_mostram_a_propria_conta(logado_como_a, url):
     pagina = logado_como_a.get(url)
     html = pagina.get_data(as_text=True)
@@ -182,7 +182,8 @@ def test_nenhuma_rota_get_apaga_ou_altera_dados(app):
     """
     # Pendência conhecida: o logout ANTIGO ainda é por GET. Sai junto com o cabeçalho antigo
     # (back-04-painel). O logout novo, /sair, já é só POST.
-    pendencias_conhecidas = {"instrutores.logout"}
+    # "cobrancas.status" tem "status" no endereço, mas só LÊ: devolve se a cobrança já foi paga.
+    pendencias_conhecidas = {"instrutores.logout", "cobrancas.status"}
 
     perigosas = [f"{endpoint} {url}" for endpoint, url, metodos in _rotas(app)
                  if re.search(r"excluir|status|sair|inativar|alternar", url)

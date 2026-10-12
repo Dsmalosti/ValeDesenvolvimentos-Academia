@@ -101,6 +101,13 @@ class AlunoService:
         if not aluno:
             raise BusinessError("Aluno não encontrado")
 
+        # [back-09-cobranca] antes: quem barrava a exclusão de aluno com pagamento era o banco, porque
+        # `pagamentos.aluno_id` era obrigatório. A cobrança aceita aluno vazio (por causa da diária avulsa),
+        # então a conferência passou a ser feita aqui, de propósito.
+        from app.models import Cobranca
+        if da_conta(Cobranca).filter_by(aluno_id=aluno.id).first():
+            raise BusinessError("Este aluno tem cobranças ou pagamentos registrados e não pode ser excluído. Desative em vez de excluir.")
+
         BaseService.deletar(aluno)
 
     @staticmethod

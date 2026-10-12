@@ -36,8 +36,8 @@ PENDENTES = [
     ('avaliacoes', 'registrar',      '/alunos/<int:id>/avaliacoes/nova',       ['GET'],  'Registrar avaliação'),
     ('agenda',     'index',          '/agenda',                                ['GET'],  'Agenda'),
     # ações que o painel envia por formulário (POST): avisam e voltam para o painel
-    ('cobrancas',  'diaria',         '/cobrancas/diaria',                      ['POST'], 'Diária avulsa'),
-    ('cobrancas',  'lembrete_lote',  '/cobrancas/lembrete',                    ['POST'], 'Cobrança pelo WhatsApp'),
+    # [back-09-cobranca] 'cobrancas.diaria' e 'cobrancas.lembrete_lote' saíram daqui: agora são rotas de
+    # verdade em blueprints/cobrancas/routes.py.
 ]
 
 

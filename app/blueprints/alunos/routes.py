@@ -5,6 +5,7 @@ from app.blueprints.alunos.form import AlunoForm
 from app.services.aluno_service import AlunoService
 from app.models import Aluno, PAPEL_INSTRUTOR
 from app.services import aluno_tela_service as telas  # [back-07-alunos] regras das telas novas
+from app.services import cobranca_service as cobrancas  # [back-09-cobranca] cobrança, renovação e extrato
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -148,10 +149,11 @@ def novo():
             return render_template('alunos/novo.html', aluno=telas.do_formulario(request.form), erros=erros,
                                    planos=telas.planos_do_formulario(), modo='novo')
         aluno = telas.criar(valores)
-        # No desenho do front, daqui a recepção vai direto receber a primeira mensalidade. Esse passo
-        # entra com a branch de cobrança; por enquanto o cadastro termina no perfil do aluno.
-        flash('Aluno cadastrado.', 'success')
-        return redirect(url_for('alunos.detalhe', id=aluno.id))
+        # [back-09-cobranca] antes: o cadastro terminava no perfil do aluno. Agora segue o desenho do front:
+        # nasce a cobrança da matrícula e a recepção vai direto receber (ou toca em "Cobrar depois").
+        cobranca = cobrancas.gerar(aluno, aluno.plano)
+        flash('Aluno cadastrado. Falta receber a primeira mensalidade.', 'success')
+        return redirect(url_for('cobrancas.receber', id=cobranca.id, forma=aluno.forma_pagamento))
     return render_template('alunos/novo.html', aluno=telas.aluno_em_branco(), erros={},
                            planos=telas.planos_do_formulario(), modo='novo')
 
@@ -236,18 +238,44 @@ def acesso(id):
 # foi ligada, o endpoint existe só para levar à tela antiga equivalente. Nenhuma ponte mexe em
 # dado, e cada uma vira a tela de verdade na branch do seu assunto.
 # [back-07-alunos] lista, novo, detalhe e buscar deixaram de ser pontes (são as rotas acima).
-# As três abaixo continuam, até as branches de cobrança e de frequência.
+# [back-09-cobranca] pagamentos e renovar também viraram telas de verdade. Sobra a da frequência.
 # ---------------------------------------------------------------------------
 @alunos_blueprint.route('/<int:id>/pagamentos')
+@papel_requerido(*DONO_E_RECEPCAO)   # extrato é dinheiro: instrutor não vê
 def pagamentos(id):
-    # extrato do aluno: por enquanto é a tela antiga de pagamentos (que já confere a conta e o papel)
-    return redirect(url_for('pagamentos.listarPagamentosAluno', aluno_id=id))
+    # [back-09-cobranca] antes: ponte para a tela antiga /pagamentos/listar/<id>
+    aluno = _aluno_da_conta(id)
+    lista = cobrancas.pagamentos_do(aluno)
+    if request.args.get('formato') == 'csv':
+        resposta = make_response(cobrancas.extrato_csv(lista))
+        resposta.headers['Content-Type'] = 'text/csv; charset=utf-8'
+        resposta.headers['Content-Disposition'] = f'attachment; filename=extrato-{aluno.id}.csv'
+        return resposta
+    return render_template('alunos/pagamentos.html', aluno=telas.contexto_do_perfil(aluno)['aluno'],
+                           pagamentos=lista, total_ano=cobrancas.total_do_ano(lista))
 
 
-@alunos_blueprint.route('/<int:id>/renovar')
+@alunos_blueprint.route('/<int:id>/renovar', methods=['GET', 'POST'])
+@papel_requerido(*DONO_E_RECEPCAO)
 def renovar(id):
-    # renovar matrícula, na tela antiga, é registrar um pagamento (que já confere a conta e o papel)
-    return redirect(url_for('pagamentos.registrarPagamento', aluno_id=id))
+    # [back-09-cobranca] antes: ponte para a tela antiga /pagamentos/registrar/<id>
+    aluno = _aluno_da_conta(id)
+    if request.method == 'POST':
+        try:
+            cobranca = cobrancas.renovar(aluno, request.form.get('plano_id'))
+        except cobrancas.CobrancaInvalida as erro:
+            flash(str(erro), 'error')
+            return redirect(url_for('alunos.renovar', id=id))
+        if request.form.get('acao') == 'sem_cobrar':
+            flash('Matrícula renovada. A cobrança fica em aberto.', 'success')
+            return redirect(url_for('alunos.detalhe', id=id))
+        return redirect(url_for('cobrancas.receber', id=cobranca.id, forma=aluno.forma_pagamento))
+    planos = cobrancas.planos_para_renovar(aluno)
+    if not planos:
+        flash('Cadastre um plano ativo antes de renovar.', 'warning')
+        return redirect(url_for('planos.lista'))
+    return render_template('alunos/renovar.html', aluno=telas.contexto_do_perfil(aluno)['aluno'],
+                           planos=planos, plano_atual_id=aluno.plano_id)
 
 
 @alunos_blueprint.route('/acesso/busca')

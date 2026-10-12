@@ -34,7 +34,8 @@ from werkzeug.serving import make_server  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Conta, Pagamento, Plano, User  # noqa: E402
+from app.models import Aluno, Conta, Plano, User  # noqa: E402
+from tests.navegador._base import pagamento_recebido  # noqa: E402
 
 EMAIL, SENHA = "marina@valetec.com", "Senha-de-teste-123"
 resultados = []
@@ -73,8 +74,7 @@ def montar_app():
             db.session.add(aluno)
             db.session.flush()
             if i < 2:   # dois pagamentos do Mensal neste mês
-                db.session.add(Pagamento(aluno_id=aluno.id, instrutor_id=dona.id, conta_id=conta.id, valor=149.90, forma_pagamento="pix",
-                                         data_pagamento=hoje, data_vencimento=hoje + timedelta(days=30)))
+                pagamento_recebido(db, aluno, dona, 149.90, hoje, hoje + timedelta(days=30))
         db.session.commit()
     return app
 

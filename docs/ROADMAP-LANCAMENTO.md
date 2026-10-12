@@ -6,7 +6,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | | |
 |---|---|
 | **Atualizado em** | 10/10/2026 |
-| **Estado** | Fase B em andamento: **alunos** e **planos** prontos (PRs #17 a #20). A **cobrança** está parada de propósito: a `back-09-cobranca` foi enviada só com a **proposta de esquema** (`docs/mudancas/back-09-cobranca.md`) e espera o OK do Diogo às 6 perguntas antes de qualquer código. Faltam também decisões de conta externa (hospedagem, domínio, e-mail). |
+| **Estado** | Fase B em andamento: **alunos**, **planos** e **cobrança** prontos (PRs #17 a #22). Em 12/10/2026 o Adauto pediu para terminar tudo o que não depende dele nem do Diogo; as decisões novas dele estão na tabela de decisões (PIX manual, mensagens gratuitas, LGPD). A próxima é a que estiver sem marca na Fase B. |
 | **Base** | `main` em `9b61934` |
 | **Referências** | `Tarefas do backend — Diogo.md` (os números 1.1, 3.2 etc. deste roadmap vêm de lá), `Integracao-Front-Back.md`, `Esquema-Backend.md`, `Acesso-e-Mensagens.md`, `Front-Personal.md` |
 
@@ -37,7 +37,7 @@ O `CLAUDE.md` diz *como* trabalhar; este arquivo diz *o que* fazer e *onde param
 | [x] | `front-04-planos` | Templates das telas de planos do front novo (lista e formulário), cópia fiel do Drive | [#19](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/19) → `back-07-alunos` | Aguardando revisão do Diogo |
 | [x] | `back-08-planos` | As telas de planos funcionando com o banco: cartões com alunos e faturamento de cada plano, criar e editar com valor em `1.234,56`, pausar e reativar. **Tem migration** (1 coluna em `planos`). | [#20](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/20) → `front-04-planos` | Aguardando revisão do Diogo |
 | [x] | `front-05-cobranca` | Templates da cobrança do front novo (receber, renovar, extrato do aluno), cópia fiel do Drive | [#21](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/21) → `back-08-planos` | Aguardando revisão do Diogo |
-| [ ] | `back-09-cobranca` | **Por enquanto só a proposta de esquema** das tabelas `cobrancas` e `pagamentos`, para o Diogo aprovar. O código vem depois do OK. | [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` | **Aguardando resposta do Diogo** (6 perguntas no doc e na descrição do PR) |
+| [x] | `back-09-cobranca` | Cobrança de verdade: tabelas `cobrancas` e `pagamentos` (esquema aprovado pelo Diogo), receber em PIX, débito, crédito ou dinheiro com confirmação manual, renovar, diária avulsa e extrato. **Tem migration, e ela converte a tabela de pagamentos.** | [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` | Aguardando revisão do Diogo (o PR nasceu como proposta de esquema; o código entrou depois do OK dele) |
 
 O backend de hoje cobre cerca de 25 das 81 rotas que o front usa. Já existem, no formato antigo: alunos, planos, exercícios, fichas e um CRUD de pagamentos com situação de inadimplência. Não existem: cobrança no formato do front, frequência, relatórios, configurações, avaliações, mensagens, convite e a variante Personal.
 
@@ -62,7 +62,7 @@ Cada tela são duas branches: a `front-NN` (templates) e a `back-NN` que sai del
 |---|---|---|---|---|---|
 | [x] | `front-03-alunos` + `back-07-alunos` | Cadastrar, buscar, editar e inativar aluno; ver a página do aluno; exportar a lista. Datas em `dd/mm/aaaa` (hoje todo cadastro falharia na validação). | 4.1, 4.3, 4.4 | Feito. Limites em `docs/mudancas/back-07-alunos.md`: reativar aluno ainda é pela tela antiga; o botão "Bloquear" só avisa; depois do cadastro vai para o perfil, e não para o recebimento. | A1 (dada); T3; foto do aluno fica para depois do lançamento |
 | [x] | `front-04-planos` + `back-08-planos` | Criar, editar, pausar e reativar planos. Valor digitado como `R$ 1.234,56`. | 4.1, 4.3, 5.4 | Feito. Limites em `docs/mudancas/back-08-planos.md`: a variante Personal (pacotes) fica para a `back-17`; o faturamento do cartão conta para o plano em que o aluno está hoje. | A1 (dada) |
-| [ ] | `front-05-cobranca` + `back-09-cobranca` | Receber a mensalidade: matrícula, renovação (recalcula vencimento e valor), confirmação em PIX, débito, crédito ou dinheiro, diária avulsa, histórico de pagamentos do aluno. No lançamento o PIX é **manual** (a recepção confere e confirma). | 5.2 | Matricular → cobrar → confirmar nas 4 formas → valor certo no painel. Cada pagamento guarda quem confirmou e como. | A1 (dada); reconciliar com a tabela `pagamentos` que o Diogo já criou; D3 |
+| [x] | `front-05-cobranca` + `back-09-cobranca` | Receber a mensalidade: matrícula, renovação (recalcula vencimento e valor), confirmação em PIX, débito, crédito ou dinheiro, diária avulsa, histórico de pagamentos do aluno. No lançamento o PIX é **manual** (a recepção confere e confirma). | 5.2 | Matricular → cobrar → confirmar nas 4 formas → valor certo no painel. Cada pagamento guarda quem confirmou e como. | A1 (dada); reconciliar com a tabela `pagamentos` que o Diogo já criou; D3 |
 | [ ] | `front-06-frequencia` + `back-10-frequencia` | Registrar a entrada do aluno em um toque; ver quem sumiu há mais de 15 dias; exportar. | 5.3 | Aluno sem nenhuma entrada aparece como "sem dado", não como "0 acessos". Ligar e desligar o check-in persiste. | A1 (dada) |
 | [ ] | `front-07-relatorios` + `back-11-relatorios` | Fechamento do mês: recebido por forma de pagamento, inadimplência, custos e ponto de equilíbrio, exportação em CSV. Só dono e recepção. | 5.8 | Os totais batem com os cards do painel e com a soma dos pagamentos de teste. | A1 (dada) |
 | [ ] | `front-08-config` + `back-12-config` | Dados da academia, horário, metas, modelos de mensagem, recebimento e funcionalidades ligadas. | 5.9 | Cada aba salva e o valor aparece nas outras telas (nome da academia no cabeçalho, meta no painel). | A1 (dada) |
@@ -142,7 +142,10 @@ Decisões de negócio ou de conta externa. As quatro primeiras o Adauto quer dec
 | D9 | Os clientes **se cadastram sozinhos**. | A tela "Criar conta" (`back-13`) é obrigatória para o lançamento, com limite de tentativas (A6) e e-mail funcionando (D6). Responde a T4: o cadastro fica aberto, mas pela tela nova. |
 | D10 | Cada cliente **cadastra os alunos do zero**. | Não há importação de planilha no plano. |
 | D11 | Suporte **nos fins de semana e depois das 20h** em dias úteis. Quer **backup** das contas para o caso de perda. | Backup automático do banco na Fase D. Os termos prometem backup diário guardado por 30 dias: a frequência e o prazo são sugestão do Claude, a confirmar. |
-| D3 | PIX no lançamento com **confirmação manual** pela recepção (resposta do Diogo, item 17). | A `back-09-cobranca` não integra com nenhum PSP. PIX automático fica para depois do lançamento. |
+| D3 | PIX no lançamento com **confirmação manual** pela recepção (resposta do Diogo, item 17). | A `back-09-cobranca` não integra com nenhum PSP. Confirmado pelo Adauto em 12/10/2026: no MVP o PIX é só a confirmação do recebimento, como dinheiro e cartão. PIX automático fica para depois do lançamento. |
+| D14 | **Mensagens para os alunos têm de ser gratuitas e fáceis para o dono** (Adauto, 12/10/2026). | Sem API paga de WhatsApp. O sistema monta a mensagem e abre o WhatsApp do próprio dono com o texto pronto (link `wa.me`); ele só toca em enviar. Para vários alunos, uma fila "próximo". Detalhe na branch de mensagens. |
+| D15 | **LGPD: criar, terminar e deixar funcionando no sistema**; o advogado revisa depois (Adauto, 12/10/2026). | A `back-19-lgpd` entra com termos e política publicados, aceite registrado, exportar e apagar os dados de um aluno. Os textos continuam sendo rascunho até o advogado ver. |
+| D16 | **Terminar tudo o que não depende do Adauto nem do Diogo** e deixar só o que depende deles (Adauto, 12/10/2026). | As branches seguem a ordem do roadmap. O que precisar de decisão fica anotado e não trava as outras. |
 
 ### Decisões técnicas: respondidas pelo Diogo (10/10/2026)
 
@@ -185,9 +188,12 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | O campo "Observações" do aluno sugere "restrição médica": é dado de saúde, sensível pela LGPD | `alunos/_campos.html` | `back-19-lgpd` e a política de privacidade |
 | O servidor não limita o tamanho do que é enviado num formulário (`MAX_CONTENT_LENGTH`). O cadastro de aluno no celular tem campo de foto, que o servidor ignora | `config.py` | `back-18-seguranca` |
 | O cartão de plano mostra "1 alunos": o template não tem singular | `planos/lista.html` (front) | Ajuste do Adauto no front (Drive); depois é só copiar de novo |
-| O faturamento por plano (painel e tela de planos) conta o pagamento para o plano em que o aluno está **hoje**. Se ele trocou de plano no mês, o valor aparece no plano novo | `painel_service.py` | `back-09-cobranca`: o pagamento passa a guardar o plano |
+| O faturamento por plano contava o pagamento para o plano em que o aluno está **hoje** | `painel_service.py` | **Resolvido na `back-09-cobranca`:** a cobrança guarda o plano da época |
 | Nas telas novas, nome de plano não pode repetir na academia. Regra nossa, que o front de exemplo não tinha | `plano_tela_service.py` | Decisão do Adauto: manter ou tirar |
-| **Não dá para registrar PIX no lançamento com o template atual:** `cobranca/receber.html` desliga a opção PIX quando o PIX automático não está ligado, e o PIX do lançamento é manual (D3) | `cobranca/receber.html` (front) | Ajuste do Adauto no front (Drive): opção PIX habilitada com "Você confirma". O backend já vai aceitar `forma=pix` manual |
+| O template `cobranca/receber.html` do Drive só conhece o PIX automático. O do repositório tem **7 ajustes marcados** para o PIX manual (`[back-09-cobranca]`) | `cobranca/receber.html` | **Adauto:** levar os 7 ajustes para o front do Drive (lista em `docs/mudancas/back-09-cobranca.md`, seção 8), senão a próxima cópia os apaga |
+| A hora do pagamento é a hora do servidor. Em produção o servidor precisa estar no fuso de Brasília, senão "confirmado às 14h32" sai errado, e "hoje" vira amanhã depois das 21h | `cobranca_service.py`, e todo `date.today()` | `back-20-producao`: definir `TZ=America/Sao_Paulo` |
+| Não há estorno nem cancelamento de cobrança pela tela. O status `cancelada` existe e é respeitado, mas nenhum botão o grava | `cobrancas/routes.py` | Depois do lançamento, junto com o PIX automático |
+| Arquivos antigos de pagamento sem uso (`pagamentos/form.py`, 3 templates, `pagamento_service.py`) | `app/blueprints/pagamentos/` | Apagar quando o layout antigo sair (com o OK do Diogo) |
 
 ## Registro de atualizações
 
@@ -208,3 +214,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 10/10/2026 | PRs abertos: #17 (`front-03`), #18 (`back-07`), #19 (`front-04`) e #20 (`back-08`). O banco local do Adauto recebeu as migrations `b07a1f2e3d40` e `b08c3d4e5f60`, com backup antes. |
 | 10/10/2026 | `front-05-cobranca` enviada (templates). `back-09-cobranca` enviada só com a proposta de esquema da cobrança, para o Diogo aprovar antes do código. Achado: o template de receber não permite PIX manual. |
 | 10/10/2026 | PRs abertos: #21 (`front-05`) e #22 (`back-09`, só a proposta de esquema da cobrança). |
+| 12/10/2026 | O Diogo deu OK nas 6 perguntas da cobrança. Decisões novas do Adauto: PIX do MVP só com confirmação manual (D3), mensagens gratuitas (D14), LGPD pronta no sistema (D15), terminar tudo o que não depende deles (D16). `back-09-cobranca` enviada com o código: modelo, migration que converte os pagamentos, receber, renovar, diária e extrato. |

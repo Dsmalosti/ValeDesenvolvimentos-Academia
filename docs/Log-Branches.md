@@ -112,13 +112,15 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
 - **Observações:** sozinha não muda nada para quem usa. O `receber.html` não tem caminho para PIX manual (está no roadmap, em achados).
 
-## back-09-cobranca (em andamento: só a proposta)
+## back-09-cobranca
 
-- **Sai de:** `front-05-cobranca` · **PR:** [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` · **Data:** 10/10/2026
-- **O que tem:** `docs/mudancas/back-09-cobranca.md` com a proposta das tabelas `cobrancas` (nova) e `pagamentos` (a atual, em outro formato), as regras que saem delas, os passos da migration e 6 perguntas para o Diogo, cada uma com recomendação.
-- **O que NÃO tem:** código, modelo ou migration. O Diogo pediu para ver o esquema antes.
-- **Para retomar:** com as respostas do Diogo, escrever modelo + migration `b09…` (testar num Postgres temporário com pagamentos antigos dentro), o serviço de cobrança, as rotas `cobrancas.*`, `alunos.renovar` e `alunos.pagamentos`, trocar a leitura de vencimento do `situacao_service.py` e do `painel_service.py` para as cobranças pagas, e voltar o fim do cadastro de aluno para a tela de receber.
+- **Sai de:** `front-05-cobranca` · **PR:** [#22](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/22) → `front-05-cobranca` · **Data:** 12/10/2026 (proposta de esquema em 10/10)
+- **O que mudou:** tabela nova `cobrancas` (o que se deve) e `pagamentos` em outro formato (o que entrou, com quem confirmou e como), no esquema que o Diogo aprovou. Depois de cadastrar o aluno a recepção vai direto receber; recebe em PIX, débito, crédito ou dinheiro, sempre com confirmação manual; renovar com ou sem troca de plano; diária avulsa; extrato na tela e em CSV. A regra de "em dia / pendente" passou a ler as cobranças, e quem tem cobrança em aberto conta como pendente. As 3 telas antigas de pagamento viraram redirecionamentos.
+- **Migration:** `b09d5e6f7a80_cobrancas_e_pagamentos.py`, escrita à mão, **converte a tabela de pagamentos**. Backup antes; depois do pull, `flask db upgrade`.
+- **Testes:** `pytest` 214 de 214 (38 novos em `tests/test_cobrancas.py`); migration num Postgres temporário, 21 checagens, com ida e volta e pagamentos antigos dentro; navegador: cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** o template `cobranca/receber.html` do repositório tem 7 ajustes marcados para o PIX manual que o do Drive não tem. Excluir aluno com cobrança passou a ser recusado pela aplicação (antes era o banco). PIX automático, estorno e cobrança em lote pelo WhatsApp não existem ainda. Em produção o servidor precisa estar no fuso de Brasília.
+- **Doc:** `docs/mudancas/back-09-cobranca.md`
 
-## Onde parou (10/10/2026)
+## Onde parou (12/10/2026)
 
-Alunos e planos prontos (PRs #17 a #20). A **cobrança está esperando o Diogo**: a `back-09-cobranca` tem só a proposta de esquema, com 6 perguntas. Não escrever modelo nem migration antes da resposta. Enquanto isso, o que não depende da cobrança pode andar: a próxima da fila que não usa pagamentos é `front-08-config` + `back-12-config` (dados da academia, horário, metas); frequência e relatórios dependem de decisões ou da cobrança. Os PRs da cobrança são #21 (templates) e #22 (proposta; as 6 perguntas estão na descrição). Do Adauto: ajustar o front para PIX manual, D12, D13, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
+Alunos, planos e cobrança prontos e enviados (PRs #17 a #22). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar a `b09d5e6f7a80`** (pedir o OK dele; fazer backup antes). O Adauto pediu, em 12/10, para terminar tudo o que não depende dele nem do Diogo (D16 no roadmap): seguir a Fase B na ordem, depois segurança, LGPD e produção. Decisões dele que mudam o desenho das próximas: mensagens gratuitas por link do WhatsApp (D14) e LGPD funcionando no sistema (D15). Pendências dele: levar para o Drive os 7 ajustes do `cobranca/receber.html`, D12, D13, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).

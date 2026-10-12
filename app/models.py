@@ -200,24 +200,78 @@ class TreinoExercicio(db.Model):
         return f"<TreinoExercicio {self.exercicio.nome}>"
 
 
-class Pagamento(db.Model):
-    __tablename__ = 'pagamentos'
-    id = db.Column(db.Integer, primary_key=True)
-    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=False)
-    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=False)
-    # [back-06-contas-e-papeis] a academia dona do pagamento; `instrutor_id` é quem registrou
-    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
-    valor = db.Column(db.Numeric(10, 2), nullable=False)
-    data_pagamento = db.Column(db.Date, nullable=False)
-    data_vencimento = db.Column(db.Date, nullable=False)
-    forma_pagamento = db.Column(db.String(20), nullable=True)
-    observacao = db.Column(db.Text, nullable=True)
+# [back-09-cobranca] valores aceitos nas colunas de texto das duas tabelas abaixo. São conferidos
+# pela aplicação (não são db.Enum), para dar para acrescentar um valor sem migration.
+COBRANCA_MATRICULA, COBRANCA_RENOVACAO, COBRANCA_DIARIA = 'matricula', 'renovacao', 'diaria'
+COBRANCA_PENDENTE, COBRANCA_PAGA, COBRANCA_CANCELADA = 'pendente', 'paga', 'cancelada'
+FORMAS_DE_PAGAMENTO = ('pix', 'debito', 'credito', 'dinheiro')
+FORMA_NAO_INFORMADA = 'nao_informada'      # só em pagamento anterior à back-09, que não guardava a forma
+ORIGEM_MANUAL, ORIGEM_WEBHOOK = 'manual', 'webhook'
 
-    aluno = db.relationship('Aluno', backref='pagamentos', lazy=True)
-    instrutor = db.relationship('User', backref='pagamentos', lazy=True)
+
+class Cobranca(db.Model):
+    """
+    [back-09-cobranca] Uma cobrança é "o que se deve": nasce na matrícula, na renovação ou na
+    diária avulsa e fica `pendente` até ser paga. Antes só existia o que já tinha sido pago.
+
+    A cobrança cobre o período de `data_inicio` a `data_vencimento`. O aluno está em dia até a
+    `data_vencimento` da última cobrança PAGA dele (regras em services/situacao_service.py).
+    """
+    __tablename__ = 'cobrancas'
+    __table_args__ = (
+        # é a combinação que o painel consulta: as cobranças de uma conta, por status e vencimento
+        db.Index('ix_cobrancas_conta_status_vencimento', 'conta_id', 'status', 'data_vencimento'),
+    )
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)      # a academia dona da cobrança
+    aluno_id = db.Column(db.Integer, db.ForeignKey('alunos.id'), nullable=True)       # vazio só na diária avulsa
+    plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=True)       # o plano DA ÉPOCA; vazio só na diária
+    tipo = db.Column(db.String(20), nullable=False)                                   # matricula | renovacao | diaria
+    nome_visitante = db.Column(db.String(100), nullable=True)                         # quem pagou a diária, se informado
+    valor = db.Column(db.Numeric(10, 2), nullable=False)                              # congelado quando a cobrança nasce
+    data_inicio = db.Column(db.Date, nullable=False)                                  # começo do período cobrado
+    data_vencimento = db.Column(db.Date, nullable=True)                               # fim do período; vazio na diária
+    status = db.Column(db.String(20), nullable=False, default=COBRANCA_PENDENTE)      # pendente | paga | cancelada
+    data_geracao = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)   # QUEM criou a cobrança
+
+    # passive_deletes='all': ao apagar um aluno, o SQLAlchemy NÃO zera sozinho o aluno_id das cobranças
+    # dele (o padrão seria esse, e a cobrança viraria uma "diária avulsa" sem dono). Quem tem cobrança
+    # não pode ser excluído: AlunoService.excluir_aluno confere antes.
+    aluno = db.relationship('Aluno', backref=db.backref('cobrancas', lazy=True, passive_deletes='all'), lazy=True)
+    plano = db.relationship('Plano', lazy=True)
 
     def __repr__(self):
-        return f'<Pagamento {self.aluno_id} - {self.data_pagamento}>'
+        return f'<Cobranca {self.id} {self.tipo} {self.status}>'
+
+
+class Pagamento(db.Model):
+    """
+    Um pagamento é "o que entrou no caixa": a confirmação de uma cobrança.
+
+    [back-09-cobranca] antes esta tabela guardava tudo junto (aluno_id, instrutor_id, valor,
+    data_vencimento, forma_pagamento). O aluno, o valor devido e o vencimento passaram para a
+    Cobranca; aqui ficou o recebimento, com QUEM confirmou e COMO (`origem_confirmacao`).
+    """
+    __tablename__ = 'pagamentos'
+    id = db.Column(db.Integer, primary_key=True)
+    # [back-06-contas-e-papeis] a academia dona do pagamento. Repete o da cobrança de propósito:
+    # toda consulta do sistema filtra por esta coluna (helpers/conta.py).
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
+    cobranca_id = db.Column(db.Integer, db.ForeignKey('cobrancas.id'), nullable=False, index=True)
+    forma = db.Column(db.String(20), nullable=False)                    # pix | debito | credito | dinheiro (antes: forma_pagamento)
+    valor_pago = db.Column(db.Numeric(10, 2), nullable=False)           # quanto entrou (antes: valor)
+    data_pagamento = db.Column(db.DateTime, nullable=False)             # dia e hora (antes: só a data)
+    origem_confirmacao = db.Column(db.String(20), nullable=False, default=ORIGEM_MANUAL)   # manual | webhook
+    confirmado_por_instrutor_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)   # antes: instrutor_id
+    referencia_externa = db.Column(db.String(100), nullable=True)       # código da transação no banco (PIX automático, no futuro)
+    observacao = db.Column(db.Text, nullable=True)
+
+    cobranca = db.relationship('Cobranca', backref='pagamentos', lazy=True)
+    confirmado_por = db.relationship('User', lazy=True)
+
+    def __repr__(self):
+        return f'<Pagamento {self.id} cobranca={self.cobranca_id}>'
 
 
 
