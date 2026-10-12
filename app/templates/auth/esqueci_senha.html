@@ -1,0 +1,28 @@
+{# POST /esqueci-senha (auth.esqueci_senha)  campo: email #}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo %}
+{% block titulo %}Esqueci a senha{% endblock %}
+{% block hero %}
+<a class="m-btn" href="{{ url_for('auth.login') }}" aria-label="Voltar para o login" style="margin-bottom:8px">{{ icon('chevron-left', 22) }}</a>
+<h1>Recuperar acesso</h1>
+<p>Vamos te ajudar a entrar de novo</p>
+{% endblock %}
+{% block content %}
+{% if enviado %}
+<div class="note note--green" role="status">{{ icon('check', 20) }}<span><strong>Link enviado</strong>Se {{ email }} estiver cadastrado, você recebe um e-mail em instantes. Confira também o spam.</span></div>
+<a class="btn btn-ghost btn-block" style="margin-top:16px" href="{{ url_for('auth.login') }}">Voltar pro login</a>
+{% else %}
+<span class="tile tile--lg tone-blue" style="margin-bottom:14px">{{ icon('lock', 24) }}</span>
+<h2>Recuperar acesso</h2>
+<p class="lead">Digite o e-mail cadastrado. Mandamos um link pra você criar uma senha nova.</p>
+<form method="post" action="{{ url_for('auth.esqueci_senha') }}" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <div class="stack gap-4">
+    {{ campo('email', 'E-mail', email or '', 'email', 'seu@email.com', obrigatorio=True, autocomplete='email', inputmode='email', erro=erro) }}
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>Enviar link de recuperação</button>
+    <a class="btn btn-ghost btn-block" href="{{ url_for('auth.login') }}">Voltar pro login</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
