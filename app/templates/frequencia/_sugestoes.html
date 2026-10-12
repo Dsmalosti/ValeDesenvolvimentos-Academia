@@ -1,0 +1,22 @@
+{# Lista de quem pode dar entrada (parcial, ?partial=1). Contexto: sugestoes [aluno], q #}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status %}
+{% if sugestoes %}
+<ul class="sug-list">
+  {% for a in sugestoes %}
+  <li class="sug-item">
+    {{ avatar(a.nome, 'lg') }}
+    <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="faint fs-12 linha1">Plano {{ a.plano }}</span></div>
+    {{ chip_status(a.status) }}
+    <form method="post" action="{{ url_for('frequencia.checkin') }}" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <input type="hidden" name="aluno_id" value="{{ a.id }}">
+      <input type="hidden" name="origem" value="recepcao">
+      <button class="btn btn-primary sug-btn" type="submit" aria-label="Registrar entrada de {{ a.nome }}"><span class="d-only">Registrar</span><span class="m-only">Entrar</span></button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted" style="margin:10px 0 0">Ninguém com "{{ q }}". Confira a grafia ou busque pelo CPF.</p>
+{% endif %}

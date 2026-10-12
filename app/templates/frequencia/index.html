@@ -1,0 +1,90 @@
+{#
+  GET /frequencia (frequencia.index)  ·  mobile: aba "Check-in" da tabbar
+  Contexto: stats{entradas_hoje,na_academia,pico_hora,pico_qtd,media}, horas ['06'..'22'], por_hora [int],
+            sugestoes [aluno], na_academia [{aluno,hora}], entradas [{aluno,hora,origem}], q
+  POST /frequencia/checkin (frequencia.checkin): aluno_id, origem. Busca ao vivo: GET ?q=&partial=1 -> _sugestoes.html
+  Gráfico: charts.js "barras" (a tabela acessível é gerada junto).
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, dialog_head %}
+{% set nav_ativo = 'frequencia' %}
+{% set pagina_titulo = 'Frequência' %}
+{% set pagina_sub = 'Check-in pela recepção ou pelo app do aluno — não precisa de catraca' %}
+{% set m_titulo = 'Check-in' %}
+{% set m_sub = 'Sem catraca · direto no celular' %}
+
+{% block page_acoes %}<a class="btn btn-primary" href="#f-busca-checkin" data-foco="#f-busca-checkin">{{ icon('plus', 18) }}Registrar entrada</a>{% endblock %}
+
+{% block content %}
+<div class="freq-grid">
+  <section class="card card--pad freq-registrar" aria-labelledby="h-reg">
+    <h2 class="ctitle" id="h-reg">Registrar entrada</h2>
+    <p class="csub d-only" style="margin-bottom:14px">Digite o nome ou o CPF — o aluno aparece na hora e a recepção confirma com um clique.</p>
+    <p class="csub m-only" style="margin-bottom:14px">Digite o nome ou CPF e confirme com um toque</p>
+    <form class="field-icon" role="search" method="get" action="{{ url_for('frequencia.index') }}">
+      {{ icon('search', 18) }}
+      <input class="input" id="f-busca-checkin" type="search" name="q" value="{{ q }}" placeholder="Buscar aluno por nome ou CPF" aria-label="Buscar aluno por nome ou CPF" autocomplete="off" enterkeyhint="search"
+        data-remoto="{{ url_for('frequencia.index') }}" data-alvo="sugestoes-checkin">
+    </form>
+    <h3 class="sectitle" style="margin:18px 0 4px"><span class="d-only">Sugestões de agora</span><span class="m-only">Chegaram agora</span></h3>
+    <div id="sugestoes-checkin" aria-live="polite">{% include 'frequencia/_sugestoes.html' %}</div>
+  </section>
+
+  <div class="freq-stats">
+    <div class="card stat"><div class="stat__val tone-txt-blue">{{ stats.entradas_hoje }}</div><div class="stat__lbl">Entradas <span class="m-only"><br></span>hoje</div></div>
+    <div class="card stat"><div class="stat__val tone-txt-teal">{{ stats.na_academia }}</div><div class="stat__lbl">Na academia<span class="d-only"> agora</span></div></div>
+    <div class="card stat"><div class="stat__val tone-txt-orange">{{ stats.pico_hora }}h</div><div class="stat__lbl">Pico do dia<span class="d-only"> · {{ stats.pico_qtd }} entradas</span></div></div>
+  </div>
+
+  <section class="card card--pad freq-grafico" aria-labelledby="h-graf">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 class="ctitle" id="h-graf">Entradas por hora<span class="d-only"> · hoje</span></h2><div class="csub m-only">Hoje · a barra amarela é o pico</div></div>
+      <span class="chip chip--blue d-only">Pico às {{ stats.pico_hora }}h</span>
+    </div>
+    <div class="chart" style="margin-top:14px" data-chart="barras"
+      data-json='{{ {"labels": horas, "valores": por_hora, "meta": stats.media, "metaRotulo": "média", "metaCor": "neutra", "destaque": por_hora.index(stats.pico_qtd), "destaqueCor": "amarelo", "titulo": "Entradas por hora, hoje", "unidade": "entradas", "todosRotulos": true}|tojson|forceescape }}'></div>
+  </section>
+
+  <section class="card card--pad freq-agora" aria-labelledby="h-agora">
+    <div class="row-flex" style="justify-content:space-between"><h2 class="ctitle" id="h-agora">Na academia agora</h2><span class="chip chip--green">{{ na_academia|length }} alunos</span></div>
+    <ul class="agora-list">
+      {% for n in na_academia[:4] %}
+      <li>{{ avatar(n.aluno.nome, 'sm') }}<b class="grow truncate">{{ n.aluno.nome }}</b><span class="faint fs-12"><span class="d-only">entrou </span>{{ n.hora }}</span></li>
+      {% endfor %}
+    </ul>
+    <button type="button" class="btn-link-soft agora-todos" data-open="dlg-agora">Ver todos os {{ na_academia|length }}</button>
+  </section>
+
+  <section class="card card--flush freq-tabela d-only" aria-labelledby="h-checkins">
+    <div class="row-flex" style="justify-content:space-between;padding:20px 24px 18px">
+      <h2 class="ctitle" id="h-checkins" style="font-size:16px">Check-ins de hoje</h2>
+      <a class="btn btn-ghost btn-sm" href="{{ url_for('frequencia.exportar') }}" download>{{ icon('download', 16) }}Exportar</a>
+    </div>
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr><th scope="col">Aluno</th><th scope="col">Horário</th><th scope="col">Plano</th><th scope="col">Origem</th><th scope="col">Situação</th></tr></thead>
+        <tbody>
+          {% for e in entradas %}
+          <tr><td><div class="cell-person">{{ avatar(e.aluno.nome) }}<b>{{ e.aluno.nome }}</b></div></td>
+            <td class="strong">{{ e.hora }}</td><td>{{ e.aluno.plano }}</td><td>{{ e.origem }}</td><td>{{ chip_status(e.aluno.status) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+<dialog class="vt-dialog" id="dlg-agora" aria-label="Na academia agora">
+  {{ dialog_head('Na academia agora', na_academia|length ~ ' alunos treinando neste momento', 'users', 'green') }}
+  <div class="vt-dialog__body">
+    <ul class="agora-list agora-list--tudo">
+      {% for n in na_academia %}
+      <li>{{ avatar(n.aluno.nome, 'sm') }}<b class="grow truncate">{{ n.aluno.nome }}</b><span class="faint fs-12">entrou {{ n.hora }}</span></li>
+      {% endfor %}
+    </ul>
+  </div>
+</dialog>
+{% endblock %}

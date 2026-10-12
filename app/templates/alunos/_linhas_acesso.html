@@ -1,0 +1,17 @@
+{# Parcial do modal "Bloquear/Liberar acesso" (?partial=1). Contexto: resultados, q #}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar %}
+{% if resultados %}
+<ul class="pop-list">
+  {% for a in resultados %}
+  <li class="pop-item">
+    {{ avatar(a.nome, 'sm') }}
+    <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha {{ 'ok' if a.acesso_liberado else 'bad' }}">{{ 'Acesso liberado' if a.acesso_liberado else 'Acesso bloqueado' }}</span></div>
+    <form method="post" action="{{ url_for('alunos.acesso', id=a.id) }}" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <button class="btn btn-sm {{ 'btn-danger-ghost' if a.acesso_liberado else 'btn-primary' }}" type="submit">{{ icon('lock' if a.acesso_liberado else 'unlock', 16) }}{{ 'Bloquear' if a.acesso_liberado else 'Liberar' }}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted" style="margin:0">Ninguém com "{{ q }}".</p>{% endif %}
