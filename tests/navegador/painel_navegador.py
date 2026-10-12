@@ -160,11 +160,11 @@ with sync_playwright() as p:
             pg.wait_for_timeout(500)
             checa(f"[{nome}] gaveta do menu abre", pg.locator("#gaveta[open]").count() == 1 and pg.locator("#gaveta .dlink").count() >= 5)
             pg.screenshot(path=os.path.join(FOTOS, f"{nome}-3-gaveta.png"))
-            pg.tap("#gaveta .dlink:has-text('Configurações')")
+            pg.tap("#gaveta .dlink:has-text('Mensagens')")      # (era Configurações, que virou tela de verdade na back-12)
         else:
             checa(f"[{nome}] rail lateral visível e sem barra de abas", pg.is_visible(".rail") and not pg.is_visible(".tabbar"))
-            pg.click(".rail .navicon[aria-label='Configurações']")
-        pg.wait_for_url("**/configuracoes", timeout=6000)
+            pg.click(".rail .navicon[aria-label='Mensagens']")
+        pg.wait_for_url("**/mensagens", timeout=6000)
         checa(f"[{nome}] seção sem backend mostra 'Em construção' no layout novo",
               "Em construção" in pg.inner_text("#conteudo") and pg.locator(".app .main").count() == 1)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-4-em-construcao.png"))

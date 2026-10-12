@@ -37,6 +37,20 @@ class Conta(db.Model):
     # funcionalidades ligadas na conta (no front: academia.checkin_ativo e academia.pix_ligado)
     checkin_ativo = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     pix_ligado = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
+    # [back-12-config] Configurações da conta (tela /configuracoes). Regras em services/config_service.py.
+    # Horário de funcionamento: texto livre, como aparece para o aluno ("06h - 22h", "Fechado"). Vazio = não informado.
+    horario_semana = db.Column(db.String(40), nullable=True)
+    horario_sabado = db.Column(db.String(40), nullable=True)
+    horario_domingo = db.Column(db.String(40), nullable=True)
+    # Metas: viram a linha tracejada dos gráficos. Vazio = sem meta (o gráfico mostra a média, ou nada).
+    meta_alunos_ativos = db.Column(db.Integer, nullable=True)
+    meta_faturamento = db.Column(db.Numeric(10, 2), nullable=True)
+    meta_retencao = db.Column(db.Integer, nullable=True)            # % que continua depois de 90 dias
+    # "O aluno vira Inativo sozinho depois de X dias sem renovar a matrícula"
+    inatividade_ligada = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
+    inatividade_dias = db.Column(db.Integer, nullable=False, default=60, server_default='60')
+    inatividade_conferida_em = db.Column(db.Date, nullable=True)    # último dia em que a regra rodou para esta conta
+    lembretes_ligados = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
@@ -220,6 +234,23 @@ def _marca_a_inativacao(aluno, novo, antigo, _iniciador):
         aluno.data_inativacao = None
     elif antigo is True:            # só na passagem de ativo para inativo (aluno criado já inativo não tem data)
         aluno.data_inativacao = datetime.now()
+
+
+class ModeloMensagem(db.Model):
+    """
+    [back-12-config] O texto de um modelo de mensagem de WhatsApp que a academia ALTEROU (cobrança,
+    aniversário, aluno sumido...). Só existe linha para o que foi alterado: quem nunca mexeu usa o
+    texto padrão, que fica em services/config_service.py.
+    """
+    __tablename__ = 'modelos_mensagem'
+    __table_args__ = (db.UniqueConstraint('conta_id', 'tipo', name='uq_modelos_mensagem_conta_id_tipo'),)
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)
+    tipo = db.Column(db.String(30), nullable=False)        # cobranca | aniversario | sumido | boasvindas | avaliacao | sessao
+    texto = db.Column(db.Text, nullable=False)
+
+    def __repr__(self):
+        return f'<ModeloMensagem {self.tipo}>'
 
 
 class Custo(db.Model):

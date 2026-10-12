@@ -113,7 +113,7 @@ def _formas(pagamentos):
             for nome in ('PIX', 'Cartão', 'Dinheiro', 'Outras') if soma[nome] or nome != 'Outras']
 
 
-def _receita_12_meses(pagamentos, hoje):
+def _receita_12_meses(pagamentos, hoje, meta=None):
     """Gráfico "Receita mês a mês": os últimos 12 meses, o atual por último (a coluna em destaque)."""
     meses = [_mes_antes(hoje.year, hoje.month, n) for n in range(11, -1, -1)]
     por_mes = defaultdict(float)
@@ -125,8 +125,8 @@ def _receita_12_meses(pagamentos, hoje):
         'labels': [MESES[m - 1][:3].capitalize() for _, m in meses], 'valores': valores, 'destaque': 11,
         'titulo': 'Receita mês a mês', 'sub': 'Últimos 12 meses · a coluna amarela é o mês corrente',
         'selo': 'sem receita no período' if not max(valores) else ('melhor mês do período' if melhor == 11 else f'melhor mês: {MESES[meses[melhor][1] - 1]}'),
-        # sem meta de faturamento (vem de Configurações), a linha tracejada é a média
-        'meta': round(sum(valores) / len(valores)), 'meta_rotulo': None,
+        # [back-12-config] com meta de faturamento em Configurações, a linha tracejada é a meta; sem ela, a média
+        'meta': round(meta) if meta else round(sum(valores) / len(valores)), 'meta_rotulo': 'meta' if meta else None,
     }
 
 
@@ -274,7 +274,13 @@ def _retencao(alunos, hoje):
         valores.append(round(ficaram / len(base) * 100))
     if len(valores) < 2:
         return {'labels': [], 'valores': [], 'meta': None}
-    return {'labels': labels, 'valores': valores, 'meta': None}   # a meta de retenção vem de Configurações
+    return {'labels': labels, 'valores': valores, 'meta': None}   # a meta entra em contexto_do_painel()
+
+
+def retencao_aos_90_dias(hoje=None):
+    """[back-12-config] % dos alunos que continuam depois de 90 dias (a tela de metas mostra "hoje: X%"). None = sem dado."""
+    retencao = _retencao(da_conta(Aluno).all(), hoje or date.today())
+    return retencao['valores'][retencao['labels'].index('90')] if '90' in retencao['labels'] else None
 
 
 def _fim_do_mes(ano, mes):
@@ -395,7 +401,8 @@ def contexto_do_painel(argumentos, hoje=None):
     hoje = hoje or date.today()
     periodo = argumentos.get('periodo') if argumentos.get('periodo') in PERIODOS else 'mes'
     inicio, fim, ant_inicio, ant_fim, periodo_txt, periodo_de = intervalo(periodo, hoje)
-    checkin = bool(current_user.conta.checkin_ativo)
+    conta = current_user.conta
+    checkin = bool(conta.checkin_ativo)
     pagamentos = painel_service._pagamentos_da_conta()
     alunos = da_conta(Aluno).all()
     painel = painel_service.montar_painel(hoje)['k']       # a receber, em atraso e ticket: os números do painel
@@ -424,11 +431,11 @@ def contexto_do_painel(argumentos, hoje=None):
         'recebido': recebido, 'formas': _formas(do_periodo), 'variacao': _variacao(recebido, recebido_antes, periodo, hoje),
         'minimo': minimo, 'sobra': recebido - minimo, 'gauge_max': _teto_do_medidor(recebido, minimo),
         'custos': custos, 'custos_total': custos_total,
-        'grafico': _receita_12_meses(pagamentos, hoje),
+        'grafico': _receita_12_meses(pagamentos, hoje, float(conta.meta_faturamento) if conta.meta_faturamento else None),
         'ticket': painel['ticket'], 'ticket_delta': ticket_delta,
         'a_receber': painel['vencimentos_valor'], 'em_atraso': painel['inadimplencia'],
         'mapa': _mapa_de_movimento(hoje) if checkin else {'dias': DIAS7, 'horas': [], 'niveis': [], 'nomes': NIVEIS, 'pico': '—'},
-        'retencao': _retencao(alunos, hoje),
+        'retencao': dict(_retencao(alunos, hoje), meta=conta.meta_retencao),      # [back-12-config] a meta de retenção da conta
         'comparativo': _comparativo(alunos, hoje, checkin),
         'risco': risco, 'risco_total': risco_total,
         'lancamentos': _lancamentos(pagamentos, inicio, fim, hoje, filtro), 'filtro': filtro,

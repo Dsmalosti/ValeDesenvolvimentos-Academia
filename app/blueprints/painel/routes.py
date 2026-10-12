@@ -12,6 +12,7 @@ from app.blueprints.pendentes import tela_em_construcao
 from app.helpers.conta import exigir_login_em
 from app.models import PAPEL_INSTRUTOR
 from app.services.painel_service import montar_painel
+from app.services.config_service import aplicar_inatividade_uma_vez_por_dia  # [back-12-config]
 
 painel_blueprint = Blueprint('painel', __name__)
 exigir_login_em(painel_blueprint)  # toda rota daqui exige login, mesmo as futuras
@@ -26,6 +27,9 @@ def index():
         return tela_em_construcao('Painel do instrutor')
     # montar_painel() devolve exatamente as variáveis que o template declara no topo:
     # k, serie, planos_fat, alunos, alertas, listas, pendentes e hoje.
+    # [back-12-config] "o aluno vira Inativo sozinho depois de X dias sem renovar": a regra roda aqui, no máximo uma
+    # vez por dia para a conta, antes de montar os números (assim não depende de tarefa agendada no servidor).
+    aplicar_inatividade_uma_vez_por_dia()
     return render_template('painel/index.html', **montar_painel())
 
 

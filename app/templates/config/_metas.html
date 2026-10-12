@@ -34,7 +34,8 @@
       <label class="label" for="f-retencao">Retenção mínima</label>
       <div class="input-affix"><span class="affix">%</span><input class="input{{ ' is-invalid' if erros.retencao }}" id="f-retencao" name="retencao" type="number" min="1" max="100" inputmode="numeric" value="{{ metas.retencao }}" required data-msg-required="Informe a meta de retenção."></div>
       {% if erros.retencao %}<div class="field-error" data-server>{{ erros.retencao }}</div>
-      {% else %}<div class="field-hint">Hoje: {{ metas_hoje.retencao }}% dos alunos continuam depois de 90 dias. Aparece no gráfico "Quanto tempo o aluno fica" do Administrativo.</div>{% endif %}
+      {# [back-12-config] antes: mostrava sempre "Hoje: X%". Sem aluno com 90 dias de casa não há número para mostrar #}
+      {% else %}<div class="field-hint">{% if metas_hoje.retencao is none %}Hoje: sem dado ainda (falta aluno com 90 dias de matrícula).{% else %}Hoje: {{ metas_hoje.retencao }}% dos alunos continuam depois de 90 dias.{% endif %} Aparece no gráfico "Quanto tempo o aluno fica" do Administrativo.</div>{% endif %}
     </div>
   </section>
   <div class="note note--blue">{{ icon('target', 20) }}<span><strong>Meta é o que você quer alcançar</strong>Ela não muda nenhum número do sistema: só desenha a linha de referência e mostra quanto falta.</span></div>

@@ -151,6 +151,21 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** `relatorios/admin.html` tem 13 ajustes marcados que o Drive não tem. Excel e PDF não existem (só CSV). Retenção e churn começam como "sem dado": só contam quem for desativado daqui em diante. `/relatorios` leva ao painel administrativo.
 - **Doc:** `docs/mudancas/back-11-relatorios.md`
 
+## front-08-config
+
+- **Sai de:** `back-11-relatorios` · **PR:** a abrir → `back-11-relatorios` · **Data:** 12/10/2026
+- **O que mudou:** só templates. Cópia fiel do Drive de `config/index.html`, `config/_metas.html`, `config/recebimento.html` e `_digital_linha.html` (este num segundo commit: a tela o inclui).
+- **Testes:** os 4 arquivos conferidos byte a byte com o Drive.
+
+## back-12-config
+
+- **Sai de:** `front-08-config` · **PR:** a abrir → `front-08-config` · **Data:** 12/10/2026
+- **O que mudou:** o dono troca os dados da academia e o horário, liga e desliga o check-in, define o prazo da inatividade automática e as três metas (que viram a linha dos gráficos do painel e do administrativo); dono e recepção personalizam os modelos de mensagem; a tela de recebimento mostra de onde veio cada confirmação do mês. A regra "o aluno vira inativo sozinho depois de X dias sem renovar" roda ao abrir o painel, uma vez por dia.
+- **Migration:** `b12a8b9c0d10_configuracoes_da_conta.py`: 10 colunas em `contas` e a tabela `modelos_mensagem`. **Depois do pull, `flask db upgrade`.** Atenção: a inatividade nasce ligada, com 60 dias.
+- **Testes:** `pytest` 287 de 287 (30 novos em `tests/test_configuracoes.py`); migration num Postgres temporário, 15 checagens; navegador: configurações 29 de 29, relatórios 28 de 28, frequência 31 de 31, cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
+- **Observações:** a equipe aparece na tela, mas convidar, trocar papel e remover só avisam (é a `back-13`). "Ligar PIX" só avisa. A logo não é gravada. Dois templates têm 1 ajuste marcado cada.
+- **Doc:** `docs/mudancas/back-12-config.md`
+
 ## Onde parou (12/10/2026)
 
-Alunos, planos, cobrança, frequência e relatórios prontos e enviados. PRs #17 a #22 abertos; **faltam os PRs de `front-06`, `back-10`, `front-07` e `back-11`**. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09`, `b10` e `b11`** (pedir o OK dele; backup antes). A próxima é `front-08-config` + `back-12-config` (dados da academia, horário, metas, modelos de mensagem, recebimento, ligar e desligar o check-in), depois equipe, treinos, avaliações, mensagens, personal, segurança, LGPD e produção. Pendências do Adauto: levar para o Drive os ajustes de `cobranca/receber.html` (7), `alunos/detalhe.html` (1) e `relatorios/admin.html` (13); D12, D13, assiduidade, pesos da nota de risco, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).
+Alunos, planos, cobrança, frequência, relatórios e configurações prontos e enviados. PRs #17 a #22 abertos; **faltam os PRs de `front-06` a `back-12`** (6 branches). O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b12`** (pedir o OK dele; backup antes; avisar da inatividade automática). A próxima é `front-09-equipe` + `back-13-equipe`: convite por link (o dono copia e manda pelo WhatsApp, já que o provedor de e-mail, D6, não foi decidido), trocar papel, remover da equipe, criar conta e "esqueci a senha". Depois treinos, avaliações, mensagens, personal, segurança, LGPD e produção. Pendências do Adauto: levar para o Drive os ajustes marcados de `cobranca/receber.html` (7), `alunos/detalhe.html` (1), `relatorios/admin.html` (13), `config/recebimento.html` (1) e `config/_metas.html` (1); D12, D13, assiduidade, pesos da nota de risco, inatividade ligada por padrão, botão de reativar aluno, regra de nome de plano; dele e do Diogo: hospedagem, domínio e e-mail (D4, D5, D6).

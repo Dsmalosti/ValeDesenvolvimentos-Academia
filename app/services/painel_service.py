@@ -106,13 +106,19 @@ def montar_painel(hoje=None):
     risco += [{'nome': x['aluno']['nome'], 'tipo': 'frequencia', 'tom': 'yellow',
                'motivo': f"{x['dias']} dias sem vir à academia"} for x in ausentes]
 
+    conta = current_user.conta
+    meta_faturamento = float(conta.meta_faturamento) if conta.meta_faturamento else None
+    serie['meta'] = conta.meta_alunos_ativos      # [back-12-config] None = sem meta: o gráfico não desenha a linha
+
     k = {
         'ativos': len(ativos),
         'ativos_delta': sum(1 for a in ativos if _mesmo_mes(cadastro[a.id], ano, mes)),
         'inativos': len(inativos),
         'faturamento': faturamento,
         'fat_delta': _pct(faturamento, faturamento_anterior),      # None = sem mês anterior para comparar
-        'fat_meta': None, 'fat_meta_pct': None,                    # metas vêm de Configurações (ainda não existe)
+        # [back-12-config] antes: sempre None. Agora vem da meta de faturamento da conta (Configurações > Metas).
+        'fat_meta': meta_faturamento,
+        'fat_meta_pct': round(faturamento / meta_faturamento * 100) if meta_faturamento else None,
         'vencimentos': len(vencem),
         'vencimentos_valor': sum(x['valor'] for x in vencem),
         'inadimplencia': sum(x['valor'] for x in pendentes),
@@ -192,7 +198,7 @@ def _serie_ativos(alunos, cadastro, hoje):
     return {
         'labels': [MESES[m - 1][:3].capitalize() for _, m in meses],
         'valores': valores,
-        'meta': None,                                              # vem de Configurações > Metas (ainda não existe)
+        'meta': None,                                              # preenchida em montar_painel(), com a meta da conta
         'periodo': periodo,
     }
 

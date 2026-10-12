@@ -46,7 +46,7 @@
       <p class="muted" style="margin:14px 0 0;line-height:1.7;font-size:13.5px">A tela de cobrança continua funcionando: a academia recebe em dinheiro ou maquininha e registra aqui. Só que <b style="color:var(--text)">toda confirmação fica marcada como manual</b> no histórico — e o relatório mostra isso separado, pra você saber qual número veio do banco e qual veio de alguém clicando.</p>
     </section>
     <section class="card card--pad" aria-labelledby="h-orig">
-      <h2 class="ctitle" id="h-orig" style="font-size:16px">De onde veio cada confirmação</h2><div class="csub" style="margin-bottom:14px">Setembro · {{ origem.total }} pagamentos recebidos</div>
+      <h2 class="ctitle" id="h-orig" style="font-size:16px">De onde veio cada confirmação</h2>{# [back-12-config] antes: "Setembro", fixo #}<div class="csub" style="margin-bottom:14px">{{ origem.mes }} · {{ origem.total }} pagamentos recebidos</div>
       {{ stackbar(origem.itens, 'Origem das confirmações de pagamento', false) }}
       <ul class="leg-list">{% for i in origem.itens %}<li><i style="background:var(--{{ i.cor }})"></i>{{ i.nome }}<b>{{ i.qtd }}</b></li>{% endfor %}</ul>
     </section>
