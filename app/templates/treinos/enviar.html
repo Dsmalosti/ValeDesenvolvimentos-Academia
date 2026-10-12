@@ -1,0 +1,50 @@
+{#
+  GET /alunos/<id>/ficha/enviar (treinos.enviar)
+  Contexto: aluno, ficha, msg (texto pronto), wa_url, letras, primeiro{nome,itens}, exs[{ex,series,repeticoes}], total_ex
+  A imagem/PDF são gerados pelo backend (treinos.baixar); o WhatsApp é aberto com wa.me e o texto já preenchido.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar %}
+{% set nav_ativo = 'exercicios' %}
+{% set tab_ativo = 'treinos' %}
+{% set pagina_titulo = 'Enviar ficha' %}
+{% set pagina_sub = 'Confira antes de mandar' %}
+{% set m_sub = pagina_sub %}
+{% set m_voltar = url_for('treinos.ficha_aluno', id=aluno.id) %}
+{% set corpo_classe = 'page--narrow' %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">Ficha de {{ aluno.nome.split()[0] }}</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Enviar</span></nav>{% endblock %}
+{% block content %}
+<section class="card card--pad" aria-labelledby="h-como">
+  <h2 class="ctitle" id="h-como">Como mandar pra {{ aluno.nome.split()[0] }}</h2><div class="csub" style="margin-bottom:12px">Ela não precisa instalar nada</div>
+  <div class="opcoes" data-opcoes data-alvo="h-formato" data-controla-forma style="--cols:3" role="group" aria-label="Formato do envio">
+    <button type="button" class="opcao opcao--ico" data-valor="imagem" aria-pressed="true">{{ icon('image', 22) }}Imagem</button>
+    <button type="button" class="opcao opcao--ico" data-valor="pdf" aria-pressed="false">{{ icon('file', 22) }}PDF</button>
+    <button type="button" class="opcao opcao--ico" data-valor="texto" aria-pressed="false">{{ icon('edit', 22) }}Texto</button>
+  </div>
+  <input type="hidden" id="h-formato" value="imagem">
+</section>
+
+<section class="card card--pad" aria-labelledby="h-prev">
+  <h2 class="ctitle" id="h-prev">Prévia do que ela recebe</h2>
+  <div class="csub" style="margin-bottom:12px"><span data-so-forma="imagem">Uma imagem por treino — {{ letras|join(', ') }}</span><span data-so-forma="pdf" hidden>Um PDF com todos os treinos</span><span data-so-forma="texto" hidden>A ficha escrita direto na conversa</span></div>
+  <div class="ficha-img" data-so-forma="imagem">
+    <div class="row-flex gap-2" style="margin-bottom:10px"><span class="set-logo" style="width:28px;height:28px;border-radius:8px">{{ icon('crown', 16) }}</span><div><b style="font-size:12px">Academia {{ academia.nome }}</b><div style="font-size:10.5px;opacity:.75">{{ aluno.nome }} · até {{ ficha.valida[:5] }}</div></div></div>
+    <div class="ficha-img__box"><b class="ficha-img__t">TREINO {{ letras[0] }} · {{ primeiro.nome|upper }}</b>
+      {% for i in exs[:3] %}<div class="ficha-img__l"><span>{{ i.ex.nome }}</span><span>{{ i.series }} × {{ i.repeticoes }}</span></div>{% endfor %}
+      {% if exs|length > 3 %}<div class="ficha-img__l" style="color:var(--text-faint)">+ {{ exs|length - 3 }} exercícios</div>{% endif %}</div>
+    <div style="font-size:10.5px;text-align:center;opacity:.7;margin-top:10px">Treino {{ letras|join(' · ') }} nas próximas imagens</div>
+  </div>
+  <div class="note note--blue" data-so-forma="pdf" hidden>{{ icon('file', 18) }}<span><strong>ficha-{{ aluno.nome.split()[0]|lower }}.pdf</strong>{{ letras|length }} treino{{ '' if letras|length == 1 else 's' }} · {{ total_ex }} exercícios</span></div>
+  <div class="note note--blue" data-so-forma="texto" hidden>{{ icon('edit', 18) }}<span><strong>Só texto</strong>Vai a lista dos exercícios na própria mensagem. Bom para ficha curta.</span></div>
+</section>
+
+<section class="card card--pad" aria-label="Mensagem no WhatsApp">
+  <div class="row-flex gap-3" style="margin-bottom:10px">{{ avatar(aluno.nome, 'sm') }}<div><b class="linha1" style="font-size:14px">{{ aluno.nome }}</b><span class="faint fs-12">{{ aluno.telefone }}</span></div></div>
+  <div class="wa-bolha"><p style="margin:0;white-space:pre-line">{{ msg }}</p><span class="wa-hora">14:32</span></div>
+</section>
+
+<div class="note" data-so-forma="imagem">{{ icon('image', 18) }}<span><strong>Por que imagem e não link</strong>Link exige app do aluno, que ainda não existe. A imagem abre na conversa, fica salva no celular dele e funciona sem internet na hora do treino.</span></div>
+<a class="btn btn-green btn-lg btn-block" href="{{ wa_url }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Abrir no WhatsApp</a>
+<a class="btn btn-ghost btn-block" href="{{ url_for('treinos.baixar', id=aluno.id) }}" download>{{ icon('download', 16) }}Baixar as imagens</a>
+{% endblock %}

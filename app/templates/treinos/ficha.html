@@ -1,0 +1,118 @@
+{#
+  GET /alunos/<id>/ficha (treinos.ficha_aluno)  ?t=A|B|C   ·   edição linha a linha via POST treinos.ex_salvar (acao=adicionar|editar|remover), treinos.treino_novo, treinos.ficha_salvar
+  POST treinos.ficha_excluir (id do aluno): confirma num popup (#dlg-excluir-ficha) e apaga a ficha inteira; depois volta a /treinos
+  Campos do TreinoExercicio: exercicio_id, series, repeticoes, carga, descanso.
+  Contexto: aluno, ficha{nome,objetivo,atualizada,enviada,rascunho}, letra, letras, proxima|None, treino{nome,itens[{pos,ex,series,repeticoes,carga,descanso}]}, catalogo[exercicio], grupos
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, campo, dialog_head %}
+{% set nav_ativo = 'exercicios' %}
+{% set tab_ativo = 'treinos' %}
+{% set pagina_titulo = 'Ficha de treino' %}
+{% set m_titulo = 'Ficha de ' ~ aluno.nome.split()[0] %}
+{% set m_sub = ficha.nome %}
+{% set m_voltar = url_for('treinos.biblioteca') %}
+{% set n = treino.itens|length %}
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">{% endmacro %}
+
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('alunos.lista') }}">Alunos</a>{{ icon('chevron-right', 14) }}<a href="{{ url_for('alunos.detalhe', id=aluno.id) }}">{{ aluno.nome }}</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Ficha de treino</span></nav>{% endblock %}
+{% block page_head %}{% endblock %}
+
+{% block content %}
+<section class="card card--pad d-only ficha-head" aria-label="Ficha de {{ aluno.nome }}">
+  {{ avatar(aluno.nome, 'xl') }}
+  <div class="grow"><h1 class="ctitle" style="font-size:19px">{{ aluno.nome }}</h1><div class="faint fs-13" style="margin-top:3px">Objetivo: {{ ficha.objetivo }} · atualizada em {{ ficha.atualizada.replace(' por ', ' por ') }}{% if ficha.rascunho %} · <b class="tone-txt-yellow">rascunho</b>{% endif %}</div></div>
+  <div class="row-flex gap-2">
+    <a class="btn btn-green" href="{{ url_for('treinos.enviar', id=aluno.id) }}">{{ icon('chat', 18) }}Enviar no WhatsApp</a>
+    <button type="button" class="btn btn-ghost" data-imprimir>{{ icon('printer', 18) }}Imprimir</button>
+    <button type="button" class="btn btn-danger-ghost" data-open="dlg-excluir-ficha">{{ icon('trash', 18) }}Excluir ficha</button>
+    <button type="button" class="btn btn-ghost" data-toast="Duplicar ficha entra junto com o backend (cria uma cópia para outro aluno).">{{ icon('refresh', 18) }}Duplicar ficha</button>
+  </div>
+</section>
+
+<div class="ficha-grid">
+  <div class="stack gap-3">
+    <nav class="card card--pad tabs-treino" aria-label="Treinos da ficha">
+      {% for l in letras %}<a class="tab-treino" href="{{ url_for('treinos.ficha_aluno', id=aluno.id, t=l) }}"{% if l == letra %} aria-current="true"{% endif %}>Treino {{ l }}</a>{% endfor %}
+      {% if proxima %}<form method="post" action="{{ url_for('treinos.treino_novo', id=aluno.id) }}" style="margin:0">{{ csrf() }}<button class="tab-treino tab-treino--add" type="submit" aria-label="Criar Treino {{ proxima }}">{{ icon('plus', 18) }}</button></form>{% endif %}
+      <button type="button" class="btn btn-primary d-only" style="margin-left:auto" data-foco="#f-cat-busca-d">{{ icon('plus', 16) }}Adicionar exercício</button>
+    </nav>
+
+    <h2 class="sectitle m-only" style="display:flex;justify-content:space-between"><span>Treino {{ letra }} · {{ n }} exercício{{ '' if n == 1 else 's' }}</span></h2>
+
+    {# ---- desktop: tabela ---- #}
+    <section class="card card--flush d-only" aria-label="Exercícios do Treino {{ letra }}">
+      {% if n %}
+      <div class="table-scroll"><table class="dtable">
+        <thead><tr><th scope="col">#</th><th scope="col">Exercício</th><th scope="col">Grupo</th><th scope="col">Séries</th><th scope="col">Reps</th><th scope="col">Carga</th><th scope="col">Descanso</th><th scope="col" class="col-actions">Ações</th></tr></thead>
+        <tbody>{% for i in treino.itens %}
+          <tr><td class="faint">{{ loop.index }}</td>
+            <td><a class="cell-person" href="{{ url_for('exercicios.detalhe', id=i.ex.id) }}"><span class="ex-mini" aria-hidden="true">{{ icon('play', 16) }}</span><b>{{ i.ex.nome }}</b></a></td>
+            <td><span class="chip chip--blue">{{ i.ex.grupo_muscular }}</span></td><td class="strong">{{ i.series }}</td><td class="strong">{{ i.repeticoes }}</td><td>{{ i.carga }}</td><td>{{ i.descanso }}</td>
+            <td class="col-actions"><span class="actions">
+              <button type="button" class="iconbtn" data-open="dlg-ex-{{ i.pos }}" aria-label="Ajustar {{ i.ex.nome }}">{{ icon('edit', 18) }}</button>
+              <form method="post" action="{{ url_for('treinos.ex_salvar', id=aluno.id) }}" style="margin:0">{{ csrf() }}<input type="hidden" name="acao" value="remover"><input type="hidden" name="t" value="{{ letra }}"><input type="hidden" name="pos" value="{{ i.pos }}"><button class="iconbtn" type="submit" aria-label="Tirar {{ i.ex.nome }} do treino">{{ icon('trash', 18) }}</button></form>
+            </span></td></tr>{% endfor %}
+        </tbody></table></div>
+      {% else %}<p class="muted" style="padding:24px;margin:0">Este treino ainda não tem exercícios. Use o catálogo ao lado.</p>{% endif %}
+    </section>
+
+    {# ---- celular: cartões ---- #}
+    <div class="m-only stack gap-3">
+      {% for i in treino.itens %}
+      <div class="card fx-card">
+        <div class="grow"><b style="display:block;font-size:15px;margin-bottom:8px">{{ i.ex.nome }}</b>
+          <button type="button" class="fx-chips" data-open="dlg-ex-{{ i.pos }}" aria-label="Ajustar {{ i.ex.nome }}"><span>{{ i.series }} séries</span><span>{{ i.repeticoes }} reps</span><span>{{ i.carga }}</span></button></div>
+        <form method="post" action="{{ url_for('treinos.ex_salvar', id=aluno.id) }}" style="margin:0">{{ csrf() }}<input type="hidden" name="acao" value="remover"><input type="hidden" name="t" value="{{ letra }}"><input type="hidden" name="pos" value="{{ i.pos }}">
+          <button class="fx-x" type="submit" aria-label="Tirar {{ i.ex.nome }} do treino">{{ icon('close', 18) }}</button></form>
+      </div>
+      {% endfor %}
+      <button type="button" class="btn btn-ghost btn-block" style="border-style:dashed" data-open="dlg-catalogo">{{ icon('plus', 18) }}Adicionar exercício</button>
+      <form method="post" action="{{ url_for('treinos.ficha_salvar', id=aluno.id) }}">{{ csrf() }}<input type="hidden" name="t" value="{{ letra }}"><input type="hidden" name="nome" value="{{ ficha.nome }}"><input type="hidden" name="objetivo" value="{{ ficha.objetivo }}">
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Salvar ficha</button></form>
+      <a class="btn btn-green btn-lg btn-block" href="{{ url_for('treinos.enviar', id=aluno.id) }}">{{ icon('chat', 18) }}Enviar no WhatsApp</a>
+      <button type="button" class="btn btn-danger-ghost btn-block" data-open="dlg-excluir-ficha">{{ icon('trash', 18) }}Excluir ficha</button>
+    </div>
+  </div>
+
+  <aside class="card card--pad d-only ficha-cat" aria-labelledby="h-cat">
+    <h2 class="ctitle" id="h-cat">Catálogo de exercícios</h2><div class="csub" style="margin-bottom:12px">Clique no + para jogar no treino aberto.</div>
+    {% set lista_id = 'lista-cat-d' %}
+    <div class="cat-wrap">{% include 'treinos/_catalogo.html' %}</div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-excluir-ficha" aria-label="Excluir ficha de {{ aluno.nome }}">
+  {{ dialog_head('Excluir esta ficha?', 'Ficha de ' ~ aluno.nome ~ ' · ' ~ ficha.nome, 'trash', 'red') }}
+  <form method="post" action="{{ url_for('treinos.ficha_excluir', id=aluno.id) }}">
+    {{ csrf() }}
+    <div class="vt-dialog__body"><div class="note note--red" role="alert">{{ icon('alert', 20) }}<span><strong>Isso não dá para desfazer</strong>Todos os treinos ({{ letras|join(', ') }}) e os exercícios dessa ficha serão apagados. Os modelos e o catálogo de exercícios continuam como estão.</span></div></div>
+    <div class="vt-dialog__foot"><button type="button" class="btn btn-ghost" data-close>Cancelar</button><button class="btn btn-danger" type="submit">Excluir ficha</button></div>
+  </form>
+</dialog>
+{% for i in treino.itens %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-ex-{{ i.pos }}" aria-label="Ajustar {{ i.ex.nome }}">
+  {{ dialog_head(i.ex.nome, i.ex.grupo_muscular ~ ' · Treino ' ~ letra, 'dumbbell', 'blue') }}
+  <form method="post" action="{{ url_for('treinos.ex_salvar', id=aluno.id) }}" data-validate novalidate>
+    {{ csrf() }}<input type="hidden" name="acao" value="editar"><input type="hidden" name="t" value="{{ letra }}"><input type="hidden" name="pos" value="{{ i.pos }}">
+    <div class="vt-dialog__body"><div class="cfg-2">
+      {{ campo('series', 'Séries', i.series, tipo='number', inputmode='numeric', obrigatorio=True, extra='min="1" max="20"') }}
+      {{ campo('repeticoes', 'Repetições', i.repeticoes, tipo='number', inputmode='numeric', obrigatorio=True, extra='min="1" max="100"') }}
+      {{ campo('carga', 'Carga', i.carga if i.carga != '—' else '', placeholder='Ex.: 40 kg ou livre') }}
+      {{ campo('descanso', 'Descanso', i.descanso, placeholder='Ex.: 60s') }}
+    </div></div>
+    <div class="vt-dialog__foot"><button class="btn btn-primary" type="submit">Salvar exercício</button></div>
+  </form>
+</dialog>
+{% endfor %}
+<dialog class="vt-dialog" id="dlg-catalogo" aria-label="Adicionar exercício">
+  {{ dialog_head('Adicionar exercício', 'Catálogo da academia · ' ~ catalogo|length ~ ' exercícios') }}
+  <div class="vt-dialog__body">
+    {% set lista_id = 'lista-cat-m' %}
+    {% include 'treinos/_catalogo.html' %}
+  </div>
+</dialog>
+{% endblock %}

@@ -1,0 +1,56 @@
+{#
+  GET /treinos (treinos.biblioteca)  ?q=  ?adicionar=<exercicio_id>
+  Contexto: modelos[{id,nome,sub,usado,icone,tom}], fichas[{aluno,nome,sub,rascunho}], total_fichas, q, adicionar|None
+  Modelos ficam separados das fichas de aluno: uma ficha personalizada NUNCA entra na lista de modelos.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar %}
+{% set nav_ativo = 'exercicios' %}
+{% set tab_ativo = 'treinos' %}
+{% set pagina_titulo = 'Fichas de treino' %}
+{% set pagina_sub = modelos|length ~ ' modelos · ' ~ total_fichas ~ ' fichas de aluno' %}
+{% set m_sub = pagina_sub %}
+{% set corpo_classe = 'page--narrow' %}
+{% block page_acoes %}<a class="btn btn-ghost" href="{{ url_for('exercicios.lista') }}">{{ icon('dumbbell', 18) }}Catálogo de exercícios</a>{% endblock %}
+{% block m_extra %}
+<form class="field-icon m-search" role="search" method="get" action="{{ url_for('treinos.biblioteca') }}" style="margin-top:14px">
+  {{ icon('search', 18) }}<input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar modelo ou aluno" aria-label="Buscar modelo ou aluno" enterkeyhint="search">
+</form>
+{% endblock %}
+
+{% block content %}
+<form class="field-icon d-only" role="search" method="get" action="{{ url_for('treinos.biblioteca') }}">
+  {{ icon('search', 18) }}<input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar modelo ou aluno" aria-label="Buscar modelo ou aluno" enterkeyhint="search">
+</form>
+{% if adicionar %}<div class="note note--blue" role="status">{{ icon('info', 18) }}<span>Escolha uma ficha de aluno para adicionar <b>{{ adicionar.nome }}</b>. Depois é só tocar em “Adicionar exercício”.</span></div>{% endif %}
+
+{# no celular este título fica em cima do cabeçalho azul (o corpo sobe 34px): a classe troca a cor pra continuar legível #}
+<h2 class="sectitle{{ ' sectitle--topo' if not adicionar }}">Modelos prontos</h2>
+{% if modelos %}
+<div class="modelos-grid">
+  {% for m in modelos %}
+  <a class="card mrow-card" href="{{ url_for('treinos.modelo', mid=m.id) }}">
+    <span class="tile tone-{{ m.tom }}">{{ icon(m.icone, 22) }}</span>
+    <span class="grow"><b class="linha1">{{ m.nome }}</b><span class="faint fs-12 linha1" style="line-height:1.35">{{ m.sub }}</span></span>
+    <span class="chip chip--slate nowrap">Usado {{ m.usado }}×</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}<p class="muted" style="margin:0">Nenhum modelo com “{{ q }}”.</p>{% endif %}
+
+<section class="card card--pad" aria-labelledby="h-fa">
+  <div class="row-flex" style="justify-content:space-between;align-items:baseline;gap:8px"><h2 class="ctitle" id="h-fa">Fichas de aluno</h2><span class="faint fs-12">só aparecem aqui</span></div>
+  <div class="csub" style="margin-bottom:4px">Personalizadas — não entram nos modelos</div>
+  {% if fichas %}
+  <ul class="mlist">
+    {% for f in fichas %}
+    <li><a class="mrow" href="{{ url_for('treinos.ficha_aluno', id=f.aluno.id) }}">{{ avatar(f.aluno.nome, 'lg') }}
+      <span class="mrow__main"><span class="mrow__title" style="display:block">{{ f.aluno.nome }}</span><span class="mrow__sub" style="display:block">{{ f.sub }}</span></span>
+      <span class="faint">{{ icon('chevron-right', 18) }}</span></a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted" style="margin:12px 0 0">Nenhuma ficha de aluno com “{{ q }}”.</p>{% endif %}
+</section>
+<a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.modelo', mid=5) }}">{{ icon('plus', 18) }}Criar ficha do zero</a>
+{% endblock %}

@@ -1,0 +1,32 @@
+{# GET/POST /exercicios/novo e /exercicios/<id>/editar — campos: nome, grupo_muscular, equipamento, video_url #}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, seletor %}
+{% set nav_ativo = 'exercicios' %}
+{% set editando = (modo == 'editar') %}
+{% set pagina_titulo = 'Editar exercício' if editando else 'Novo exercício' %}
+{% set pagina_sub = 'O vídeo é o que mais ajuda o aluno a executar certo' %}
+{% set m_voltar = url_for('exercicios.lista') %}
+{% set m_sub = e.nome if editando else '' %}
+{% set corpo_classe = 'page--form' %}
+{% set sem_tabbar = true %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('exercicios.lista') }}">Exercícios</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ pagina_titulo }}</span></nav>{% endblock %}
+{% block content %}
+{% set e = e or {} %}{% set erros = erros or {} %}
+<form method="post" action="{{ url_for('exercicios.editar', id=e.id) if editando else url_for('exercicios.novo') }}" data-validate novalidate class="stack gap-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <section class="card card--pad stack gap-4">
+    <h2 class="ctitle">Dados do exercício</h2>
+    {{ campo('nome', 'Nome do exercício', e.nome, 'text', 'Ex.: Supino reto', obrigatorio=True, erro=erros.nome, autocomplete='off', extra='data-autofocus') }}
+    <div class="form-grid form-grid--2">
+      {{ seletor('grupo_muscular', 'Grupo muscular', grupos_opcoes, e.grupo_muscular, True, erros.grupo_muscular) }}
+      {{ campo('equipamento', 'Equipamento', e.equipamento, 'text', 'Ex.: Barra, halteres, máquina', erro=erros.equipamento, autocomplete='off') }}
+    </div>
+    {{ campo('video_url', 'Link do vídeo', e.video_url, 'url', 'https://...', erro=erros.video_url, icone='link', ajuda='Cole o endereço do vídeo demonstrativo (YouTube, Vimeo ou arquivo da academia).', inputmode='url') }}
+  </section>
+  <div class="stack gap-3">
+    <button class="btn btn-primary btn-lg btn-block" type="submit" data-carregando>{{ icon('check', 18) }}Salvar exercício</button>
+    <a class="btn btn-ghost btn-block" href="{{ url_for('exercicios.lista') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
