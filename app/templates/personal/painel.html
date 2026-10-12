@@ -1,0 +1,171 @@
+{#
+  GET /  (painel.index) — variante PERSONAL TRAINER (academia.modelo == 'personal').  Figma: personal/Celular/03-celular-painel-do-dono
+  Mesmo endpoint do painel da academia: o backend escolhe este template quando a conta é de personal.
+  Contexto:
+    k            {ativos, inadimplencia, inad_qtd, pacotes_acabando, ticket, faturamento, fat_meta_pct, novas, aniversarios, notificacoes}
+    ticket       {valor, faturamento, ativos, por_pacote[]}   popup do card "Ticket médio" (personal/_ticket.html)
+    listas       {novas: [{aluno, data}]}                     popup do mini card "Matrículas" (painel/_modais_cards.html)
+    alunos       últimos alunos (tabela do desktop) [{id, nome, plano, pacote{saldo,total}, vence_txt, status}]
+    sessoes_hoje quantidade de sessões marcadas hoje (card do desktop -> Agenda)
+    serie        {labels, valores, meta, periodo}     alunos ativos por mês
+    planos_fat   [{plano_id, nome, alunos, valor, pct, cor, avulso?}]  participação de cada PACOTE no faturamento (linha leva a Pacotes, com ele em destaque: planos?destaque=id)
+    alertas      {risco, aniversarios, renovacao}     (popup de avisos, mesmo componente da academia)
+    acabando     [aluno] com saldo <= 2 sessões        (popup "Pacotes acabando")
+    hoje         "Terça-feira, 15 de setembro"
+  Celular: a coluna de sempre (Figma personal/Celular). Desktop: CÓPIA do layout do painel da academia (8 cards, 7 atalhos,
+  gráfico + faturamento lado a lado, tabela de alunos) com os dados do personal — blocos m-only / d-only, igual painel/index.html.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, kpi, brl %}
+{% set nav_ativo = 'painel' %}
+{% set pagina_titulo = 'Painel' %}
+{% set pagina_sub = hoje %}
+{% set m_titulo = 'Vale Tec' %}
+{% set popups = true %}
+
+{% block m_acoes %}
+<a class="m-btn" href="{{ url_for('painel.notificacoes') }}" aria-label="Notificações, {{ k.notificacoes }} não lidas">{{ icon('bell', 22) }}{% if k.notificacoes %}<span class="dot"></span>{% endif %}</a>
+<a class="m-avatar" href="{{ url_for('config.index') }}" aria-label="Configurações">{{ usuario.iniciais }}</a>
+{% endblock %}
+
+{% block page_head %}
+<div class="page-head">
+  <div><h1 class="page-title">Painel</h1><div class="page-sub">{{ hoje }}</div></div>
+  <div class="row-flex gap-3">
+    <form class="field-icon" role="search" action="{{ url_for('alunos.lista') }}" method="get" style="width:250px">
+      {{ icon('search', 18) }}<input class="input" type="search" name="q" placeholder="Buscar aluno, pacote..." aria-label="Buscar aluno ou pacote" enterkeyhint="search">
+    </form>
+    <a class="iconbtn iconbtn--lg" style="position:relative" href="{{ url_for('painel.notificacoes') }}" aria-label="Notificações, {{ k.notificacoes }} não lidas">{{ icon('bell', 20) }}{% if k.notificacoes %}<span class="dot dot--light"></span>{% endif %}</a>
+    <div class="user-chip"><span class="avatar tone-blue" aria-hidden="true">{{ usuario.iniciais }}</span><div><b>{{ usuario.nome }}</b><small>Personal trainer</small></div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block m_extra %}
+<div class="m-header__hero"><h2>Olá, {{ usuario.nome.split()[0] }}</h2><div class="m-header__sub" style="margin-top:2px">Seu resumo de hoje</div></div>
+{% endblock %}
+
+{% block content %}
+{# Alerta principal: abre o popup de avisos já na aba de alunos em risco #}
+<button type="button" class="card alert-card m-only" data-open="pop-avisos" data-open-aba="risco">
+  <span class="tile tone-yellow">{{ icon('alert', 22) }}</span>
+  <span class="grow"><b>{{ alertas.risco|length }} alunos em risco</b><span class="alert-card__sub">Pacote acabando ou pagamento atrasado</span></span>
+  {{ icon('chevron-right', 18) }}
+</button>
+
+<section class="m-only stack gap-3" aria-label="Indicadores">
+  <div class="kpi-grid">
+    {{ kpi(k.ativos, 'Alunos ativos', 'users', 'green', href=url_for('alunos.lista', status='ativos')) }}
+    {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência · ' ~ k.inad_qtd, 'alert', 'red', href=url_for('alunos.lista', status='pendente')) }}
+    <button type="button" class="card kpi" data-open="dlg-pacotes-acabando"><div class="kpi__top"><span class="tile tone-blue">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">{{ k.pacotes_acabando }}</div><div class="kpi__lbl">Pacotes acabando</div></div></button>
+    {{ kpi(brl(k.ticket), 'Ticket médio', 'trend', 'teal', abre='dlg-ticket') }}
+  </div>
+  <div class="mini-grid">
+    {# mini cards também levam a algum lugar: Faturamento -> "De onde vem o faturamento" (logo abaixo), Matrículas -> popup, Aniversários -> aba do popup de avisos #}
+    <a class="card mini" href="#h-fat"><div class="mini__lbl">Faturamento</div><div class="mini__val">{{ brl(k.faturamento, 0) }}</div>{% if k.fat_meta_pct is not none %}<div class="mini__meta">{{ k.fat_meta_pct }}% da meta</div>{% endif %}</a>
+    <button type="button" class="card mini" data-open="dlg-novas"><div class="mini__lbl">Matrículas</div><div class="mini__val">+{{ k.novas }}</div></button>
+    <button type="button" class="card mini" data-open="pop-avisos" data-open-aba="aniversario"><div class="mini__lbl">Aniversários</div><div class="mini__val">{{ k.aniversarios }}</div></button>
+  </div>
+</section>
+
+{# --- indicadores: 8 cards no desktop (mesma grade da academia; os do personal no lugar dos de academia) --- #}
+<section class="d-only" aria-label="Indicadores">
+  <div class="kpi-grid">
+    {{ kpi(k.ativos, 'Alunos ativos', 'users', 'green', '+' ~ k.ativos_delta ~ ' no mês', href=url_for('alunos.lista', status='ativos')) }}
+    {{ kpi(k.inativos, 'Alunos inativos', 'user-x', 'slate', href=url_for('alunos.lista', status='inativo')) }}
+    {{ kpi(brl(k.faturamento, 0), 'Faturamento do mês' ~ (' · ' ~ k.fat_meta_pct ~ '% da meta' if k.fat_meta_pct is not none else ''), 'dollar', 'yellow', '+' ~ k.fat_delta ~ '%', href=url_for('relatorios.admin')) }}
+    <button type="button" class="card kpi" data-open="dlg-pacotes-acabando"><div class="kpi__top"><span class="tile tone-blue">{{ icon('calendar-plus', 20) }}</span></div><div><div class="kpi__val">{{ k.pacotes_acabando }}</div><div class="kpi__lbl">Pacotes acabando</div></div></button>
+    {{ kpi(brl(k.inadimplencia, 0), 'Inadimplência real · ' ~ k.inad_qtd ~ ' alunos', 'alert', 'red', 'atenção', 'red', href=url_for('alunos.lista', status='pendente')) }}
+    {{ kpi(brl(k.ticket), 'Ticket médio por aluno', 'trend', 'teal', abre='dlg-ticket') }}
+    {{ kpi(sessoes_hoje, 'Sessões hoje', 'calendar', 'orange', href=url_for('agenda.index')) }}
+    {{ kpi(k.novas, 'Novas matrículas (mês)', 'user-plus', 'blue', '+' ~ k.novas_delta, abre='dlg-novas') }}
+  </div>
+</section>
+
+{# --- operação rápida: 7 atalhos no desktop (no celular ficam os 4 lá embaixo) --- #}
+<section aria-labelledby="h-op-d" class="d-only stack gap-3">
+  <h2 class="sectitle" id="h-op-d">Operação rápida</h2>
+  <div class="qa-grid" data-fit-grupo>
+    <a class="qa" href="{{ url_for('alunos.novo') }}"><span class="tile tone-blue">{{ icon('user-plus', 20) }}</span>Novo aluno</a>
+    <a class="qa" href="{{ url_for('planos.novo') }}"><span class="tile tone-teal">{{ icon('apps', 20) }}</span>Criar pacote</a>
+    <a class="qa" href="{{ url_for('alunos.buscar') }}"><span class="tile tone-slate">{{ icon('search', 20) }}</span>Buscar aluno</a>
+    <a class="qa" href="{{ url_for('alunos.buscar', acao='renovar') }}"><span class="tile tone-yellow">{{ icon('refresh', 20) }}</span>Renovar pacote</a>
+    <a class="qa" href="{{ url_for('agenda.nova') }}"><span class="tile tone-orange">{{ icon('calendar-plus', 20) }}</span>Marcar sessão</a>
+    <a class="qa" href="{{ url_for('alunos.lista', status='pendente') }}"><span class="tile tone-green">{{ icon('chat', 20) }}</span>Cobrança WhatsApp</a>
+    <a class="qa" href="{{ url_for('treinos.biblioteca') }}"><span class="tile tone-red">{{ icon('clipboard', 20) }}</span>Nova ficha</a>
+  </div>
+</section>
+
+{# --- gráficos: lado a lado no desktop (painel-grid), um embaixo do outro no celular --- #}
+<div class="painel-grid">
+<section class="card card--pad" aria-labelledby="h-serie">
+  <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
+    <div><h2 class="ctitle" id="h-serie" style="font-size:16px">Alunos ativos por mês</h2><div class="csub">{{ serie.periodo }} · <span class="nowrap-frase">meta de {{ serie.meta }} em amarelo</span></div></div>
+    <div class="row-flex gap-3"><span class="chip chip--green d-only">+{{ k.ano_delta }}% no ano</span><a class="fw-7 row-flex gap-1" style="font-size:13px;white-space:nowrap" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos {{ icon('chevron-right', 16) }}</a></div>
+  </div>
+  <div class="chart" style="margin-top:12px" data-chart="linha" data-json='{{ {"labels": serie.labels, "valores": serie.valores, "meta": serie.meta, "unidade": "alunos", "titulo": "Alunos ativos por mês", "metaPct": true, "link": url_for("alunos.lista", status="ativos"), "linkRotulo": "ver alunos ativos"}|tojson|forceescape }}'></div>
+</section>
+
+<section class="card card--pad" aria-labelledby="h-fat" data-seg-grupo>
+  <h2 class="ctitle" id="h-fat" style="font-size:16px">De onde vem o faturamento</h2>
+  <div class="csub">Participação de cada pacote</div>
+  {# a barra tem links (toque), então não pode ser role=img: o resumo vai num texto só pro leitor de tela e a barra fica aria-hidden (as linhas abaixo são os links acessíveis) #}
+  <span class="visually-hidden">{% for p in planos_fat %}{{ p.nome }} {{ p.pct }}%{{ ', ' if not loop.last }}{% endfor %}</span>
+  <div class="stackbar" style="margin:14px 0 6px" aria-hidden="true">
+    {% for p in planos_fat %}<a href="{{ url_for('planos.lista', destaque=p.plano_id) }}" tabindex="-1" aria-hidden="true" data-seg="{{ p.plano_id }}" data-dica="{{ p.nome }} · {{ p.pct }}% · {{ brl(p.valor, 0) }}" style="flex:{{ p.pct }};background:var(--{{ p.cor }})">{{ p.pct ~ '%' if p.pct >= 10 }}</a>{% endfor %}
+  </div>
+  <ul class="mlist" style="margin-top:6px" data-fit-grupo>
+    {% for p in planos_fat %}
+    {# o gráfico mostra PACOTES: a linha leva pra tela de Pacotes com ele em destaque (planos?destaque=id); a linha inteira é clicável #}
+    <li class="plan-row plan-row--link" data-seg="{{ p.plano_id }}">
+      <span class="sw" style="background:var(--{{ p.cor }})"></span>
+      <span class="plan-row__nome" data-fit><b><a class="stretched-link" href="{{ url_for('planos.lista', destaque=p.plano_id) }}">{{ p.nome }}</a></b><small>{{ p.alunos }} {{ 'no mês' if p.avulso else 'alunos' }}</small></span>
+      <span class="plan-row__bar bar d-only"><div style="width:{{ p.pct }}%;background:var(--{{ p.cor }})"></div></span>
+      <b class="plan-row__valor tab-num">{{ brl(p.valor, 0) }}</b>
+      {{ icon('chevron-right', 16) }}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+</div>
+
+{# --- tabela de alunos (desktop): no lugar do vencimento, o saldo do pacote --- #}
+<section class="card card--flush d-only" aria-labelledby="h-alunos">
+  <div class="card__head"><h2 class="ctitle" id="h-alunos" style="font-size:16px">Alunos</h2><a class="fw-7 row-flex gap-1" style="font-size:13px" href="{{ url_for('alunos.lista') }}">Ver todos {{ icon('chevron-right', 16) }}</a></div>
+  <div class="table-scroll">
+    <table class="dtable">
+      <thead><tr><th scope="col">Aluno</th><th scope="col">Pacote</th><th scope="col">Saldo</th><th scope="col">Status</th><th scope="col" class="col-actions">Ações</th></tr></thead>
+      <tbody>
+        {% for a in alunos %}
+        <tr class="row-link" data-href="{{ url_for('alunos.detalhe', id=a.id) }}">
+          <td><div class="cell-person">{{ avatar(a.nome) }}<a class="row-link__nome" href="{{ url_for('alunos.detalhe', id=a.id) }}"><b>{{ a.nome }}</b></a></div></td>
+          <td>{{ a.plano }}</td>
+          <td>{% if a.ativo and a.pacote.saldo <= 1 %}<b class="bad">{{ a.vence_txt }}</b>{% else %}{{ a.vence_txt }}{% endif %}</td>
+          <td>{{ chip_status(a.status) }}</td>
+          <td class="col-actions"><span class="actions">
+            <button type="button" class="iconbtn iconbtn--green" data-toast="WhatsApp aberto para {{ a.nome.split()[0] }}." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>
+          </span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="h-op" class="m-only stack gap-3">
+  <h2 class="sectitle" id="h-op">Operação rápida</h2>
+  <div class="qa-grid qa-grid--4" data-fit-grupo>
+    <a class="qa" href="{{ url_for('alunos.novo') }}"><span class="tile tone-blue">{{ icon('user-plus', 20) }}</span>Novo aluno</a>
+    <a class="qa" href="{{ url_for('alunos.buscar') }}"><span class="tile tone-slate">{{ icon('search', 20) }}</span>Buscar</a>
+    <a class="qa" href="{{ url_for('agenda.nova') }}" aria-label="Marcar sessão"><span class="tile tone-yellow">{{ icon('calendar-plus', 20) }}</span><span><span class="txt-curto">Sessão</span><span class="txt-longo">Marcar sessão</span></span></a>
+    <a class="qa" href="{{ url_for('treinos.biblioteca') }}"><span class="tile tone-orange">{{ icon('clipboard', 20) }}</span>Nova ficha</a>
+  </div>
+</section>
+{% endblock %}
+
+{% block dialogs %}
+{% include 'personal/_pacotes_acabando.html' %}
+{% include 'personal/_ticket.html' %}
+{% include 'painel/_modais_cards.html' %}
+{% endblock %}

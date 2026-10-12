@@ -1,0 +1,35 @@
+{#
+  Popup "Ticket médio" (variante Personal). Aberto pelo card "Ticket médio" do painel.
+  Contexto: ticket {valor, faturamento, ativos, por_pacote [{plano_id, nome, alunos, cor, avulso, por_aluno}]}
+  O backend faz a conta (valor = faturamento / ativos; por_aluno = faturamento do pacote / alunos do pacote, maior primeiro).
+  Cada pacote leva para a lista de alunos daquele pacote (alunos.lista?plano=id).
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import dialog_head, brl %}
+<dialog class="vt-dialog" id="dlg-ticket" aria-label="Ticket médio">
+  <span class="vt-dialog__grip"></span>
+  {{ dialog_head('Ticket médio', 'Quanto cada aluno ativo rende por mês', 'trend', 'teal') }}
+  <div class="vt-dialog__body">
+    <div class="card card--pad ticket-resumo">
+      <div class="big-num tab-num" style="margin-top:0">{{ brl(ticket.valor) }}</div>
+      <div class="faint fs-13"><b class="tab-num">{{ brl(ticket.faturamento, 0) }}</b> faturados no mês ÷ <b class="tab-num">{{ ticket.ativos }}</b> alunos ativos</div>
+    </div>
+    <div class="sectitle" style="margin:16px 0 8px">Por pacote</div>
+    <ul class="pop-list">
+      {% for p in ticket.por_pacote %}
+      <li class="pop-item pop-item--link">
+        <span class="sw" style="background:var(--{{ p.cor }})"></span>
+        <div class="grow"><a class="stretched-link pop-item__nome" href="{{ url_for('alunos.lista', plano=p.plano_id) }}"><b class="truncate" style="display:block">{{ p.nome }}</b></a><span class="pop-item__linha tone-txt-teal">{{ p.alunos }} {{ 'no mês' if p.avulso else 'alunos' }}</span></div>
+        <b class="tab-num">{{ brl(p.por_aluno, 0) }}<small class="faint" style="font-weight:600"> /aluno</small></b>
+        {{ icon('chevron-right', 18) }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% if ticket.por_pacote|length > 1 %}
+    <div class="note note--blue" style="margin-top:14px">{{ icon('target', 20) }}<span><strong>Como subir o ticket</strong>{{ ticket.por_pacote[0].nome }} rende mais por aluno. Oferecer upgrade pra quem está em {{ ticket.por_pacote[-1].nome }} puxa a média pra cima.</span></div>
+    {% endif %}
+  </div>
+  <div class="vt-dialog__foot">
+    <a class="btn btn-primary btn-block" href="{{ url_for('alunos.lista', status='ativos') }}">Ver alunos ativos</a>
+  </div>
+</dialog>

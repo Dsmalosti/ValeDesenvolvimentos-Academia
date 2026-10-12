@@ -1,0 +1,27 @@
+{#
+  Popup "Pacotes acabando" (variante Personal). Incluído no painel (card "Pacotes acabando") e na agenda (aviso de última sessão).
+  Contexto: acabando [aluno {id, nome, telefone, pacote{nome, saldo}}]
+  Cada linha: WhatsApp do aluno e atalho para renovar o pacote (alunos.renovar).
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, dialog_head %}
+<dialog class="vt-dialog" id="dlg-pacotes-acabando" aria-label="Pacotes acabando">
+  <span class="vt-dialog__grip"></span>
+  {{ dialog_head('Pacotes acabando', acabando|length ~ (' aluno precisa' if acabando|length == 1 else ' alunos precisam') ~ ' renovar logo', 'calendar-plus', 'blue') }}
+  <div class="vt-dialog__body">
+    <ul class="pop-list">
+      {% for a in acabando %}
+      <li class="pop-item">{{ avatar(a.nome, 'sm', 'yellow' if a.pacote.saldo <= 1 else 'blue') }}
+        <div class="grow"><b class="truncate" style="display:block">{{ a.nome }}</b><span class="pop-item__linha tone-txt-{{ 'yellow' if a.pacote.saldo <= 1 else 'blue' }}">{{ a.pacote.nome }} · {{ a.vence_txt }}</span></div>
+        <a class="iconbtn iconbtn--green-fill iconbtn--lg" href="https://wa.me/55{{ a.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener" aria-label="Chamar {{ a.nome }} no WhatsApp">{{ icon('chat', 20) }}</a>
+        <a class="iconbtn iconbtn--lg" href="{{ url_for('alunos.renovar', id=a.id) }}" aria-label="Renovar o pacote de {{ a.nome }}">{{ icon('refresh', 20) }}</a>
+      </li>
+      {% else %}
+      <li class="muted" style="padding:12px 0">Nenhum pacote acabando agora.</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="vt-dialog__foot">
+    <a class="btn btn-primary btn-block" href="{{ url_for('agenda.index') }}">Ver agenda</a>
+  </div>
+</dialog>
