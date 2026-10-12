@@ -1,0 +1,36 @@
+{#
+  GET /alunos/<id>/avaliacoes (avaliacoes.aluno)
+  Contexto: aluno, hist[{id,data,avaliador,peso,imc}] (mais recente primeiro), grafico{labels,valores}|None, variacao (kg no período)
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'alunos' %}
+{% set pagina_titulo = 'Avaliações de ' ~ aluno.nome.split()[0] %}
+{% set m_titulo = 'Avaliações' %}
+{% set m_sub = aluno.nome %}
+{% set pagina_sub = aluno.nome %}
+{% set m_voltar = url_for('alunos.detalhe', id=aluno.id) %}
+{% set corpo_classe = 'page--narrow' %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('alunos.lista') }}">Alunos</a>{{ icon('chevron-right', 14) }}<a href="{{ url_for('alunos.detalhe', id=aluno.id) }}">{{ aluno.nome }}</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Avaliações</span></nav>{% endblock %}
+{% block page_acoes %}<a class="btn btn-ghost" href="{{ url_for('avaliacoes.agendar', aluno=aluno.id) }}">{{ icon('calendar-plus', 18) }}Agendar nova avaliação</a><a class="btn btn-primary" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('clipboard', 18) }}Iniciar avaliação física</a>{% endblock %}
+{% block content %}
+{% if hist %}
+{% if grafico %}
+<section class="card card--pad" aria-labelledby="h-peso"><h2 class="ctitle" id="h-peso" style="font-size:17px">Peso em 2026</h2><div class="csub">{{ hist|length }} avaliações · {{ ('%.1f'|format(variacao))|replace('.', ',')|replace('-', '−') }} kg no período</div>
+  <div class="chart" style="margin-top:10px" data-chart="linha" data-json='{{ {"labels": grafico.labels, "valores": grafico.valores, "titulo": "Peso do aluno em cada avaliação", "unidade": "kg", "casas": 1, "altura": 190, "todosRotulos": true}|tojson|forceescape }}'></div></section>
+{% endif %}
+<section class="card card--pad" aria-labelledby="h-todas"><h2 class="ctitle" id="h-todas" style="font-size:17px">Todas as avaliações</h2>
+  <ul class="mlist" style="margin-top:6px">
+    {% for h in hist %}
+    <li><a class="mrow" href="{{ url_for('avaliacoes.resultado', id=h.id) }}"><span class="tile tone-blue">{{ icon('clipboard', 20) }}</span>
+      <span class="mrow__main"><span class="mrow__title" style="display:block">{{ h.data }}</span><span class="mrow__sub" style="display:block">{{ h.avaliador }}</span></span>
+      <span class="ta-r"><b class="num" style="display:block">{{ ('%.1f'|format(h.peso))|replace('.', ',') }} kg</b><span class="faint fs-12">IMC {{ ('%.1f'|format(h.imc))|replace('.', ',') }}</span></span></a></li>
+    {% endfor %}
+  </ul></section>
+<button type="button" class="btn btn-ghost btn-lg btn-block" data-toast="O PDF do histórico é gerado pelo backend.">{{ icon('download', 16) }}Exportar histórico em PDF</button>
+{% else %}
+<section class="card card--pad ta-c" style="padding:32px 20px"><span class="tile tone-slate" style="margin:0 auto 12px">{{ icon('clipboard', 22) }}</span><h2 class="ctitle">Ainda sem avaliações</h2><p class="muted" style="margin:6px 0 0">Agende a primeira para começar o acompanhamento de {{ aluno.nome.split()[0] }}.</p></section>
+{% endif %}
+<a class="btn btn-primary btn-lg btn-block m-only" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('clipboard', 18) }}Iniciar avaliação física</a>
+<a class="btn btn-ghost btn-lg btn-block m-only" href="{{ url_for('avaliacoes.agendar', aluno=aluno.id) }}">{{ icon('calendar-plus', 18) }}Agendar nova avaliação</a>
+{% endblock %}

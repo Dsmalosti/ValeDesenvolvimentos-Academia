@@ -1,0 +1,32 @@
+{#
+  GET /avaliacoes/<id> (avaliacoes.resultado)
+  Contexto: aluno, e{id,data,avaliador,peso,imc,nota,...}, anterior|None, linhas[{nome,antes,agora,delta,melhor,un}], dias|None, wa_url
+  "melhor" = a mudança foi na direção do objetivo (o backend decide; o front só pinta verde/vermelho).
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'avaliacoes' %}
+{% set pagina_titulo = 'Resultado' %}
+{% set m_sub = 'Reavaliação de ' ~ dias ~ ' dias' if dias else 'Primeira avaliação' %}
+{% set pagina_sub = m_sub %}
+{% set m_voltar = url_for('avaliacoes.aluno', id=aluno.id) %}
+{% set corpo_classe = 'page--narrow' %}
+{% macro n(v) %}{{ ('%.1f'|format(v))|replace('.', ',') }}{% endmacro %}
+{% block content %}
+<section class="card card--pad ta-c" aria-label="Avaliação registrada">
+  <span class="tile tone-green" style="width:56px;height:56px;border-radius:50%;margin:0 auto 10px">{{ icon('check', 28) }}</span>
+  <h2 class="ctitle" style="font-size:16px">Avaliação registrada</h2><div class="faint fs-13" style="margin-top:4px">{{ aluno.nome }} · {{ e.data }} · {{ e.avaliador }}</div>
+</section>
+{% if linhas %}
+<section class="card card--pad" aria-labelledby="h-mud"><h2 class="ctitle" id="h-mud">O que mudou em {{ dias }} dias</h2><div class="csub" style="margin-bottom:8px">Comparado com {{ anterior.data }}</div>
+  <table class="cmp"><thead><tr><th scope="col"><span class="visually-hidden">Medida</span></th><th scope="col">Antes</th><th scope="col"></th><th scope="col">Agora</th><th scope="col"><span class="visually-hidden">Variação</span></th></tr></thead>
+    <tbody>{% for l in linhas %}<tr><th scope="row">{{ l.nome }}</th><td class="faint">{{ n(l.antes) }}</td><td class="faint">{{ icon('chevron-right', 14) }}</td><td><b class="num">{{ n(l.agora) }}</b></td>
+      <td class="{{ 'tone-txt-teal' if l.melhor else 'tone-txt-red' }}"><b class="num">{{ '+' if l.delta > 0 }}{{ n(l.delta) }}</b></td></tr>{% endfor %}</tbody></table>
+</section>
+{% endif %}
+<section class="card card--pad" aria-labelledby="h-an"><h2 class="ctitle" id="h-an" style="margin-bottom:10px">Anotação do avaliador</h2>
+  <p class="msg__txt" style="margin:0;font-size:13.5px">{{ e.nota or 'Sem anotação.' }}</p></section>
+<div class="row-flex gap-2"><a class="btn btn-green grow" href="{{ wa_url }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Enviar</a><button type="button" class="btn btn-ghost grow" data-toast="O PDF da avaliação é gerado pelo backend.">{{ icon('download', 16) }}Exportar PDF</button></div>
+<a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) if aluno.id in (1, 2, 3) else url_for('treinos.biblioteca') }}">{{ icon('clipboard', 18) }}Ajustar a ficha de treino</a>
+<a class="btn btn-ghost btn-lg btn-block" href="{{ url_for('avaliacoes.agendar', aluno=aluno.id) }}">{{ icon('calendar', 18) }}Agendar a próxima</a>
+{% endblock %}
