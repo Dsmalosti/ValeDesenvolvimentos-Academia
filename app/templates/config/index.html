@@ -1,0 +1,232 @@
+{#
+  GET /configuracoes (config.index)  ?aba=academia|equipe|mensagens|cobranca|integracoes|metas  (metas: não aparece para o instrutor)
+  Celular sem ?aba: menu de seções (linhas com ícone). Com ?aba: o conteúdo da seção, com "voltar" para o menu.
+  Desktop: abas; sem ?aba abre "Academia".
+  Contexto: aba|None, abas[(chave,rótulo)], cfg{func{frequencia,inatividade,lembretes},inatividade_dias,horario{semana,sabado,domingo},mensagens[{tipo,nome,cor,texto}],equipe[{id,nome,email,papel}]}, papeis{chave:(tom,rótulo)}
+  Formulários: config.salvar · config.horario · config.mensagem · config.membro · config.funcionalidade · config.metas (todos POST + csrf_token)
+  Metas: contexto metas, metas_hoje, erros — ver config/_metas.html
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, avatar, dialog_head, seletor %}
+{% set nav_ativo = 'config' %}
+{% set hub = not aba %}
+{% set atual = aba or 'academia' %}
+{% set rotulo_aba = dict(abas)[atual] %}
+{% set pagina_titulo = 'Configurações' %}
+{% set pagina_sub = 'Dados da academia, equipe e mensagens automáticas' %}
+{% set m_titulo = 'Configurações' if hub else rotulo_aba %}
+{% set m_voltar = url_for('painel.index') if hub else url_for('config.index') %}
+{% set sem_tabbar = false %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">{% endmacro %}
+{% macro linha(icone, tom, titulo, sub, href=None, chip=None, chip_tom='green') %}
+<{{ 'a' if href else 'div' }} class="set-row"{% if href %} href="{{ href }}"{% endif %}>
+  <span class="tile tone-{{ tom }}">{{ icon(icone, 20) }}</span>
+  <span class="grow"><b class="set-row__t">{{ titulo }}</b><span class="set-row__s">{{ sub }}</span></span>
+  {% if chip %}<span class="chip chip--{{ chip_tom }} nowrap">{{ chip }}</span>{% elif href %}<span class="faint">{{ icon('chevron-right', 18) }}</span>{% endif %}
+</{{ 'a' if href else 'div' }}>
+{% endmacro %}
+{% macro func(chave, icone, tom, titulo, sub) %}
+<form method="post" action="{{ url_for('config.funcionalidade') }}" data-auto-submit class="set-row">
+  {{ csrf() }}<input type="hidden" name="chave" value="{{ chave }}"><input type="hidden" name="ligado" value="{{ '1' if cfg.func[chave] else '0' }}">
+  <span class="tile tone-{{ tom }}">{{ icon(icone, 20) }}</span>
+  <span class="grow"><b class="set-row__t" id="lb-f-{{ chave }}">{{ titulo }}</b><span class="set-row__s">{{ sub }}</span></span>
+  <label class="switch"><input type="checkbox" aria-labelledby="lb-f-{{ chave }}"{% if cfg.func[chave] %} checked{% endif %}><span class="switch__track"></span></label>
+</form>
+{% endmacro %}
+
+{% block page_acoes %}
+{% if atual == 'academia' %}<button class="btn btn-primary" type="submit" form="form-academia">{{ icon('check', 18) }}Salvar alterações</button>{% endif %}
+{% endblock %}
+
+{% block content %}
+{# ================= MENU (só celular, sem ?aba) ================= #}
+{% if hub %}
+<div class="m-only stack gap-3">
+  <a class="card card--pad set-marca" href="{{ url_for('config.index', aba='academia') }}">
+    <span class="set-logo">{{ icon('dumbbell', 26) }}</span>
+    <span class="grow"><b style="font-size:16px">Academia {{ academia.nome }}</b><span class="faint fs-13" style="display:block">{{ academia.cidade }}</span></span>
+    <span class="faint">{{ icon('chevron-right', 18) }}</span>
+  </a>
+  <section class="card card--pad" aria-labelledby="s1"><h2 class="ctitle" id="s1">Academia</h2>
+    {{ linha('home', 'blue', 'Dados e endereço', 'Nome, CNPJ, telefone e endereço', url_for('config.index', aba='academia')) }}
+    {{ linha('clock', 'slate', 'Horário de funcionamento', 'Seg a Sex ' ~ cfg.horario.semana|replace(' - ', '–') ~ ' · Sáb ' ~ cfg.horario.sabado|replace(' - ', '–'), url_for('config.index', aba='academia') ~ '#horario') }}
+    {{ linha('users', 'teal', 'Equipe', cfg.equipe|length ~ ' pessoas com acesso', url_for('config.index', aba='equipe')) }}
+  </section>
+  {% include '_digital_linha.html' %}
+  <section class="card card--pad" aria-labelledby="s2"><h2 class="ctitle" id="s2">Recebimento</h2>
+    {{ linha('bolt', 'teal', 'PIX automático', 'Conectado · o dinheiro cai direto na conta da academia' if academia.pix_ligado else 'Desligado · toda cobrança é confirmada pela recepção', url_for('config.recebimento'), 'Ligado' if academia.pix_ligado else 'Desligado', 'green' if academia.pix_ligado else 'slate') }}
+    {{ linha('card', 'blue', 'Maquininha', 'Confirmação manual pela recepção', url_for('config.recebimento'), 'Manual', 'yellow') }}
+    {{ linha('grid', 'slate', 'Planos', 'Modalidades e valores', url_for('planos.lista')) }}
+  </section>
+  <section class="card card--pad" aria-labelledby="s3"><h2 class="ctitle" id="s3">Funcionalidades</h2>
+    {{ func('frequencia', 'chart', 'blue', 'Serviço de check-in', 'Ligado = modelo Academia, com frequência. Desligado = modelo Personal, sem check-in') }}
+    {{ linha('user-x', 'slate', 'Inatividade automática', 'O aluno vira Inativo sozinho depois de ' ~ cfg.inatividade_dias ~ ' dias sem renovar a matrícula', url_for('config.index', aba='cobranca'), cfg.inatividade_dias ~ ' dias', 'slate') }}
+    {{ func('lembretes', 'bell', 'teal', 'Lembretes automáticos', 'Avaliação, vencimento e aniversário no WhatsApp') }}
+  </section>
+  {% if usuario.perfil != 'instrutor' %}
+  <section class="card card--pad" aria-labelledby="s5"><h2 class="ctitle" id="s5">Metas</h2>
+    {{ linha('target', 'yellow', 'Metas do painel', 'Alunos ativos, faturamento e retenção · linha tracejada dos gráficos', url_for('config.index', aba='metas')) }}
+  </section>
+  {% endif %}
+  <section class="card card--pad" aria-labelledby="s4"><h2 class="ctitle" id="s4">Mensagens</h2>
+    {{ linha('chat', 'teal', 'Modelos de WhatsApp', 'Cobrança, aniversário, ficha e avaliação', url_for('config.index', aba='mensagens')) }}
+  </section>
+  <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="btn btn-danger-ghost btn-block btn-lg" type="submit">{{ icon('logout', 18) }}Sair da conta</button></form>
+</div>
+{% endif %}
+
+{# ================= CONTEÚDO DAS ABAS (desktop sempre; celular só com ?aba) ================= #}
+<div class="stack gap-4{{ ' d-only' if hub }}">
+  <nav class="seg cfg-tabs d-only" aria-label="Seções das configurações">
+    {% for k, r in abas %}<a class="seg__btn" href="{{ url_for('config.index', aba=k) }}"{% if k == atual %} aria-current="true"{% endif %}>{{ r }}</a>{% endfor %}
+  </nav>
+
+  {% if atual == 'academia' %}
+  <div class="cfg-grid">
+    <div class="stack gap-4">
+      <section class="card card--pad" id="dados" aria-labelledby="h-dados">
+        <h2 class="ctitle" id="h-dados" style="font-size:16px">Dados da academia</h2><div class="csub" style="margin-bottom:14px">Aparece no recibo, no relatório e nas mensagens automáticas.</div>
+        <form method="post" action="{{ url_for('config.salvar') }}" id="form-academia" enctype="multipart/form-data" data-validate novalidate>
+          {{ csrf() }}
+          <div class="stack gap-3">
+            {{ campo('nome', 'Nome da academia', academia.nome, obrigatorio=True, autocomplete='organization') }}
+            <div class="cfg-2">{{ campo('cnpj', 'CNPJ', academia.cnpj, inputmode='numeric', placeholder='00.000.000/0001-00') }}{{ campo('telefone', 'Telefone / WhatsApp', academia.telefone, mask='telefone', inputmode='tel', tipo='tel') }}</div>
+            <div class="cfg-2">{{ campo('email', 'E-mail', academia.email, tipo='email', autocomplete='email') }}{{ campo('cidade', 'Cidade', academia.cidade) }}</div>
+            {{ campo('endereco', 'Endereço', academia.endereco) }}
+          </div>
+          <button class="btn btn-primary btn-block m-only" type="submit" style="margin-top:16px">{{ icon('check', 18) }}Salvar alterações</button>
+          <input class="visually-hidden" type="file" name="logo" accept="image/png,image/svg+xml,image/jpeg" data-foto tabindex="-1" id="f-logo" aria-label="Logo da academia">
+        </form>
+      </section>
+      <section class="card card--pad" aria-labelledby="h-msg1">
+        {{ self.bloco_mensagens() }}
+      </section>
+    </div>
+    <div class="stack gap-4">
+      {% set acesso_sfx = '-d' %}{% include '_digital_linha.html' %}
+      <section class="card card--pad" aria-labelledby="h-marca"><h2 class="ctitle" id="h-marca" style="font-size:16px;margin-bottom:14px">Marca</h2>
+        <div class="row-flex gap-4"><span class="set-logo set-logo--lg" data-foto-previa>{{ icon('dumbbell', 30) }}</span><div><b>Logo da academia</b><div class="faint fs-12">PNG ou SVG, fundo transparente</div></div></div>
+        <button type="button" class="btn btn-ghost btn-block" style="margin-top:14px" data-foto-abrir="galeria" data-alvo-foto="#f-logo">Trocar logo</button>
+      </section>
+      <section class="card card--pad" aria-labelledby="h-eq1">{{ self.bloco_equipe() }}</section>
+      <section class="card card--pad" id="horario" aria-labelledby="h-hor">
+        <div class="row-flex" style="justify-content:space-between"><h2 class="ctitle" id="h-hor" style="font-size:16px">Horário de funcionamento</h2><button type="button" class="fs-13 fw-7 btn-link" data-open="dlg-horario">Editar</button></div>
+        <dl class="hor-list"><div><dt>Segunda a sexta</dt><dd>{{ cfg.horario.semana }}</dd></div><div><dt>Sábado</dt><dd>{{ cfg.horario.sabado }}</dd></div><div><dt>Domingo</dt><dd class="{{ 'faint' if cfg.horario.domingo|lower == 'fechado' }}">{{ cfg.horario.domingo }}</dd></div></dl>
+      </section>
+    </div>
+  </div>
+
+  {% elif atual == 'equipe' %}
+  <section class="card card--pad cfg-narrow" aria-labelledby="h-eq1">{{ self.bloco_equipe() }}</section>
+
+  {% elif atual == 'mensagens' %}
+  <section class="card card--pad cfg-narrow" aria-labelledby="h-msg1">{{ self.bloco_mensagens() }}</section>
+
+  {% elif atual == 'cobranca' %}
+  <div class="cfg-narrow stack gap-3">
+    <section class="card card--pad" aria-labelledby="h-cob"><h2 class="ctitle" id="h-cob" style="font-size:16px">Cobrança e vencimento</h2><div class="csub" style="margin-bottom:6px">Regras que o sistema aplica sozinho.</div>
+      {{ func('lembretes', 'bell', 'teal', 'Lembretes automáticos', 'Avaliação, vencimento e aniversário no WhatsApp') }}
+      {{ func('frequencia', 'chart', 'blue', 'Serviço de check-in', 'Ligado = modelo Academia, com frequência. Desligado = modelo Personal, sem check-in') }}
+      <form method="post" action="{{ url_for('config.funcionalidade') }}" class="set-row" data-validate novalidate style="align-items:flex-end">
+        {{ csrf() }}<input type="hidden" name="chave" value="inatividade"><input type="hidden" name="ligado" value="{{ '1' if cfg.func.inatividade else '0' }}">
+        <span class="tile tone-slate">{{ icon('user-x', 20) }}</span>
+        <span class="grow"><b class="set-row__t">Inatividade automática</b><span class="set-row__s">O aluno vira Inativo sozinho depois de X dias sem renovar a matrícula.</span></span>
+        <div style="width:110px">{{ campo('dias', 'Dias', cfg.inatividade_dias, tipo='number', inputmode='numeric', extra='min="15" max="365"') }}</div>
+        <button class="btn btn-ghost btn-sm" type="submit">Salvar</button>
+      </form>
+    </section>
+    <a class="card card--pad set-marca" href="{{ url_for('config.recebimento') }}"><span class="tile tone-teal">{{ icon('bolt', 20) }}</span><span class="grow" style="min-width:0"><b class="linha1">Recebimento (PIX, maquininha, dinheiro)</b><span class="faint fs-13" style="display:block">Como a academia recebe e de onde vem cada confirmação</span></span><span class="faint">{{ icon('chevron-right', 18) }}</span></a>
+  </div>
+
+  {% elif atual == 'metas' %}
+  <div class="cfg-narrow">{% include 'config/_metas.html' %}</div>
+
+  {% else %}
+  <div class="cfg-narrow stack gap-3">
+    <section class="card card--pad" aria-labelledby="h-int"><h2 class="ctitle" id="h-int" style="font-size:16px">Integrações</h2><div class="csub" style="margin-bottom:6px">Serviços conectados à academia.</div>
+      {{ linha('bolt', 'teal', 'PIX automático', 'Aviso de pagamento (webhook) ' ~ ('escutando' if academia.pix_ligado else 'desligado'), url_for('config.recebimento'), 'Conectado' if academia.pix_ligado else 'Desligado', 'green' if academia.pix_ligado else 'slate') }}
+      {{ linha('chat', 'teal', 'WhatsApp', 'Cobrança, aniversário, ficha e avaliação abrem no WhatsApp do celular da recepção', None, 'Ativo', 'green') }}
+      {{ linha('card', 'blue', 'Maquininha', 'Sem integração: a recepção confirma na mão', None, 'Manual', 'yellow') }}
+    </section>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{# ---- blocos reaproveitados (mesma aba Academia e abas próprias) ---- #}
+{% block bloco_equipe %}
+<div class="row-flex" style="justify-content:space-between;align-items:flex-start"><div><h2 class="ctitle" id="h-eq1" style="font-size:16px">Equipe</h2><div class="csub">Cada papel enxerga uma parte diferente do sistema.</div></div>
+  <button type="button" class="fs-13 fw-7 btn-link" data-open="dlg-convidar">Convidar</button></div>
+<ul class="eq-list">
+  {% for m in cfg.equipe %}{% set p = papeis[m.papel] %}
+  <li>{{ avatar(m.nome, 'lg') }}<div class="grow"><b class="truncate" style="display:block">{{ m.nome }}</b><span class="faint fs-12 truncate" style="display:block">{% if m.convite %}Convite enviado · esperando criar a senha{% else %}{{ m.email }}{% endif %}</span></div>
+    {% if m.convite %}<button type="button" class="iconbtn" data-copiar="{{ m.convite }}" aria-label="Copiar link do convite de {{ m.email }}">{{ icon('link', 18) }}</button>{% endif %}
+    <span class="chip chip--{{ p[0] }}">{{ p[1] }}</span>
+    {% if m.papel != 'proprietario' %}<button type="button" class="iconbtn" data-open="dlg-membro-{{ m.id }}" aria-label="Gerenciar {{ m.nome }}">{{ icon('more', 18) }}</button>{% else %}<span style="width:40px"></span>{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+
+{% block bloco_mensagens %}
+<div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px"><div><h2 class="ctitle" id="h-msg1" style="font-size:16px">Mensagens automáticas</h2><div class="csub">O que o sistema sugere quando você aperta o botão de WhatsApp.</div></div>
+  <span class="chip chip--blue d-only nowrap">[nome] vira o nome do aluno</span></div>
+<div class="msgs">
+  {% for m in cfg.mensagens %}
+  <div class="msg"><div class="row-flex" style="justify-content:space-between"><b class="row-flex gap-2"><i class="mdot mdot--{{ m.cor }}"></i>{{ m.nome }}</b><button type="button" class="fs-13 fw-7 btn-link" data-open="dlg-msg-{{ m.tipo }}">Editar</button></div>
+    <p class="msg__txt">{{ m.texto }}</p></div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block dialogs %}
+{% if atual in ('academia', 'mensagens') %}
+{% for m in cfg.mensagens %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-msg-{{ m.tipo }}" aria-label="Editar mensagem {{ m.nome }}">
+  {{ dialog_head(m.nome, 'Use [nome], [data], [valor], [academia], [plano] e [dias]', 'chat', 'teal') }}
+  <form method="post" action="{{ url_for('config.mensagem') }}" data-validate novalidate>
+    {{ csrf() }}<input type="hidden" name="tipo" value="{{ m.tipo }}">
+    <div class="vt-dialog__body"><div class="field-group"><label class="label" for="f-texto-{{ m.tipo }}">Texto da mensagem</label><textarea class="input" id="f-texto-{{ m.tipo }}" name="texto" rows="5" maxlength="500" required>{{ m.texto }}</textarea></div></div>
+    <div class="vt-dialog__foot"><button class="btn btn-primary" type="submit">Salvar mensagem</button></div>
+  </form>
+</dialog>
+{% endfor %}
+{% endif %}
+{% if atual in ('academia', 'equipe') %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-convidar" aria-label="Convidar para a equipe">
+  {{ dialog_head('Convidar para a equipe', 'A pessoa recebe um link por e-mail (vale 7 dias) para criar a própria senha', 'user-plus', 'blue') }}
+  <form method="post" action="{{ url_for('config.membro') }}" data-validate novalidate>
+    {{ csrf() }}<input type="hidden" name="acao" value="convidar">
+    <div class="vt-dialog__body">
+      {{ campo('email', 'E-mail', '', tipo='email', obrigatorio=True, placeholder='pessoa@email.com', autocomplete='off') }}
+      {{ seletor('papel', 'Papel', [('recepcao', 'Recepção'), ('instrutor', 'Instrutor')], 'recepcao', vazio=None) }}
+    </div>
+    <div class="vt-dialog__foot"><button class="btn btn-primary" type="submit">Enviar convite</button></div>
+  </form>
+</dialog>
+{% for m in cfg.equipe if m.papel != 'proprietario' %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-membro-{{ m.id }}" aria-label="Gerenciar {{ m.nome }}">
+  {{ dialog_head(m.nome, m.email, 'user', 'blue') }}
+  <form method="post" action="{{ url_for('config.membro') }}">
+    {{ csrf() }}<input type="hidden" name="id" value="{{ m.id }}">
+    <div class="vt-dialog__body">{{ seletor('papel', 'Papel', [('recepcao', 'Recepção'), ('instrutor', 'Instrutor')], m.papel, vazio=None) }}</div>
+    <div class="vt-dialog__foot">
+      <button class="btn btn-danger-ghost" type="submit" name="acao" value="remover">{{ icon('trash', 16) }}Remover da equipe</button>
+      <button class="btn btn-primary" type="submit" name="acao" value="papel">Salvar papel</button>
+    </div>
+  </form>
+</dialog>
+{% endfor %}
+{% endif %}
+{% if atual == 'academia' %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-horario" aria-label="Horário de funcionamento">
+  {{ dialog_head('Horário de funcionamento', 'Escreva como aparece para o aluno. Ex.: 06h - 22h ou Fechado', 'clock', 'slate') }}
+  <form method="post" action="{{ url_for('config.horario') }}" data-validate novalidate>
+    {{ csrf() }}
+    <div class="vt-dialog__body">{{ campo('semana', 'Segunda a sexta', cfg.horario.semana, obrigatorio=True) }}{{ campo('sabado', 'Sábado', cfg.horario.sabado, obrigatorio=True) }}{{ campo('domingo', 'Domingo', cfg.horario.domingo, obrigatorio=True) }}</div>
+    <div class="vt-dialog__foot"><button class="btn btn-primary" type="submit">Salvar horário</button></div>
+  </form>
+</dialog>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,42 @@
+{#
+  Configurações > Metas (academia e Personal). Incluído em config/index.html e personal/config.html com ?aba=metas.
+  POST config.metas — campos (name == chave da meta): alunos_ativos (int), faturamento (R$), retencao (% de 1 a 100)
+  Contexto: metas {alunos_ativos, faturamento, retencao}, metas_hoje {alunos_ativos, faturamento, retencao} (valor atual de cada métrica), erros{}
+  Onde cada meta aparece (o backend usa a mesma chave):
+    alunos_ativos -> linha amarela do gráfico "Alunos ativos por mês" (painel)
+    faturamento   -> linha do gráfico de Receita (Administrativo/Relatórios) + "% da meta" no card de Faturamento do painel
+    retencao      -> linha do gráfico "Quanto tempo o aluno fica" (Administrativo)
+#}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import brl %}
+{% set erros = erros or {} %}
+{% macro pct(atual, meta) %}{{ ((atual / meta * 100)|round|int) if meta else 0 }}{% endmacro %}
+<form method="post" action="{{ url_for('config.metas') }}" class="stack gap-3" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <section class="card card--pad stack gap-4" aria-labelledby="h-metas">
+    <div><h2 class="ctitle" id="h-metas" style="font-size:16px">Metas</h2><div class="csub">Cada meta vira a linha tracejada do gráfico onde ela aparece.</div></div>
+
+    <div class="field-group">
+      <label class="label" for="f-alunos_ativos">Alunos ativos</label>
+      <div class="field-icon">{{ icon('users', 18) }}<input class="input{{ ' is-invalid' if erros.alunos_ativos }}" id="f-alunos_ativos" name="alunos_ativos" type="number" min="1" max="100000" inputmode="numeric" value="{{ metas.alunos_ativos }}" required data-msg-required="Informe a meta de alunos ativos."></div>
+      {% if erros.alunos_ativos %}<div class="field-error" data-server>{{ erros.alunos_ativos }}</div>
+      {% else %}<div class="field-hint">Hoje: {{ metas_hoje.alunos_ativos }} alunos · {{ pct(metas_hoje.alunos_ativos, metas.alunos_ativos) }}% da meta. Aparece no gráfico "Alunos ativos por mês" do painel.</div>{% endif %}
+    </div>
+
+    <div class="field-group">
+      <label class="label" for="f-faturamento">Faturamento do mês</label>
+      <div class="input-affix"><span class="affix">R$</span><input class="input{{ ' is-invalid' if erros.faturamento }}" id="f-faturamento" name="faturamento" data-mask="dinheiro" inputmode="numeric" value="{{ brl(metas.faturamento)|replace('R$ ', '') if metas.faturamento else '' }}" placeholder="0,00" required data-msg-required="Informe a meta de faturamento."></div>
+      {% if erros.faturamento %}<div class="field-error" data-server>{{ erros.faturamento }}</div>
+      {% else %}<div class="field-hint">Hoje: {{ brl(metas_hoje.faturamento, 0) }} · {{ pct(metas_hoje.faturamento, metas.faturamento) }}% da meta. Aparece no gráfico de Receita do Administrativo e no card de Faturamento do painel.</div>{% endif %}
+    </div>
+
+    <div class="field-group">
+      <label class="label" for="f-retencao">Retenção mínima</label>
+      <div class="input-affix"><span class="affix">%</span><input class="input{{ ' is-invalid' if erros.retencao }}" id="f-retencao" name="retencao" type="number" min="1" max="100" inputmode="numeric" value="{{ metas.retencao }}" required data-msg-required="Informe a meta de retenção."></div>
+      {% if erros.retencao %}<div class="field-error" data-server>{{ erros.retencao }}</div>
+      {% else %}<div class="field-hint">Hoje: {{ metas_hoje.retencao }}% dos alunos continuam depois de 90 dias. Aparece no gráfico "Quanto tempo o aluno fica" do Administrativo.</div>{% endif %}
+    </div>
+  </section>
+  <div class="note note--blue">{{ icon('target', 20) }}<span><strong>Meta é o que você quer alcançar</strong>Ela não muda nenhum número do sistema: só desenha a linha de referência e mostra quanto falta.</span></div>
+  <button class="btn btn-primary btn-lg btn-block" type="submit" data-carregando>{{ icon('check', 18) }}Salvar metas</button>
+</form>
