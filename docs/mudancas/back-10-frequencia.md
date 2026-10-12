@@ -35,7 +35,7 @@ O botão **Bloquear** do perfil, que só mostrava um aviso, passou a funcionar: 
 | `app/cli.py` | Conta nova do modelo "academia" nasce com o check-in ligado. |
 | `app/blueprints/pendentes.py`, `app/__init__.py` | `frequencia.index` saiu das telas "em construção"; o blueprint novo é registrado. |
 | `app/templates/alunos/detalhe.html` | **1 ajuste marcado** (ver "Sem dado", abaixo). É o único template alterado. |
-| `tests/test_frequencia.py` | **Novo.** 24 testes. |
+| `tests/test_frequencia.py` | **Novo.** 22 testes. |
 | `tests/conftest.py` | Ajudantes `criar_entrada` e `ligar_checkin`. |
 | `tests/navegador/frequencia_navegador.py` | **Novo.** Teste no navegador. |
 | `tests/navegador/_base.py` | Ajudantes comuns dos testes de navegador (cenários, login, checagens finais). |
@@ -114,7 +114,7 @@ A coluna `contas.checkin_ativo` existe desde a `back-06`, sempre desligada, e a 
 
 ## Como foi testado
 
-- **`pytest`: 236 de 236** (24 novos em `tests/test_frequencia.py`, contando os casos de cada teste): entrada em um toque; toque repetido; 5 entradas recusadas; pendência não barra; instrutor registra e não exporta; números da tela (entradas, na academia, pico, barras por hora); dia sem entrada não inventa pico; busca ao vivo só da própria academia; sugestões pelo horário; CSV só do dia e só da academia; check-in desligado; "sem dado" no painel e no perfil; ausente só quem tem entrada e sumiu (15 dias exatos ainda não conta; inativo não conta); assiduidade; bloquear e liberar; busca do popup; aluno de outra academia (404); não excluir aluno com entrada.
+- **`pytest`: 236 de 236** (22 novos em `tests/test_frequencia.py`, contando os casos de cada teste): entrada em um toque; toque repetido; 5 entradas recusadas; pendência não barra; instrutor registra e não exporta; números da tela (entradas, na academia, pico, barras por hora); dia sem entrada não inventa pico; busca ao vivo só da própria academia; sugestões pelo horário; CSV só do dia e só da academia; check-in desligado; "sem dado" no painel e no perfil; ausente só quem tem entrada e sumiu (15 dias exatos ainda não conta; inativo não conta); assiduidade; bloquear e liberar; busca do popup; aluno de outra academia (404); não excluir aluno com entrada.
 - **Migration num Postgres temporário:** 14 checagens, com uma conta academia e uma personal. Sobe; o aluno antigo fica liberado; o check-in liga só na academia; `flask db check` sem diferença; desce; o banco volta a bater com o modelo anterior; sobe de novo.
 - **Navegador (Playwright):** frequência **31 de 31**; cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60. Celular de 390 px com toque (claro) e computador de 1440 px (escuro). Fotos abertas e conferidas.
 - **Varredura de todas as rotas GET por papel**, comparada com a `front-06-frequencia`: mudaram só as rotas desta branch.
