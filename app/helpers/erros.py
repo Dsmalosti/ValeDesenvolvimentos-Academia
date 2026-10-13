@@ -21,6 +21,15 @@ def registrar_paginas_de_erro(app):
     def nao_encontrado(erro):
         return render_template('errors/404.html'), 404
 
+    # [back-18-seguranca] duas páginas novas (antes estes dois erros nem aconteciam: não havia os limites).
+    @app.errorhandler(429)
+    def muitas_tentativas(erro):
+        return render_template('errors/429.html'), 429
+
+    @app.errorhandler(413)
+    def envio_grande_demais(erro):
+        return render_template('errors/413.html'), 413
+
     @app.errorhandler(500)
     def erro_interno(erro):
         # desfaz o que estava pela metade no banco, para a próxima requisição começar limpa

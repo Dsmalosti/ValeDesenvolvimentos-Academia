@@ -27,9 +27,8 @@ def entrar(pagina, base, email, senha, celular):
     """Faz o login pela tela e fecha o popup de avisos do painel, se ele abrir."""
     acionar = pagina.tap if celular else pagina.click
     pagina.goto(base + "/")
-    pagina.wait_for_selector("#dlg-perfil[open]", timeout=5000)
-    acionar('#dlg-perfil [data-valor="recepcao"]')
-    pagina.wait_for_timeout(400)
+    # [back-18-seguranca] antes: esperava o popup "Como você vai entrar?" e escolhia "Recepção". O popup saiu do login.
+    pagina.wait_for_selector("#f-identificador", timeout=5000)
     pagina.fill("#f-identificador", email)
     pagina.fill("#f-senha", senha)
     acionar("button[type=submit]")

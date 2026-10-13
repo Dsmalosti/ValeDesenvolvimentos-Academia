@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime
 
 from sqlalchemy import event
@@ -8,7 +9,22 @@ from flask_login import UserMixin
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(user_id)
+    """
+    Quem é o usuário desta sessão. O que fica guardado no cookie é "id|marca da senha" (ver User.get_id).
+
+    [back-18-seguranca] antes: `User.query.get(user_id)`, com o id puro. Isso tinha dois buracos:
+      - trocar a senha não derrubava quem já estava logado em outro aparelho (quem roubou a senha continuava dentro);
+      - quem foi removido da equipe (`ativo` falso) continuava usando o sistema até sair por conta própria.
+    Agora a sessão só vale se a marca bater com a senha ATUAL e o usuário estiver ativo. Sessão antiga (id puro)
+    não tem a marca e deixa de valer: todo mundo entra de novo uma vez, depois que esta branch for ao ar.
+    """
+    identificador, _, marca = str(user_id).partition('|')
+    if not identificador.isdigit():
+        return None
+    usuario = db.session.get(User, int(identificador))
+    if usuario is None or not usuario.ativo or marca != usuario.marca_da_senha():
+        return None
+    return usuario
 
 # [back-06-contas-e-papeis] Papéis de quem usa o sistema dentro de uma conta (academia).
 PAPEL_PROPRIETARIO, PAPEL_RECEPCAO, PAPEL_INSTRUTOR = 'proprietario', 'recepcao', 'instrutor'
@@ -73,6 +89,15 @@ class User(db.Model, UserMixin):
     # [back-06-contas-e-papeis] a academia a que o usuário pertence, e o que ele pode fazer nela
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)
     papel = db.Column(db.String(20), nullable=False, default=PAPEL_PROPRIETARIO, server_default=PAPEL_PROPRIETARIO)
+
+    # [back-18-seguranca] ver load_user, lá em cima.
+    def marca_da_senha(self):
+        """Um pedaço do resumo (sha256) da senha guardada. Muda quando a senha muda; não revela a senha nem o hash dela."""
+        return hashlib.sha256((self.senha or '').encode('utf-8')).hexdigest()[:16]
+
+    def get_id(self):
+        """O que o Flask-Login guarda na sessão: o id e a marca da senha daquele momento."""
+        return f'{self.id}|{self.marca_da_senha()}'
 
     conta = db.relationship('Conta', backref='usuarios', lazy=True)
 

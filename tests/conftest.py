@@ -92,8 +92,11 @@ def conta_de(usuario_id):
 
 def logar(cliente, usuario_id):
     """Marca o cliente de teste como logado, sem passar pela tela de login."""
+    # [back-18-seguranca] a sessão guarda "id|marca da senha" (User.get_id); com o id puro o sistema não reconhece mais
+    with _APP.app_context():
+        identificacao = db.session.get(User, usuario_id).get_id()
     with cliente.session_transaction() as sessao:
-        sessao["_user_id"] = str(usuario_id)
+        sessao["_user_id"] = identificacao
         sessao["_fresh"] = True
 
 

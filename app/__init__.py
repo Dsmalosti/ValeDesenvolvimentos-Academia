@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from config import config_map
-from app.extensions import admin, database, security
+from app.extensions import admin, database, protecao, security
 
 # Carrega o .env
 dotenv_path = Path(__file__).resolve().parent.parent / ".env"
@@ -45,6 +45,7 @@ def create_app():
     database.init_app(app)
     admin.init_app(app)
     security.init_app(app)
+    protecao.init_app(app)      # [back-18-seguranca] limite de tentativas e cabeçalhos de segurança
 
     # Blueprints
     from app.routes import main_blueprint

@@ -104,9 +104,7 @@ with sync_playwright() as p:
 
         # --- entra e fecha o popup de avisos do painel ---
         pg.goto(BASE + "/")
-        pg.wait_for_selector("#dlg-perfil[open]", timeout=5000)
-        acionar('#dlg-perfil [data-valor="recepcao"]')
-        pg.wait_for_timeout(400)
+        pg.wait_for_selector("#f-identificador", timeout=5000)      # [back-18-seguranca] antes: esperava e fechava o popup de perfil, que saiu do login
         pg.fill("#f-identificador", EMAIL)
         pg.fill("#f-senha", SENHA)
         acionar("button[type=submit]")

@@ -2,6 +2,7 @@ from app.extensions.database import db
 from app.extensions.security import bcrypt
 from flask import Blueprint,render_template, url_for, request, redirect, flash, abort
 from flask_login import login_user, logout_user, current_user, login_required
+from app.extensions.protecao import limiter  # [back-18-seguranca]
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, conta_id, da_conta, papel_requerido
 from app.blueprints.instrutores.form import UserForm, LoginForm
 from app.models import User, Aluno
@@ -90,6 +91,7 @@ def excluirInstrutor(instrutor_id):
 
 # Rota para logar
 @instrutores_blueprint.route('/login/', methods=['GET', 'POST'])
+@limiter.limit('10 per minute; 40 per hour', methods=['POST'])   # [back-18-seguranca] a tela antiga de login não pode ser o atalho de quem adivinha senha
 def login():
     form = LoginForm()
 

@@ -91,34 +91,17 @@ with sync_playwright() as p:
         pg.on("response", lambda r: r.status >= 400 and falhas_rede.append(f"{r.status} {r.url}"))
 
         # chega pedindo uma página protegida, como um usuário de verdade
-        pg.goto(BASE + "/planos/listar/")
-        pg.wait_for_selector("#dlg-perfil[open]", timeout=4000)
-        checa(f"[{nome}] sem login cai na tela nova com o popup de perfil", "/login" in pg.url and pg.is_visible("#dlg-perfil"))
-        checa(f"[{nome}] correção do iPhone carregada e a página de trás não rola com popup aberto",
-              pg.evaluate("getComputedStyle(document.documentElement).overflow") == "hidden"
-              and pg.evaluate("!!document.querySelector('script[src*=\"ajustes-iphone.js\"]')"))
-        pg.keyboard.press("Escape")
-        pg.wait_for_timeout(300)
-        checa(f"[{nome}] popup obrigatório não fecha com Esc antes de escolher", pg.locator("#dlg-perfil[open]").count() == 1,
-              "fechou com Esc logo ao abrir (sem nenhum toque antes)")
-        if pg.locator("#dlg-perfil[open]").count() == 0:
-            pg.reload()
-            pg.wait_for_selector("#dlg-perfil[open]", timeout=4000)
-
-        acionar('#dlg-perfil [data-valor="recepcao"]')
-        pg.wait_for_timeout(500)
-        checa(f"[{nome}] escolher perfil fecha o popup", pg.locator("#dlg-perfil[open]").count() == 0)
-        checa(f"[{nome}] chip mostra Recepção e o campo escondido recebe o perfil",
-              pg.inner_text("[data-perfil-nome]") == "Recepção" and pg.input_value("#h-perfil") == "recepcao")
-        acionar('[data-perfil-chip] [data-open="dlg-perfil"]')
-        try:   # espera o popup abrir de verdade; com tempo fixo o teste falhava de vez em quando
-            pg.wait_for_selector("#dlg-perfil[open]", timeout=3000)
-        except Exception:
-            pass
-        checa(f'[{nome}] "Trocar" reabre o popup', pg.locator("#dlg-perfil[open]").count() == 1)
-        acionar('#dlg-perfil [data-valor="instrutor"]')
-        pg.wait_for_timeout(500)
-        checa(f"[{nome}] trocar perfil atualiza o chip", pg.inner_text("[data-perfil-nome]") == "Instrutor")
+        chegada = pg.goto(BASE + "/planos/listar/")
+        pg.wait_for_selector("#f-identificador", timeout=4000)
+        # [back-18-seguranca] antes: aqui abria o popup obrigatório "Como você vai entrar?" e o teste conferia o popup
+        # (não fechar com Esc, escolher, trocar). O popup saiu: o papel vem do banco. Agora o teste confere que ele não existe.
+        checa(f"[{nome}] sem login cai na tela nova, direto no formulário (sem popup de perfil)", "/login" in pg.url
+              and pg.locator("#dlg-perfil").count() == 0 and pg.locator("dialog[open]").count() == 0 and pg.is_visible("#f-identificador"))
+        checa(f"[{nome}] correção do iPhone carregada", pg.evaluate("!!document.querySelector('script[src*=\"ajustes-iphone.js\"]')"))
+        checa(f"[{nome}] sem etiqueta 'Entrando como' e sem botão de digital", pg.locator("[data-perfil-chip]").count() == 0
+              and pg.locator("[data-digital-entrar]").count() == 0)
+        checa(f"[{nome}] o servidor manda a regra de conteúdo (CSP) e a página funciona com ela",
+              "default-src 'self'" in (chegada.headers.get("content-security-policy") or ""))
 
         acionar("button[type=submit]")
         pg.wait_for_timeout(400)
@@ -133,12 +116,14 @@ with sync_playwright() as p:
 
         pg.fill("#f-identificador", "Ana@ValeTec.com")
         pg.fill("#f-senha", "senha-errada")
-        acionar("button[type=submit]")
-        pg.wait_for_load_state("networkidle")
-        pg.wait_for_timeout(800)
-        checa(f"[{nome}] senha errada: aviso vermelho, e-mail mantido, popup não reabre",
+        # [back-18-seguranca] antes: tocava e esperava a rede ficar parada, o que às vezes "terminava" antes de o envio
+        # começar (com a máquina ocupada). Agora espera a página nova chegar de verdade.
+        with pg.expect_navigation(wait_until="load", timeout=15000):
+            acionar("button[type=submit]")
+        pg.wait_for_timeout(500)
+        checa(f"[{nome}] senha errada: aviso vermelho, e-mail mantido, nenhum popup",
               pg.is_visible(".note--red") and pg.input_value("#f-identificador") == "Ana@ValeTec.com"
-              and pg.locator("#dlg-perfil[open]").count() == 0)
+              and pg.locator("dialog[open]").count() == 0)
         larg = pg.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")
         checa(f"[{nome}] sem rolagem lateral", larg[0] <= larg[1], larg)
         alvos = pg.evaluate("""[...document.querySelectorAll('main a, main button')].filter(e => e.offsetParent)
@@ -165,11 +150,10 @@ with sync_playwright() as p:
     ctx = nav.new_context(viewport={"width": 1440, "height": 900})
     pg = ctx.new_page()
     pg.goto(BASE + "/login")
-    pg.wait_for_selector("#dlg-perfil[open]")
+    pg.wait_for_selector("#f-identificador")
+    # [back-18-seguranca] antes: o foco ficava preso no popup de perfil. Sem o popup, o Tab já anda pelo formulário.
     pg.keyboard.press("Tab")
-    checa("[teclado] foco fica preso dentro do popup", pg.evaluate('document.activeElement.closest("#dlg-perfil") !== null'))
-    pg.keyboard.press("Enter")
-    pg.wait_for_timeout(500)
+    checa("[teclado] o Tab entra direto no formulário", pg.evaluate('document.activeElement.closest("form") !== null'))
     pg.fill("#f-identificador", EMAIL_ATIVO)
     pg.fill("#f-senha", SENHA)
     pg.press("#f-senha", "Enter")

@@ -16,6 +16,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 
 from app.services.auth_service import AuthService
 from app.exceptions import BusinessError
+from app.extensions.protecao import limiter  # [back-18-seguranca] limite de tentativas nas telas públicas
 from app.helpers.email import email_configurado  # [back-13-equipe]
 from app.services import acesso_service as acesso  # [back-13-equipe]
 
@@ -42,7 +43,23 @@ def _destino_seguro(proximo):
     return proximo
 
 
+# [back-18-seguranca] Limites de tentativa das telas públicas (antes não havia nenhum). Só o envio (POST) conta;
+# abrir a tela é livre. A chave é o IP de quem chama. Passou do limite: resposta 429 (helpers/erros.py).
+LIMITE_DO_LOGIN = '10 per minute; 40 per hour'           # adivinhar senha
+LIMITE_POR_CONTA = '10 per 15 minutes'                   # ... e o mesmo e-mail, venha de onde vier
+LIMITE_DE_CONTAS_NOVAS = '5 per hour; 20 per day'        # criar contas em série
+LIMITE_DE_PEDIDOS_DE_SENHA = '5 per hour'                # pedir troca de senha sem parar
+LIMITE_DOS_LINKS = '20 per hour'                         # tentar códigos de convite ou de troca de senha
+
+
+def _email_da_tentativa():
+    """A segunda chave do limite do login: o e-mail digitado (sem ele, o IP)."""
+    return 'login:' + ((request.form.get('identificador') or '').strip().lower() or request.remote_addr or '')
+
+
 @auth_blueprint.route('/login', methods=['GET', 'POST'])
+@limiter.limit(LIMITE_DO_LOGIN, methods=['POST'])
+@limiter.limit(LIMITE_POR_CONTA, methods=['POST'], key_func=_email_da_tentativa)
 def login():
     # Quem já está logado não precisa ver a tela de login.
     if current_user.is_authenticated:
@@ -63,7 +80,7 @@ def login():
             # Volta para a tela com o aviso vermelho, o e-mail preenchido e o perfil
             # escolhido (assim o popup não abre de novo).
             return render_template('auth/login.html', erro=mensagem,
-                                   identificador=identificador, perfil=perfil)
+                                   identificador=identificador, perfil=perfil, escolher_perfil=False)
 
         if not identificador or not senha:
             return tela_com_erro('Preencha o e-mail e a senha.')
@@ -80,6 +97,7 @@ def login():
         # Sessão nova a cada login: impede "session fixation" (alguém que plantou um
         # cookie de sessão antes do login não herda a sessão logada).
         session.clear()
+        session.permanent = True        # [back-18-seguranca] a sessão passa a ter prazo (PERMANENT_SESSION_LIFETIME, 12 horas sem uso)
         login_user(usuario, remember=lembrar)
         # [back-04-painel] antes: 'main.homepage' (tela inicial antiga)
         return redirect(proximo or url_for('painel.index'))
@@ -93,7 +111,9 @@ def login():
         session[_CHAVE_PROXIMO] = proximo
     else:
         session.pop(_CHAVE_PROXIMO, None)
-    return render_template('auth/login.html')
+    # [back-18-seguranca] `escolher_perfil=False`: o popup "Como você vai entrar?" sai. O papel vem do banco desde a
+    # back-06; o popup era só para o front de exemplo. Antes: o popup abria sempre.
+    return render_template('auth/login.html', escolher_perfil=False)
 
 
 @auth_blueprint.route('/sair', methods=['POST'])
@@ -122,10 +142,12 @@ def logout():
 def _entrar(usuario):
     """Sessão nova e login, como na tela de entrar (impede herdar uma sessão plantada antes)."""
     session.clear()
+    session.permanent = True            # [back-18-seguranca] sessão com prazo, como no login
     login_user(usuario)
 
 
 @auth_blueprint.route('/criar-conta', methods=['GET', 'POST'])
+@limiter.limit(LIMITE_DE_CONTAS_NOVAS, methods=['POST'])
 def criar_conta():
     if current_user.is_authenticated:
         return redirect(url_for('painel.index'))
@@ -140,6 +162,7 @@ def criar_conta():
 
 
 @auth_blueprint.route('/convite/<token>', methods=['GET', 'POST'])
+@limiter.limit(LIMITE_DOS_LINKS)
 def convite(token):
     convite = acesso.convite_do_link(token)
     if convite is None:
@@ -165,6 +188,7 @@ def convite(token):
 
 
 @auth_blueprint.route('/esqueci-senha', methods=['GET', 'POST'])
+@limiter.limit(LIMITE_DE_PEDIDOS_DE_SENHA, methods=['POST'])
 def esqueci_senha():
     if request.method == 'POST':
         email = (request.form.get('email') or '').strip()
@@ -176,6 +200,7 @@ def esqueci_senha():
 
 
 @auth_blueprint.route('/nova-senha/<token>', methods=['GET', 'POST'])
+@limiter.limit(LIMITE_DOS_LINKS)
 def nova_senha(token):
     pedido = acesso.pedido_de_troca_do_link(token)
     if pedido is None:
