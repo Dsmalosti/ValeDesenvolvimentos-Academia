@@ -123,13 +123,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-06-frequencia
 
-- **Sai de:** `back-09-cobranca` · **PR:** a abrir → `back-09-cobranca` · **Data:** 12/10/2026
+- **Sai de:** `back-09-cobranca` · **PR:** [#25](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/25) → `back-09-cobranca` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `frequencia/index.html`, `frequencia/_sugestoes.html` e `alunos/_linhas_acesso.html`.
 - **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
 
 ## back-10-frequencia
 
-- **Sai de:** `front-06-frequencia` · **PR:** a abrir → `front-06-frequencia` · **Data:** 12/10/2026
+- **Sai de:** `front-06-frequencia` · **PR:** [#26](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/26) → `front-06-frequencia` · **Data:** 12/10/2026
 - **O que mudou:** check-in em um toque (busca ao vivo por nome ou CPF), quem está na academia agora, entradas por hora, planilha do dia; card "Ausentes há mais de 15 dias" e alunos em risco por frequência no painel; assiduidade no perfil; bloquear e liberar acesso (coluna `alunos.acesso_liberado`). Quem não tem entrada registrada é "sem dado", nunca "0".
 - **Migration:** `b10e6f7a8b90_frequencias_e_acesso.py`: cria `frequencias`, acrescenta `alunos.acesso_liberado` e liga o check-in nas contas do modelo academia. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 236 de 236 (22 novos em `tests/test_frequencia.py`); migration num Postgres temporário, 14 checagens; navegador: frequência 31 de 31, cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
@@ -138,13 +138,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-07-relatorios
 
-- **Sai de:** `back-10-frequencia` · **PR:** a abrir → `back-10-frequencia` · **Data:** 12/10/2026
+- **Sai de:** `back-10-frequencia` · **PR:** [#27](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/27) → `back-10-frequencia` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `relatorios/admin.html` e `relatorios/index.html`.
 - **Testes:** os 2 arquivos conferidos byte a byte com o Drive.
 
 ## back-11-relatorios
 
-- **Sai de:** `front-07-relatorios` · **PR:** a abrir → `front-07-relatorios` · **Data:** 12/10/2026
+- **Sai de:** `front-07-relatorios` · **PR:** [#28](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/28) → `front-07-relatorios` · **Data:** 12/10/2026
 - **O que mudou:** o menu "Administrativo" mostra faturamento por forma, receita de 12 meses, ponto de equilíbrio contra os custos fixos (cadastrados na própria tela), fechamento, lançamentos com filtro e CSV, mapa de movimento, retenção, churn e alunos em risco. O banco passou a guardar quando cada aluno é desativado (`alunos.data_inativacao`, preenchida sozinha). O gráfico de ativos do painel passou a contar quem saiu depois.
 - **Migration:** `b11f7a8b9c00_custos_e_data_de_inativacao.py`: cria `custos` e acrescenta `alunos.data_inativacao`. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 257 de 257 (21 novos em `tests/test_relatorios.py`); migration num Postgres temporário, 12 checagens; navegador: relatórios 28 de 28, frequência 31 de 31, cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
@@ -153,13 +153,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-08-config
 
-- **Sai de:** `back-11-relatorios` · **PR:** a abrir → `back-11-relatorios` · **Data:** 12/10/2026
+- **Sai de:** `back-11-relatorios` · **PR:** [#29](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/29) → `back-11-relatorios` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `config/index.html`, `config/_metas.html`, `config/recebimento.html` e `_digital_linha.html` (este num segundo commit: a tela o inclui).
 - **Testes:** os 4 arquivos conferidos byte a byte com o Drive.
 
 ## back-12-config
 
-- **Sai de:** `front-08-config` · **PR:** a abrir → `front-08-config` · **Data:** 12/10/2026
+- **Sai de:** `front-08-config` · **PR:** [#30](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/30) → `front-08-config` · **Data:** 12/10/2026
 - **O que mudou:** o dono troca os dados da academia e o horário, liga e desliga o check-in, define o prazo da inatividade automática e as três metas (que viram a linha dos gráficos do painel e do administrativo); dono e recepção personalizam os modelos de mensagem; a tela de recebimento mostra de onde veio cada confirmação do mês. A regra "o aluno vira inativo sozinho depois de X dias sem renovar" roda ao abrir o painel, uma vez por dia.
 - **Migration:** `b12a8b9c0d10_configuracoes_da_conta.py`: 10 colunas em `contas` e a tabela `modelos_mensagem`. **Depois do pull, `flask db upgrade`.** Atenção: a inatividade nasce ligada, com 60 dias.
 - **Testes:** `pytest` 287 de 287 (30 novos em `tests/test_configuracoes.py`); migration num Postgres temporário, 15 checagens; navegador: configurações 29 de 29, relatórios 28 de 28, frequência 31 de 31, cobrança 33 de 33, alunos 32 de 32, planos 31 de 31, painel 74 de 74, login 60 de 60; varredura de rotas por papel sem nenhuma rota pior.
@@ -168,13 +168,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-09-equipe
 
-- **Sai de:** `back-12-config` · **PR:** a abrir → `back-12-config` · **Data:** 12/10/2026
+- **Sai de:** `back-12-config` · **PR:** [#31](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/31) → `back-12-config` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `auth/criar_conta.html`, `auth/convite.html` e `auth/esqueci_senha.html`.
 - **Testes:** os 3 arquivos conferidos byte a byte com o Drive.
 
 ## back-13-equipe
 
-- **Sai de:** `front-09-equipe` · **PR:** a abrir → `front-09-equipe` · **Data:** 12/10/2026
+- **Sai de:** `front-09-equipe` · **PR:** [#32](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/32) → `front-09-equipe` · **Data:** 12/10/2026
 - **O que mudou:** o dono cria a própria conta em `/criar-conta` (academia ou personal) e já entra; convida recepção e instrutores por link (7 dias, uso único, só o hash no banco), troca o papel e remove (desativa, sem apagar); troca de senha por link (1 hora, uso único). Envio de e-mail por SMTP com a biblioteca padrão; sem configurar, o convite é copiado e o suporte gera o link de senha com `flask link-de-senha`.
 - **Migration:** `b13b9c0d1e20_convites_e_troca_de_senha.py`: cria `convites` e `redefinicoes_senha`. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 317 de 317 (31 novos em `tests/test_equipe.py`); migration num Postgres temporário, 13 checagens; navegador: equipe 34 de 34 (dono, convidado e visitante em navegadores separados) e as outras telas sem mudança; varredura de rotas por papel sem nenhuma rota pior.
@@ -183,13 +183,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-10-treinos
 
-- **Sai de:** `back-13-equipe` · **PR:** a abrir → `back-13-equipe` · **Data:** 12/10/2026
+- **Sai de:** `back-13-equipe` · **PR:** [#33](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/33) → `back-13-equipe` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `exercicios/` (lista, detalhe, form) e `treinos/` (biblioteca, modelo, atribuir, ficha, _catalogo, enviar).
 - **Testes:** os 9 arquivos conferidos byte a byte com o Drive.
 
 ## back-14-treinos
 
-- **Sai de:** `front-10-treinos` · **PR:** a abrir → `front-10-treinos` · **Data:** 12/10/2026
+- **Sai de:** `front-10-treinos` · **PR:** [#34](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/34) → `front-10-treinos` · **Data:** 12/10/2026
 - **O que mudou:** catálogo de exercícios (64 padrão, que ninguém edita, mais os da academia), com busca, filtro, detalhe, novo e editar; 5 modelos prontos de ficha; usar o modelo com um ou vários alunos; editor da ficha por treino (A a E): ajustar, adicionar pelo catálogo, tirar, criar treino, salvar, excluir; enviar pelo WhatsApp com o texto da ficha pronto (link `wa.me`, custo zero) e baixar em texto. As telas antigas de exercício e ficha continuam no ar, sem alteração.
 - **Migration:** `b14c0d1e2f30_treinos_e_catalogo_padrao.py`: acrescenta colunas em `exercicio`, `ficha`, `treino` e `treino_exercicio`, dá letra aos treinos que já existem e grava o catálogo padrão. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 352 de 352 (36 novos em `tests/test_treinos.py`); migration num Postgres temporário, 25 checagens; navegador: treinos 79 de 79 e as outras nove telas sem mudança; varredura de rotas por papel sem nenhuma rota pior.
@@ -198,13 +198,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-11-avaliacoes
 
-- **Sai de:** `back-14-treinos` · **PR:** a abrir → `back-14-treinos` · **Data:** 12/10/2026
+- **Sai de:** `back-14-treinos` · **PR:** [#35](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/35) → `back-14-treinos` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `avaliacoes/` (agenda, agendar, aluno, registrar, resultado).
 - **Testes:** os 5 arquivos conferidos byte a byte com o Drive.
 
 ## back-15-avaliacoes
 
-- **Sai de:** `front-11-avaliacoes` · **PR:** a abrir → `front-11-avaliacoes` · **Data:** 12/10/2026
+- **Sai de:** `front-11-avaliacoes` · **PR:** [#36](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/36) → `front-11-avaliacoes` · **Data:** 12/10/2026
 - **O que mudou:** agenda de avaliações (hoje, amanhã, semana, não realizadas); agendar e remarcar, sem dois alunos no mesmo horário do mesmo avaliador; assistente de quatro etapas com IMC e cintura/quadril calculados só no servidor; resultado com a comparação e botão do WhatsApp com o texto pronto; histórico com gráfico; cartão no perfil do aluno; aviso e card "Avaliações de hoje" no painel. Medidas só para dono e instrutor: a recepção agenda e é barrada no resto.
 - **Migration:** `b15d1e2f3a40_avaliacoes_fisicas.py`: cria `avaliacoes_agendadas` e `avaliacoes_fisicas`. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 397 de 397 (45 novos em `tests/test_avaliacoes.py`); migration num Postgres temporário, 16 checagens; navegador: avaliações 68 de 68 e as outras dez telas sem mudança; varredura de rotas por papel sem nenhuma rota pior.
@@ -213,13 +213,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-12-mensagens
 
-- **Sai de:** `back-15-avaliacoes` · **PR:** a abrir → `back-15-avaliacoes` · **Data:** 12/10/2026
+- **Sai de:** `back-15-avaliacoes` · **PR:** [#37](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/37) → `back-15-avaliacoes` · **Data:** 12/10/2026
 - **O que mudou:** só template. Cópia fiel do Drive de `mensagens/index.html`.
 - **Testes:** o arquivo conferido byte a byte com o Drive.
 
 ## back-16-mensagens
 
-- **Sai de:** `front-12-mensagens` · **PR:** a abrir → `front-12-mensagens` · **Data:** 12/10/2026
+- **Sai de:** `front-12-mensagens` · **PR:** [#38](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/38) → `front-12-mensagens` · **Data:** 12/10/2026
 - **O que mudou:** a fila de mensagens do dia: aniversariantes de hoje, avaliações de amanhã e mensalidades vencidas, cada uma com o texto dos modelos de Configurações já preenchido e o botão que abre o WhatsApp de quem usa (custo zero, sem API; decisão D14). O toque fica gravado ("Enviada hoje" para toda a equipe); cobrança no máximo a cada 3 dias; instrutor não vê cobrança. Botões de WhatsApp que eram demonstração (perfil, lista, painel, avisos) viraram links; a cobrança em lote do painel leva à fila.
 - **Migration:** `b16e2f3a4b50_mensagens_enviadas.py`: cria `mensagens_enviadas`. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 422 de 422 (25 novos em `tests/test_mensagens.py`); migration num Postgres temporário, 18 checagens; navegador: mensagens 34 de 34 (sem sair para a internet) e as outras onze telas; varredura de rotas por papel sem mudança.
@@ -228,13 +228,13 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## front-13-personal
 
-- **Sai de:** `back-16-mensagens` · **PR:** a abrir → `back-16-mensagens` · **Data:** 12/10/2026
+- **Sai de:** `back-16-mensagens` · **PR:** [#24](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/24) → `back-16-mensagens` · **Data:** 12/10/2026
 - **O que mudou:** só templates. Cópia fiel do Drive de `personal/` (painel, pacotes, pacote_form, renovar, config, _pacotes_acabando, _ticket) e `agenda/` (index, detalhe, nova).
 - **Testes:** os 10 arquivos conferidos byte a byte com o Drive.
 
 ## back-17-personal
 
-- **Sai de:** `front-13-personal` · **PR:** a abrir → `front-13-personal` · **Data:** 12/10/2026
+- **Sai de:** `front-13-personal` · **PR:** [#39](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/39) → `front-13-personal` · **Data:** 12/10/2026
 - **O que mudou:** a conta de personal trainer ganha o sistema dela. Pacotes de sessões no lugar de planos; saldo calculado (sessões compradas menos as concluídas que abateram), sem coluna de saldo; renovar soma o que sobrou (D12, como no front); pendente é quem tem cobrança em aberto; agenda com marcar, presença, remarcar, cancelar e repetição semanal; painel, configurações (CPF, CREF, locais), cobrança e fila de mensagens com o texto de pacote e de sessão. Tudo atrás de `pacote_service.e_personal()`: a conta de academia não muda.
 - **Migration:** `b17f3a4b5c60_personal_pacotes_e_sessoes.py`: `planos.quantidade_sessoes`, `cobrancas.quantidade_sessoes`, `contas.cpf/cref/locais_ativos` e a tabela `sessoes`. Não toca em dado existente. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 465 de 465 (43 novos em `tests/test_personal.py`); migration num Postgres temporário, 17 checagens; navegador: personal 55 de 55 e as doze telas da academia sem mudança; varredura de rotas por papel (conta de academia): só a agenda mudou.
@@ -243,7 +243,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-18-seguranca
 
-- **Sai de:** `back-17-personal` · **PR:** a abrir → `back-17-personal` · **Data:** 12/10/2026
+- **Sai de:** `back-17-personal` · **PR:** [#40](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/40) → `back-17-personal` · **Data:** 12/10/2026
 - **O que mudou:** limite de tentativas no login (por IP e por e-mail), em criar conta, em "esqueci a senha", nos links de convite e de senha e na tela antiga de login; cabeçalhos de segurança com regra de conteúdo (CSP) e, em produção, HTTPS obrigatório; sessão com prazo de 12 horas e "manter conectado" por 30 dias; a sessão cai ao trocar a senha e ao ser removido da equipe; o login responde igual para e-mail inexistente, senha errada e conta desativada; saem o popup de perfil e o botão de digital do login; envio limitado a 5 MB.
 - **Migration:** não tem.
 - **Dependências:** `Flask-Limiter==4.1.1` e `flask-talisman==1.1.0` (autorizadas, A6), mais `limits`, `Deprecated`, `ordered-set` e `wrapt`. **Depois do pull: `pip install -r requirements.txt`.**
@@ -253,7 +253,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-19-lgpd
 
-- **Sai de:** `back-18-seguranca` · **PR:** a abrir → `back-18-seguranca` · **Data:** 13/10/2026
+- **Sai de:** `back-18-seguranca` · **PR:** [#41](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/41) → `back-18-seguranca` · **Data:** 13/10/2026
 - **O que mudou:** termos de uso e política de privacidade publicados em `/termos` e `/privacidade` (lidos de `app/legal/*.md`, com aviso de versão preliminar); o aceite fica gravado ao criar a conta (versão e data); o cadastro do aluno ganhou "Aceita receber avisos pelo WhatsApp" e quem recusou sai da fila de mensagens; o dono baixa um arquivo com tudo o que o sistema guarda sobre um aluno; "Excluir aluno" passa a funcionar para quem tem histórico: apaga dados pessoais, avaliações, fichas, frequência e sessões, e mantém os pagamentos sem identificação. O aluno apagado some de todas as telas (`da_conta(Aluno)`).
 - **Migration:** `b19a4b5c6d70_lgpd_aceites_e_anonimizacao.py`: `instrutores.termos_versao/termos_aceitos_em` e `alunos.aceita_whatsapp/anonimizado_em`. **Depois do pull, `flask db upgrade`.**
 - **Testes:** `pytest` 502 de 502 (15 novos em `tests/test_lgpd.py`); migration num Postgres temporário, 14 checagens; navegador: LGPD 28 de 28 e as outras 13 telas; varredura de rotas por papel: só as rotas novas.
@@ -262,7 +262,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-20-producao
 
-- **Sai de:** `back-19-lgpd` · **PR:** a abrir → `back-19-lgpd` · **Data:** 13/10/2026
+- **Sai de:** `back-19-lgpd` · **PR:** [#42](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/42) → `back-19-lgpd` · **Data:** 13/10/2026
 - **O que mudou:** comando `flask banco-novo` (cria um banco vazio pelo `models.py`, marca a última versão das migrations e grava o catálogo de exercícios; recusa banco que já tem tabela); rota pública `/saude` (responde `ok` ou `banco fora do ar`); com `PROXIES_NA_FRENTE` o limite de tentativas enxerga o endereço de cada visitante; no servidor (Linux) o app assume o horário de Brasília; em produção só vale `DATABASE_URL`, e o formato `postgres://` é aceito; logs com data em produção; guia `docs/DEPLOY.md`.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 512 de 512 (10 novos em `tests/test_producao.py`, entre eles a varredura "conta A × conta B" em todas as rotas); num Postgres temporário: `flask db upgrade` do zero para em `f456ba924031`, `flask banco-novo` cria 20 tabelas e `flask db check` passa; navegador: as 14 telas; varredura de rotas por papel: só a rota nova.
@@ -271,7 +271,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## Onde parou (13/10/2026)
 
-**O roadmap acabou no que não depende de decisão.** Tudo enviado até a `back-20-producao`: todas as telas do front ligadas (menos a central de notificações e o painel do instrutor, que não estão em nenhuma branch), segurança (`back-18`), LGPD (`back-19`) e preparação de produção com a checklist final (`back-20`). Em 11/10/2026 o Diogo juntou na `main` (PR #23, `integracao-main`) tudo até a `front-05-cobranca` e a proposta de esquema da `back-09`, com um ajuste dele em `auth/routes.py`; **faltam os PRs de `back-09-cobranca` (o código) a `back-20-producao`**: 20 branches, na ordem, a primeira apontando para a `main` e cada uma das outras para a anterior. A junção da `back-20` com a `main` atual foi simulada: sem conflito, testes passando. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b19`** e instalar as dependências da `back-18` (`pip install -r requirements.txt`): pedir o OK dele, backup antes, avisar da inatividade automática da `b12`. Enquanto isso a pasta do projeto fica em `back-08-planos`, que é onde o banco dele está.
+**O roadmap acabou no que não depende de decisão.** Tudo enviado até a `back-20-producao`: todas as telas do front ligadas (menos a central de notificações e o painel do instrutor, que não estão em nenhuma branch), segurança (`back-18`), LGPD (`back-19`) e preparação de produção com a checklist final (`back-20`). Em 11/10/2026 o Diogo juntou na `main` (PR #23, `integracao-main`) tudo até a `front-05-cobranca` e a proposta de esquema da `back-09`, com um ajuste dele em `auth/routes.py`; **os 20 PRs de `back-09-cobranca` a `back-20-producao` estão abertos desde 13/10/2026**, com o título numerado de `[01/20]` a `[20/20]`: #22 (01), #25 a #38 (02 a 15), #24 (16) e #39 a #42 (17 a 20). Cada um aponta para a branch anterior. **Dois ajustes ficaram para o Adauto fazer à mão no GitHub** (a ferramenta não deixou o Claude alterar PR que já existia): no #22, trocar a base de `front-05-cobranca` para `main` e o título para `[01/20] back-09: cobrança, renovação, diária avulsa e extrato`; no #24, trocar a base de `main` para `back-16-mensagens`. A junção da `back-20` com a `main` atual foi simulada: sem conflito, testes passando. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b19`** e instalar as dependências da `back-18` (`pip install -r requirements.txt`): pedir o OK dele, backup antes, avisar da inatividade automática da `b12`. Enquanto isso a pasta do projeto fica em `back-08-planos`, que é onde o banco dele está.
 
 O que falta, e de quem depende:
 
