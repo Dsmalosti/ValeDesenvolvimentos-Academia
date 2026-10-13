@@ -78,6 +78,7 @@ def create_app():
     from app.blueprints.avaliacoes.routes import avaliacoes_blueprint  # [back-15-avaliacoes]
     from app.blueprints.mensagens.routes import mensagens_blueprint  # [back-16-mensagens]
     from app.blueprints.agenda.routes import agenda_blueprint  # [back-17-personal]
+    from app.blueprints.legal.routes import legal_blueprint  # [back-19-lgpd] termos de uso e política de privacidade
     from app.blueprints.pendentes import blueprints_pendentes
     app.register_blueprint(painel_blueprint)
     app.register_blueprint(cobrancas_blueprint)  # [back-09-cobranca]
@@ -88,6 +89,7 @@ def create_app():
     app.register_blueprint(avaliacoes_blueprint)  # [back-15-avaliacoes]
     app.register_blueprint(mensagens_blueprint)  # [back-16-mensagens]
     app.register_blueprint(agenda_blueprint)  # [back-17-personal]
+    app.register_blueprint(legal_blueprint)  # [back-19-lgpd]
     for blueprint_pendente in blueprints_pendentes():
         app.register_blueprint(blueprint_pendente)
 

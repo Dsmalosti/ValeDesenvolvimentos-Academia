@@ -8,6 +8,7 @@ from app.services import aluno_tela_service as telas  # [back-07-alunos] regras 
 from app.services import cobranca_service as cobrancas  # [back-09-cobranca] cobrança, renovação e extrato
 from app.services import frequencia_service as frequencia  # [back-10-frequencia] bloquear acesso e busca do popup
 from app.services import pacote_service  # [back-17-personal] renovar pacote na conta de personal
+from app.services import lgpd_service  # [back-19-lgpd] exportar e apagar os dados de um aluno
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -214,14 +215,35 @@ def inativar(id):
 @papel_requerido(*DONO)   # apagar os dados de um aluno de vez é só com o dono (LGPD)
 def excluir(id):
     aluno = _aluno_da_conta(id)
+    # [back-19-lgpd] antes: aluno com pagamento, entrada, avaliação ou sessão NÃO podia ser excluído ("desative em vez de
+    # excluir"), e a academia não tinha como atender um pedido de exclusão de dados (direito do aluno pela LGPD).
+    # Agora: quem não tem histórico é excluído como sempre; quem tem, tem os dados pessoais e de saúde APAGADOS e o
+    # cadastro anonimizado. Os pagamentos ficam no financeiro, sem identificação (services/lgpd_service.py).
+    primeiro_nome = (aluno.nome or 'aluno').split()[0]
+    if lgpd_service.tem_historico(aluno):
+        lgpd_service.apagar(aluno)
+        flash(f'Dados de {primeiro_nome} apagados. Os pagamentos continuam no financeiro, sem identificação.', 'success')
+        return redirect(url_for('alunos.lista'))
     try:
         AlunoService.excluir_aluno(aluno.id)
     except BusinessError:
-        # o banco recusa apagar aluno que tem ficha ou pagamento ligado a ele
-        flash('Não foi possível excluir: este aluno tem fichas ou pagamentos registrados. Desative em vez de excluir.', 'error')
+        flash('Não foi possível excluir este cadastro agora. Tente de novo.', 'error')
         return redirect(url_for('alunos.detalhe', id=id))
     flash('Cadastro excluído.', 'success')
     return redirect(url_for('alunos.lista'))
+
+
+@alunos_blueprint.route('/<int:id>/dados')
+@papel_requerido(*DONO)   # [back-19-lgpd] rota nova: o arquivo traz CPF, contato e dados de saúde; só o dono baixa
+def dados(id):
+    """Um arquivo com tudo o que o sistema guarda sobre o aluno (direito de acesso e de portabilidade, LGPD)."""
+    import json
+    aluno = _aluno_da_conta(id)
+    resposta = make_response(json.dumps(lgpd_service.exportar(aluno), ensure_ascii=False, indent=2))
+    resposta.headers['Content-Type'] = 'application/json; charset=utf-8'
+    resposta.headers['Content-Disposition'] = f'attachment; filename=dados-do-aluno-{aluno.id}.json'
+    resposta.headers['Cache-Control'] = 'no-store'      # o navegador não guarda cópia do arquivo
+    return resposta
 
 
 @alunos_blueprint.route('/<int:id>/acesso', methods=['POST'])

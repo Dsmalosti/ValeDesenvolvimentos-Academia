@@ -30,6 +30,14 @@
   <label class="label{{ ' visually-hidden' if secao }}" for="f-observacoes">Observações</label>
   <textarea class="input" id="f-observacoes" name="observacoes" rows="3" placeholder="Restrição médica, objetivo do aluno, indicação...">{{ a.observacoes or '' }}</textarea>
 </div>
+{# [back-19-lgpd] Campo NOVO, que o front do Drive não tem: a vontade do aluno sobre receber avisos pelo WhatsApp (LGPD).
+   Usa as mesmas peças dos outros formulários (switch-row). Vem marcado enquanto ninguém desmarcar; aluno com a caixa
+   desmarcada não entra na fila de Mensagens. `whatsapp_perguntado` avisa o servidor de que a caixa estava na tela. #}
+<input type="hidden" name="whatsapp_perguntado" value="1">
+<div class="switch-row" style="margin-top:14px">
+  <div><b id="lb-whats">Aceita receber avisos pelo WhatsApp</b><div class="csub" style="margin:0">Lembretes, aniversário e cobrança. Desmarque se o aluno pediu para não receber.</div></div>
+  <label class="switch"><input type="checkbox" name="aceita_whatsapp" value="1" aria-labelledby="lb-whats"{% if a.aceita_whatsapp is not defined or a.aceita_whatsapp is none or a.aceita_whatsapp %} checked{% endif %}><span class="switch__track"></span></label>
+</div>
 {%- endmacro %}
 
 {% macro foto(a) -%}

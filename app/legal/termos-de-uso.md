@@ -1,6 +1,6 @@
 # Termos de Uso — Vale Tec
 
-> **RASCUNHO v0.1 (10/10/2026) — ainda não vale.** Escrito pelo Claude a pedido do Adauto, para ele revisar e completar. Os trechos `[PREENCHER: ...]` dependem de informação que só o Adauto tem. Veja a lista do que conferir em `docs/legal/LEIA-ME.md`.
+> **Versão preliminar 0.2, de 13/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica. Os trechos marcados como "a definir" serão preenchidos antes da versão final.
 
 **Última atualização:** `[PREENCHER: data de publicação]`
 
@@ -8,7 +8,7 @@
 
 O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers. Ele é oferecido por `[PREENCHER: nome completo ou razão social]`, inscrito no CNPJ `[PREENCHER]`, com sede em `[PREENCHER: cidade/UF]` ("Vale Tec", "nós").
 
-Estes Termos são o contrato entre o Vale Tec e quem cria uma conta para usar o sistema ("você", "cliente"): a academia, o estúdio ou o profissional. Ao criar a conta, você declara que leu e aceita estes Termos e a nossa [Política de Privacidade](Politica-de-Privacidade.md).
+Estes Termos são o contrato entre o Vale Tec e quem cria uma conta para usar o sistema ("você", "cliente"): a academia, o estúdio ou o profissional. Ao criar a conta, você declara que leu e aceita estes Termos e a nossa [Política de Privacidade](politica-de-privacidade).
 
 Se você cria a conta em nome de uma empresa, declara que tem poder para representá-la.
 

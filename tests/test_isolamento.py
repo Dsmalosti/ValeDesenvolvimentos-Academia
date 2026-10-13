@@ -15,7 +15,9 @@ from tests.conftest import (campo, contar, criar_aluno, criar_ficha, criar_plano
 
 # Páginas que existem para quem NÃO está logado. Qualquer outra rota tem que exigir login.
 ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_conta", "auth.convite", "auth.nova_senha",
-                  "instrutores.login", "instrutores.cadastroInstrutor"}
+                  "instrutores.login", "instrutores.cadastroInstrutor",
+                  # [back-19-lgpd] termos de uso e política de privacidade: quem ainda vai criar a conta precisa conseguir ler
+                  "legal.termos", "legal.privacidade"}
 
 
 @pytest.fixture()

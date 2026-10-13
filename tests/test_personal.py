@@ -453,7 +453,8 @@ def test_sem_login_e_get_nao_grava(app, personal):
     assert (contar(Sessao), contar(Cobranca), campo(Sessao, sessao, "status")) == (1, 2, "agendada")
 
 
-def test_aluno_com_sessao_nao_pode_ser_excluido(app, personal):
+def test_excluir_aluno_com_sessao_apaga_as_sessoes(app, personal):
+    # [back-19-lgpd] antes: aluno com histórico não podia ser excluído. Agora os dados pessoais são apagados e o cadastro, anonimizado.
     criar_sessao(personal["dono"], personal["duda"], HOJE + DIA)
     como(app, personal["dono"]).post(f"/alunos/{personal['duda']}/excluir")
-    assert contar(Aluno, id=personal["duda"]) == 1 and contar(Sessao) == 1
+    assert campo(Aluno, personal["duda"], "nome") == "Aluno removido" and contar(Sessao) == 0

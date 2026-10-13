@@ -385,11 +385,12 @@ def test_abrir_telas_nao_grava_nada(app, academia):
     assert (contar(AvaliacaoFisica), contar(AvaliacaoAgendada), campo(AvaliacaoAgendada, marcado, "status")) == (1, 1, "confirmada")
 
 
-def test_aluno_com_avaliacao_nao_pode_ser_excluido(app, academia):
+def test_excluir_aluno_com_avaliacao_apaga_as_avaliacoes(app, academia):
+    # [back-19-lgpd] antes: aluno com histórico não podia ser excluído. Agora os dados pessoais são apagados e o cadastro, anonimizado.
     dono = como(app, academia["dono"])
     criar_avaliacao(academia["dono"], academia["ana"], HOJE)
     criar_agendamento(academia["dono"], academia["bia"], HOJE + DIA)
     dono.post(f"/alunos/{academia['ana']}/excluir")
     dono.post(f"/alunos/{academia['bia']}/excluir")
-    assert contar(Aluno, id=academia["ana"]) == 1 and contar(Aluno, id=academia["bia"]) == 1
-    assert contar(AvaliacaoFisica) == 1 and contar(AvaliacaoAgendada) == 1
+    assert campo(Aluno, academia["ana"], "nome") == "Aluno removido" and campo(Aluno, academia["bia"], "nome") == "Aluno removido"
+    assert contar(AvaliacaoFisica) == 0 and contar(AvaliacaoAgendada) == 0          # dado de saúde não fica

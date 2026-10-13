@@ -240,13 +240,15 @@ def test_inativar_nao_apaga(app, academia):
     assert contar(Aluno, id=academia["ana"]) == 1 and campo(Aluno, academia["ana"], "ativo") is False
 
 
-def test_excluir_e_so_do_dono_e_recusa_quem_tem_historico(app, academia):
+def test_excluir_e_so_do_dono_e_apaga_os_dados_de_quem_tem_historico(app, academia):
     assert como(app, academia["recepcao"]).post(f"/alunos/{academia['ana']}/excluir").status_code == 403
     criar_pagamento(academia["dono"], academia["bia"], 100, HOJE, HOJE)
     dono = como(app, academia["dono"])
 
+    # [back-19-lgpd] antes: aluno com histórico não podia ser excluído. Agora os dados pessoais são apagados e o cadastro, anonimizado.
     com_historico = dono.post(f"/alunos/{academia['bia']}/excluir", follow_redirects=True).get_data(as_text=True)
-    assert contar(Aluno, id=academia["bia"]) == 1 and "tem fichas ou pagamentos registrados" in com_historico
+    assert contar(Aluno, id=academia["bia"]) == 1 and "Bia Lima" not in com_historico     # a linha fica (o pagamento aponta para ela), sem o nome
+    assert [campo(Aluno, academia["bia"], c) for c in ("nome", "cpf", "email", "telefone", "ativo")] == ["Aluno removido", None, None, None, False]
 
     assert dono.post(f"/alunos/{academia['ana']}/excluir").headers["Location"] == "/alunos"
     assert contar(Aluno, id=academia["ana"]) == 0

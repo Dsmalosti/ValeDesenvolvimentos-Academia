@@ -89,6 +89,10 @@ class User(db.Model, UserMixin):
     # [back-06-contas-e-papeis] a academia a que o usuário pertence, e o que ele pode fazer nela
     conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False)
     papel = db.Column(db.String(20), nullable=False, default=PAPEL_PROPRIETARIO, server_default=PAPEL_PROPRIETARIO)
+    # [back-19-lgpd] Qual versão dos termos de uso e da política de privacidade a pessoa aceitou ao criar a conta, e quando.
+    # Vazio para quem entrou antes desta branch e para quem entrou por convite (o contrato é com o dono da conta).
+    termos_versao = db.Column(db.String(30), nullable=True)
+    termos_aceitos_em = db.Column(db.DateTime, nullable=True)
 
     # [back-18-seguranca] ver load_user, lá em cima.
     def marca_da_senha(self):
@@ -134,6 +138,12 @@ class Aluno(db.Model):
     # sozinha sempre que `ativo` muda (função _marca_a_inativacao, logo depois da classe). Sem ela não dá
     # para saber quanto tempo um aluno ficou, nem quantos saíram em cada mês.
     data_inativacao = db.Column(db.DateTime, nullable=True)
+    # [back-19-lgpd] O aluno aceita receber avisos pelo WhatsApp? True, False ou vazio (ainda não foi perguntado).
+    # Quem RECUSOU não entra na fila de mensagens (services/mensagem_service.py).
+    aceita_whatsapp = db.Column(db.Boolean, nullable=True)
+    # [back-19-lgpd] Quando os dados pessoais deste aluno foram apagados a pedido (services/lgpd_service.py). Com a data
+    # preenchida, o aluno some de todas as telas (helpers/conta.py, da_conta); a linha fica só para os pagamentos apontarem.
+    anonimizado_em = db.Column(db.DateTime, nullable=True)
     # chave extrangeira para plano
     plano_id = db.Column(db.Integer, db.ForeignKey('planos.id'), nullable=True)
     # chave estrangeira para o instrutor (academia) dono deste aluno

@@ -81,6 +81,8 @@ def fila(hoje=None):
     itens = []
 
     def entra(tipo, aluno, referencia, contexto, **variaveis):
+        if aluno.aceita_whatsapp is False:
+            return      # [back-19-lgpd] o aluno pediu para não receber avisos pelo WhatsApp (antes não havia como registrar isso)
         texto = preencher(modelos.get(tipo, ''), nome=(aluno.nome or 'aluno').split()[0], academia=academia, **variaveis)
         itens.append({'id': f'{tipo}-{referencia}', 'tipo': tipo, 'referencia': str(referencia), 'contexto': contexto, 'texto': texto,
                       'aluno': {'id': aluno.id, 'nome': aluno.nome or 'Aluno sem nome', 'telefone': aluno.telefone or ''},

@@ -96,8 +96,12 @@ def criar_conta(valores, senha):
     conta = Conta(nome=(f'Academia de {partes[0]}' if academia else valores['nome'])[:120], modelo=valores['tipo'], checkin_ativo=academia)
     db.session.add(conta)
     db.session.flush()
+    # [back-19-lgpd] a tela diz "Ao criar a conta você aceita os termos de uso e a política de privacidade": fica gravado
+    # qual versão dos textos estava no ar e quando. Antes não ficava registro nenhum do aceite.
+    from app.services import legal_service
     usuario = User(nome=partes[0], sobrenome=' '.join(partes[1:]) or None, email=valores['email'], conta_id=conta.id,
-                   papel=PAPEL_PROPRIETARIO, ativo=True, senha=_senha_guardada(senha))
+                   papel=PAPEL_PROPRIETARIO, ativo=True, senha=_senha_guardada(senha),
+                   termos_versao=legal_service.VERSAO, termos_aceitos_em=datetime.now())
     db.session.add(usuario)
     db.session.commit()
     return usuario

@@ -19,7 +19,7 @@ from sqlalchemy import func
 
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, fichas_da_conta
-from app.models import Aluno, Ficha, Plano
+from app.models import PAPEL_PROPRIETARIO, Aluno, Ficha, Plano
 from app.services import avaliacao_service, cobranca_service, frequencia_service, treino_service
 from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
@@ -195,6 +195,8 @@ def contexto_do_perfil(aluno, hoje=None):
         'observacoes': aluno.observacoes or '',
         'acesso_liberado': bool(aluno.acesso_liberado),     # [back-10-frequencia] antes: sempre True
     })
+    # [back-19-lgpd] só o dono exporta os dados do aluno (e apaga, pelo "Excluir aluno")
+    perfil['pode_lgpd'] = current_user.papel == PAPEL_PROPRIETARIO
     if 'pacote' in perfil:
         # [back-17-personal] conta de personal: no lugar da data de vencimento, o saldo do pacote
         perfil['vence_completo'] = perfil['vence_txt'].capitalize()
@@ -237,6 +239,7 @@ def aluno_para_o_formulario(aluno):
         'data_inicio_txt': _dmy(aluno.data_inicio), 'plano_id': aluno.plano_id,
         'forma_pagamento': aluno.forma_pagamento or '', 'dia_vencimento': aluno.dia_vencimento or '',
         'observacoes': aluno.observacoes or '',
+        'aceita_whatsapp': aluno.aceita_whatsapp,       # [back-19-lgpd] None = ainda não perguntado (a caixa vem marcada)
     }
 
 
@@ -244,6 +247,7 @@ def do_formulario(formulario, aluno_id=None, nome_original=None):
     """Devolve à tela o que a pessoa digitou, para ela não ter de preencher tudo de novo depois de um erro."""
     dados = {k: (formulario.get(k) or '') for k in ('nome', 'cpf', 'telefone', 'email', 'forma_pagamento',
                                                      'dia_vencimento', 'observacoes')}
+    dados['aceita_whatsapp'] = formulario.get('aceita_whatsapp') == '1' if formulario.get('whatsapp_perguntado') else None   # [back-19-lgpd]
     dados['data_nascimento_txt'] = formulario.get('data_nascimento') or ''
     dados['data_inicio_txt'] = formulario.get('data_inicio') or ''
     plano = formulario.get('plano_id') or ''
@@ -334,6 +338,10 @@ def validar(formulario, aluno=None, hoje=None):
             erros['data_inicio'] = 'Data inválida. Use dia/mês/ano.'
 
     v['observacoes'] = (formulario.get('observacoes') or '').strip() or None
+    # [back-19-lgpd] "Aceita receber avisos pelo WhatsApp". Caixa de marcar não manda nada quando está desmarcada; o campo
+    # escondido `whatsapp_perguntado` diz que a caixa estava na tela. Sem ele (formulário antigo), o valor gravado não muda.
+    if formulario.get('whatsapp_perguntado'):
+        v['aceita_whatsapp'] = formulario.get('aceita_whatsapp') == '1'
     if v['observacoes'] and len(v['observacoes']) > MAX_OBSERVACOES:
         erros['observacoes'] = f'As observações podem ter no máximo {MAX_OBSERVACOES} letras.'
     return v, erros

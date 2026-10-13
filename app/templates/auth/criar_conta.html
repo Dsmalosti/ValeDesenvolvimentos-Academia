@@ -53,7 +53,7 @@
       {% if erros.senha %}<div class="field-error" data-server>{{ erros.senha }}</div>{% endif %}
     </div>
     <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>Criar minha conta</button>
-    <p class="faint fs-12 ta-c" style="margin:0">Ao criar a conta você aceita os <a href="#termos">termos de uso</a> e a <a href="#privacidade">política de privacidade</a>. Os dados dos seus alunos são seus: o Vale Tec não usa nem vende (LGPD).</p>
+    <p class="faint fs-12 ta-c" style="margin:0">{# [back-19-lgpd] antes: os dois links apontavam para #termos e #privacidade, que não levavam a lugar nenhum #}Ao criar a conta você aceita os <a href="{{ url_for('legal.termos') }}" target="_blank" rel="noopener">termos de uso</a> e a <a href="{{ url_for('legal.privacidade') }}" target="_blank" rel="noopener">política de privacidade</a>. Os dados dos seus alunos são seus: o Vale Tec não usa nem vende (LGPD).</p>
   </div>
 </form>
 <p class="ta-c" style="margin-top:20px;font-size:14px">Já tem conta? <a class="fw-7" href="{{ url_for('auth.login') }}">Entrar</a></p>

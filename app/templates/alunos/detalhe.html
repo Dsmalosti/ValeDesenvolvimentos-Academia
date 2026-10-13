@@ -140,6 +140,9 @@
     <button type="button" class="btn btn-danger-ghost" data-open="dlg-inativar">{{ icon('lock', 18) }}Desativar aluno</button>
     <button type="button" class="btn btn-danger" data-open="dlg-excluir">{{ icon('close', 18) }}Excluir aluno</button>
   </div>
+  {# [back-19-lgpd] Botão NOVO, que o front do Drive não tem: baixar tudo o que o sistema guarda sobre o aluno (direito de acesso, LGPD).
+     Só o dono vê (`aluno.pode_lgpd`). #}
+  {% if aluno.pode_lgpd %}<a class="btn btn-ghost btn-block" style="margin-top:10px" href="{{ url_for('alunos.dados', id=aluno.id) }}" download>{{ icon('download', 18) }}Baixar os dados deste aluno (LGPD)</a>{% endif %}
 </section>
 {% endblock %}
 
@@ -156,6 +159,6 @@
 </dialog>
 {% endmacro %}
 {{ confirmar('dlg-inativar', 'Desativar ' ~ aluno.nome.split()[0] ~ '?', 'O histórico é mantido e o acesso na recepção é bloqueado. Dá para reativar depois.', url_for('alunos.inativar', id=aluno.id), 'Desativar aluno') }}
-{{ confirmar('dlg-excluir', 'Excluir cadastro?', 'Isso apaga o cadastro e o histórico de ' ~ aluno.nome ~ ' e não dá para desfazer. Se só quer parar de cobrar, prefira desativar.', url_for('alunos.excluir', id=aluno.id), 'Excluir para sempre') }}
+{{ confirmar('dlg-excluir', 'Excluir cadastro?', 'Isso apaga os dados pessoais, as avaliações, as fichas e a frequência de ' ~ aluno.nome ~ ' e não dá para desfazer. Os pagamentos ficam no financeiro, sem o nome. Se só quer parar de cobrar, prefira desativar.', url_for('alunos.excluir', id=aluno.id), 'Excluir para sempre') }}
 {{ confirmar('dlg-acesso', ('Bloquear' if aluno.acesso_liberado else 'Liberar') ~ ' acesso?', 'Muda na hora a permissão de ' ~ aluno.nome ~ ' na recepção.', url_for('alunos.acesso', id=aluno.id), 'Bloquear acesso' if aluno.acesso_liberado else 'Liberar acesso', 'btn-danger' if aluno.acesso_liberado else 'btn-primary') }}
 {% endblock %}

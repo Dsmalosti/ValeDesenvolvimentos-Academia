@@ -261,7 +261,8 @@ def test_acesso_de_aluno_de_outra_academia_da_404(app, academia):
     assert "Ana Souza" not in outro.get("/alunos/acesso/busca?q=ana").get_data(as_text=True)
 
 
-def test_aluno_com_entrada_nao_pode_ser_excluido(app, academia):
+def test_excluir_aluno_com_entrada_apaga_as_entradas(app, academia):
+    # [back-19-lgpd] antes: aluno com histórico não podia ser excluído. Agora os dados pessoais são apagados e o cadastro, anonimizado.
     criar_entrada(academia["dono"], academia["ana"], AGORA)
     como(app, academia["dono"]).post(f"/alunos/{academia['ana']}/excluir")
-    assert contar(Aluno, id=academia["ana"]) == 1 and contar(Frequencia) == 1
+    assert campo(Aluno, academia["ana"], "nome") == "Aluno removido" and contar(Frequencia) == 0

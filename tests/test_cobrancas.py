@@ -158,12 +158,14 @@ def test_pagar_reativa_aluno_inativo(app, academia):
     assert campo(Aluno, academia["ana"], "ativo") is True
 
 
-def test_aluno_com_cobranca_nao_pode_ser_excluido(app, academia):
+def test_excluir_aluno_com_cobranca_mantem_a_cobranca_sem_o_nome(app, academia):
+    # [back-19-lgpd] antes: aluno com histórico não podia ser excluído. Agora os dados pessoais são apagados e o cadastro, anonimizado.
     criar_cobranca_em_aberto(academia["dono"], academia["ana"], 100, HOJE, HOJE + 30 * DIA)
     dono = como(app, academia["dono"])
     dono.post(f"/alunos/{academia['ana']}/excluir")
     dono.post(f"/alunos/excluir/{academia['ana']}")       # a rota antiga também
-    assert contar(Aluno, id=academia["ana"]) == 1 and contar(Cobranca, aluno_id=academia["ana"]) == 1
+    assert contar(Aluno, id=academia["ana"]) == 1 and contar(Cobranca, aluno_id=academia["ana"]) == 1      # o financeiro não muda
+    assert campo(Aluno, academia["ana"], "nome") == "Aluno removido" and campo(Aluno, academia["ana"], "cpf") is None
 
 
 # ------------------------------------------------------------------ renovar

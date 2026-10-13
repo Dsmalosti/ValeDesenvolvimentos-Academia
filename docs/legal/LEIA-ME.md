@@ -1,17 +1,29 @@
 # Textos legais do Vale Tec — o que o Adauto precisa conferir
 
-Nesta pasta estão os rascunhos dos dois textos que a tela "Criar conta" promete ao cliente:
+Os dois textos que a tela "Criar conta" cita agora estão **publicados no sistema**, como páginas públicas:
 
-- `Termos-de-Uso.md`
-- `Politica-de-Privacidade.md`
+| Texto | Página | Arquivo (é nele que se edita) |
+|---|---|---|
+| Termos de Uso | `/termos` | `app/legal/termos-de-uso.md` |
+| Política de Privacidade | `/privacidade` | `app/legal/politica-de-privacidade.md` |
 
-Foram escritos pelo Claude em 10/10/2026, a pedido do Adauto (decisão D7 do roadmap), para ele revisar e completar. **Nenhum dos dois vale ainda** e nenhum está publicado no sistema.
+Foram escritos pelo Claude em 10/10/2026, a pedido do Adauto (decisão D7), e atualizados em 13/10/2026 na branch `back-19-lgpd` (decisão D15: deixar a LGPD funcionando no sistema; o advogado revisa depois). Os arquivos saíram desta pasta e foram para `app/legal/` porque o sistema passou a lê-los.
+
+**Os dois aparecem com o aviso "Versão preliminar 0.2, ainda em revisão".** Tire o aviso (a linha que começa com `>` no topo de cada arquivo) quando o advogado aprovar.
+
+## Como editar
+
+1. Abra o arquivo `.md` e mude o texto. É Markdown comum: `#` título, `##` seção, `-` lista, `**negrito**`, tabela com `|`.
+2. **Troque a versão** em `app/services/legal_service.py` (a linha `VERSAO = '...'`). É essa versão que fica gravada no cadastro de quem cria a conta. Mudou o texto, mudou a versão.
+3. Abra `/termos` e `/privacidade` e confira.
 
 ## Importante
 
 O Claude não é advogado. Os textos seguem a LGPD e a prática comum de sistemas parecidos, mas não substituem a revisão de um profissional. A recomendação é passar por um advogado **antes de começar a cobrar**: enquanto o sistema é gratuito e de teste o risco é menor, e é quando entra dinheiro e mais clientes que um contrato mal escrito custa caro.
 
-## 1. O que só você sabe (está marcado como `[PREENCHER]`)
+## 1. O que só você sabe (aparece na página como "a definir")
+
+No arquivo está marcado como `` `[PREENCHER: ...]` ``. Troque o trecho inteiro, com os acentos graves, pelo valor.
 
 | O quê | Onde aparece |
 |---|---|
@@ -22,31 +34,35 @@ O Claude não é advogado. Os textos seguem a LGPD e a prática comum de sistema
 | Data de publicação | topo dos dois |
 | Provedor de hospedagem e país onde os dados ficam (decisão D4) | Política §4 |
 | Provedor de e-mail (decisão D6) | Política §4 |
-| Prazo do "lembrar de mim" | Política §3 |
 
-## 2. O que eu assumi e você precisa confirmar
+O prazo do "lembrar de mim" saiu desta lista: o sistema usa 30 dias e o texto já diz isso.
 
-Cada linha é uma promessa feita ao cliente. Se não for verdade, troque o texto ou me avise para ajustar o sistema.
+## 2. O que o texto promete e se o sistema já cumpre
 
-| Promessa no texto | De onde veio | Já é verdade no sistema? |
-|---|---|---|
-| Teste gratuito de cerca de 2 meses; preço avisado com 30 dias de antecedência | Sua resposta à D2. Os **30 dias** são sugestão minha | Não depende do sistema |
-| Suporte nos fins de semana e depois das 20h em dias úteis | Sua resposta à D11 | Não depende do sistema |
-| Cópia de segurança diária, guardada por 30 dias | Você pediu backup; os números são sugestão minha | **Ainda não.** Entra na Fase D (ambiente de produção) |
-| Depois do cancelamento, 30 dias para exportar e depois os dados são apagados | Sugestão minha | **Ainda não.** Precisa da branch de LGPD |
-| Aviso de incidente à academia em até 48 horas | Sugestão minha | É compromisso seu, não do sistema |
-| A academia consegue exportar e excluir os dados de um aluno | Tarefa 3.9 da lista do backend | **Ainda não.** Branch de LGPD |
-| Marcação de "aceita receber mensagens" por aluno | Tarefa 3.9 | **Ainda não.** Branch de LGPD |
-| Uma conta não enxerga nada de outra | Branch `back-03-isolamento` | Sim para alunos, planos, pagamentos, fichas e usuários. **Exercícios ainda são compartilhados** entre todas as contas |
-| Cada pessoa da equipe vê só o que o papel dela permite | Tarefa 3.6 | **Ainda não.** Branch de contas e papéis |
-| Conexão por HTTPS | — | **Ainda não.** Fase D |
-| Logs sem CPF, telefone nem senha | Branch `back-02-limpeza` | Sim |
-| Senha guardada só como hash | Já era assim (bcrypt) | Sim |
-| Não coletamos dados de cartão | O sistema não processa pagamento | Sim |
-| Só cookies necessários, sem rastreamento | O front não carrega nenhuma ferramenta de análise ou propaganda | Sim |
-| Registros de acesso (data, hora, IP) guardados por 6 meses | Exigência do Marco Civil da Internet para quem oferece aplicação na internet | **Ainda não.** Hoje o sistema não guarda esses registros de forma organizada; vai para a Fase D |
+Cada linha é uma promessa feita ao cliente. Atualizado em 13/10/2026.
 
-**Regra prática:** não publique os textos enquanto houver "Ainda não" nesta tabela para algo que o texto promete. Ou o sistema passa a cumprir, ou a promessa sai do texto.
+| Promessa no texto | Já é verdade no sistema? |
+|---|---|
+| Teste gratuito de cerca de 2 meses; preço avisado com 30 dias de antecedência | Não depende do sistema (os 30 dias são sugestão do Claude) |
+| Suporte nos fins de semana e depois das 20h em dias úteis | Não depende do sistema |
+| Uma conta não enxerga nada de outra | **Sim.** Vale também para exercícios, desde a `back-06` |
+| Cada pessoa da equipe vê só o que o papel dela permite | **Sim**, desde a `back-06`. Medidas de avaliação física: só dono e instrutor (`back-15`) |
+| A academia consegue exportar os dados de um aluno | **Sim** (`back-19`): botão no perfil do aluno, só para o dono |
+| A academia consegue excluir os dados de um aluno | **Sim** (`back-19`): "Excluir aluno" apaga os dados pessoais e de saúde; os pagamentos ficam, sem identificação |
+| Marcação de "aceita receber mensagens" por aluno | **Sim** (`back-19`): no cadastro do aluno; quem recusou não entra na fila de mensagens |
+| O sistema não envia mensagem sozinho | **Sim** (`back-16`): prepara o texto e abre o WhatsApp de quem usa |
+| Senha guardada só como hash | **Sim** (bcrypt) |
+| Não coletamos dados de cartão | **Sim**: o sistema não processa pagamento |
+| Só cookies necessários, sem rastreamento | **Sim.** O front não carrega nenhuma ferramenta de análise ou propaganda, e a regra de conteúdo da `back-18` só deixa rodar script do próprio sistema (mais o Bootstrap das telas antigas) |
+| Sessão de 12 horas sem uso; "lembrar de mim" por 30 dias | **Sim** (`back-18`) |
+| Logs sem CPF, telefone nem senha | **Sim**, e há um teste que vigia isso (`tests/test_lgpd.py`) |
+| Conexão por HTTPS | **Na produção, sim:** a `back-18` obriga. Depende de a hospedagem estar no ar (Fase D) |
+| Cópia de segurança diária, guardada por 30 dias | **Ainda não.** É do ambiente de produção (Fase D) |
+| Depois do cancelamento da conta, 30 dias para exportar e depois os dados são apagados | **Ainda não.** Não existe "cancelar conta" no sistema; hoje seria feito à mão, a pedido |
+| Registros de acesso (data, hora, IP) guardados por 6 meses | **Ainda não.** É do servidor de produção (Fase D) |
+| Aviso de incidente à academia em até 48 horas | É compromisso seu, não do sistema |
+
+**Regra prática:** antes de tirar o aviso de "versão preliminar", cada "Ainda não" precisa virar "Sim", ou a promessa sai do texto.
 
 ## 3. Pontos para decidir com um advogado
 
@@ -55,11 +71,12 @@ Cada linha é uma promessa feita ao cliente. Se não for verdade, troque o texto
 3. **Encarregado de dados (DPO).** Empresas pequenas têm regras mais leves na ANPD e, em geral, não precisam nomear um encarregado, mas precisam manter um canal de contato. Confirmar se o seu caso se enquadra.
 4. **Contrato de tratamento de dados com a academia.** Hoje está embutido nos Termos (§7). Para clientes maiores, costuma virar um documento separado.
 5. **Consentimento do aluno para a avaliação física.** O texto põe essa obrigação na academia. Vale oferecer a ela um modelo de termo de consentimento, para facilitar.
-6. **Foro.** Está como a sua cidade, com a ressalva do consumidor.
+6. **A opção de WhatsApp vem marcada.** No cadastro do aluno, "Aceita receber avisos pelo WhatsApp" começa ligada e a academia desmarca se o aluno não quiser. Para lembrete e cobrança isso costuma bastar; para mensagem com oferta (o parabéns com desconto, por exemplo), o advogado pode pedir que comece desligada.
+7. **O que fica depois de apagar um aluno.** Os pagamentos continuam, sem nome. Confirmar o prazo de guarda desses registros.
+8. **Foro.** Está como a sua cidade, com a ressalva do consumidor.
 
-## 4. O que falta no sistema para publicar
+## 4. O que o sistema guarda como prova do aceite
 
-- Duas páginas públicas, `/termos` e `/privacidade`, ligadas nos links da tela "Criar conta" (hoje os links apontam para `#termos` e `#privacidade`, que não levam a lugar nenhum).
-- Guardar, no cadastro, a data e a versão dos termos que a pessoa aceitou.
+Quem cria a conta em `/criar-conta` fica com a **versão dos textos** e a **data e hora** gravadas no cadastro (`instrutores.termos_versao` e `termos_aceitos_em`). Contas criadas antes de 13/10/2026 não têm esse registro. Quem entra por convite não aceita termos: o contrato é com o dono da conta.
 
-As duas coisas estão previstas na branch de LGPD do roadmap.
+Quando a versão final for publicada, vale decidir se as contas antigas precisam aceitar de novo (o sistema ainda não pede).

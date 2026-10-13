@@ -1,6 +1,6 @@
 # Política de Privacidade — Vale Tec
 
-> **RASCUNHO v0.1 (10/10/2026) — ainda não vale.** Escrito pelo Claude a pedido do Adauto, para ele revisar e completar. Os trechos `[PREENCHER: ...]` dependem de informação que só o Adauto tem. Veja a lista do que conferir em `docs/legal/LEIA-ME.md`.
+> **Versão preliminar 0.2, de 13/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica. Os trechos marcados como "a definir" serão preenchidos antes da versão final.
 
 **Última atualização:** `[PREENCHER: data de publicação]`
 
@@ -39,8 +39,10 @@ Estes dados são colocados no sistema pela academia ou pelo profissional. É ele
 | Plano, datas, valores e pagamentos registrados | Controle de mensalidades e de inadimplência |
 | Registros de entrada (frequência) | Acompanhar a presença |
 | Fichas de treino | Organizar os exercícios do aluno |
+| Sessões marcadas com o personal trainer e o saldo do pacote | Organizar a agenda e saber quantas sessões o aluno ainda tem |
 | **Avaliação física**: peso, altura, medidas, dobras cutâneas e os cálculos feitos a partir delas | Acompanhar a evolução física do aluno |
-| Marcação de que o aluno aceita receber mensagens | Respeitar a vontade do aluno |
+| Marcação de que o aluno aceita, ou não, receber mensagens pelo WhatsApp | Respeitar a vontade do aluno: quem recusou não entra na fila de mensagens |
+| Registro de que uma mensagem foi preparada para o aluno (o tipo e o dia; nunca o texto nem o telefone) | Evitar mandar a mesma cobrança várias vezes |
 
 **Dado sensível.** As informações da avaliação física dizem respeito à saúde e, pela LGPD, são dados pessoais sensíveis. Elas só devem ser registradas com o consentimento do aluno, que a academia ou o profissional é responsável por obter.
 
@@ -58,8 +60,8 @@ Usamos apenas o necessário para o sistema funcionar:
 
 | O quê | Para quê | Duração |
 |---|---|---|
-| Cookie de sessão | Manter você logado enquanto usa | Até você sair ou fechar o navegador |
-| Cookie "lembrar de mim" | Manter você logado entre uma visita e outra, só se você marcar essa opção | `[PREENCHER: prazo, a definir na configuração do sistema]` |
+| Cookie de sessão | Manter você logado enquanto usa | Até você sair, ou depois de 12 horas sem uso |
+| Cookie "lembrar de mim" | Manter você logado entre uma visita e outra, só se você marcar essa opção | 30 dias |
 | Preferência de tema (claro ou escuro) | Lembrar a sua escolha. Fica só no seu aparelho | Até você apagar os dados do navegador |
 
 ## 4. Com quem compartilhamos
@@ -91,7 +93,7 @@ Nenhum sistema é totalmente imune a falhas. Se acontecer um incidente de segura
 | Dados da conta e dos alunos | Enquanto a conta estiver ativa |
 | Depois do cancelamento da conta | 30 dias para exportação; depois disso, os dados são apagados dos sistemas em uso |
 | Cópias de segurança | Eliminadas no ciclo normal, em até 30 dias depois do apagamento |
-| Aluno excluído pela academia | Apagado dos sistemas em uso na hora; some das cópias de segurança em até 30 dias |
+| Aluno que teve os dados apagados pela academia | Os dados pessoais e de saúde (nome, contato, CPF, avaliações, fichas, frequência, agenda) são apagados dos sistemas em uso na hora e somem das cópias de segurança em até 30 dias. Os registros de pagamento continuam, **sem nada que identifique o aluno**, pelo prazo que a lei exige para registros financeiros |
 | Registros de acesso (data, hora, IP) | 6 meses, como manda o Marco Civil da Internet |
 | Dados que a lei mande guardar por mais tempo | Pelo prazo da lei, e só para essa finalidade |
 
