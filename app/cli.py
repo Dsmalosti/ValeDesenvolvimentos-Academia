@@ -81,3 +81,31 @@ def registrar_comandos(app):
             raise click.ClickException('Não há conta ativa com este e-mail.')
         click.echo('Link de troca de senha (vale 1 hora):')
         click.echo(link)
+
+    @app.cli.command('banco-novo')
+    def banco_novo():
+        """
+        [back-20-producao] Monta um banco VAZIO (o de produção, na primeira vez): cria todas as tabelas a partir do
+        models.py, marca o banco na versão mais nova das migrations e grava o catálogo padrão de exercícios.
+
+        Por que existe: `flask db upgrade` num Postgres vazio para na segunda migration antiga (f456ba924031, que muda o
+        tipo de treino.repeticoes de um jeito que o Postgres recusa). Num banco NOVO não há o que migrar: o caminho
+        certo é criar tudo de uma vez e dizer ao Alembic que o banco já está em dia. Daí em diante, cada versão nova
+        entra com `flask db upgrade`, normalmente.
+
+        O comando se recusa a rodar se o banco já tiver qualquer tabela.
+        """
+        from flask_migrate import stamp
+        from sqlalchemy import inspect
+
+        from app.services.treino_service import semear_catalogo_padrao
+
+        existentes = inspect(db.engine).get_table_names()
+        if existentes:
+            raise click.ClickException(f'Este banco já tem {len(existentes)} tabela(s). O comando só vale para banco vazio. '
+                                       'Para atualizar um banco que já existe, use: flask db upgrade')
+        db.create_all()
+        stamp(revision='head')
+        exercicios = semear_catalogo_padrao()
+        click.echo(f'Banco criado: {len(inspect(db.engine).get_table_names())} tabelas, {exercicios} exercícios no catálogo padrão.')
+        click.echo('Próximo passo: crie a primeira conta pela tela /criar-conta (ou com: flask criar-conta).')

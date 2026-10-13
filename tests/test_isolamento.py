@@ -17,7 +17,9 @@ from tests.conftest import (campo, contar, criar_aluno, criar_ficha, criar_plano
 ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_conta", "auth.convite", "auth.nova_senha",
                   "instrutores.login", "instrutores.cadastroInstrutor",
                   # [back-19-lgpd] termos de uso e política de privacidade: quem ainda vai criar a conta precisa conseguir ler
-                  "legal.termos", "legal.privacidade"}
+                  "legal.termos", "legal.privacidade",
+                  # [back-20-producao] /saude: a hospedagem pergunta se o app está de pé; responde só "ok"
+                  "saude.saude"}
 
 
 @pytest.fixture()
