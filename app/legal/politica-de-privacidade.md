@@ -1,12 +1,12 @@
 # Política de Privacidade — Vale Tec
 
-> **Versão preliminar 0.2, de 13/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica. Os trechos marcados como "a definir" serão preenchidos antes da versão final.
+> **Versão preliminar 0.3, de 13/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica. Os trechos marcados como "a definir" (a hospedagem e o serviço de e-mail) serão preenchidos antes da versão final.
 
-**Última atualização:** `[PREENCHER: data de publicação]`
+**Última atualização:** 13/10/2026
 
 Esta política explica, em linguagem direta, quais dados o Vale Tec trata, para quê, por quanto tempo e quais são os seus direitos. Ela segue a Lei Geral de Proteção de Dados (Lei 13.709/2018, a LGPD).
 
-O Vale Tec é oferecido por `[PREENCHER: nome completo ou razão social]`, CNPJ `[PREENCHER]`. Contato para assuntos de dados pessoais: `[PREENCHER: e-mail]`.
+O Vale Tec é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, CNPJ 60.499.733/0001-44, com sede em Tremembé/SP. Contato para assuntos de dados pessoais: vale.informatica02@gmail.com.
 
 ## 1. Para quem é esta política
 
@@ -111,7 +111,7 @@ A LGPD (art. 18) garante a você, entre outros, o direito de:
 
 **Como pedir:**
 
-- **Usuário do sistema:** escreva para `[PREENCHER: e-mail]`. Respondemos em até 15 dias. Muita coisa você mesmo resolve nas configurações da conta.
+- **Usuário do sistema:** escreva para vale.informatica02@gmail.com. Respondemos em até 15 dias. Muita coisa você mesmo resolve nas configurações da conta.
 - **Aluno:** procure a sua academia ou o seu personal, que é quem decide sobre os seus dados. O sistema permite que eles exportem e excluam os dados de um aluno. Se você escrever para nós, encaminhamos o pedido a eles.
 
 Para proteger você, podemos pedir uma confirmação de identidade antes de atender.
@@ -122,5 +122,5 @@ Podemos atualizar esta política. Mudanças importantes serão avisadas por e-ma
 
 ## 9. Contato
 
-- Assuntos de privacidade e proteção de dados: `[PREENCHER: e-mail]`
+- Assuntos de privacidade e proteção de dados: vale.informatica02@gmail.com
 - Autoridade Nacional de Proteção de Dados: https://www.gov.br/anpd

@@ -95,7 +95,7 @@ Pelas decisões D1 e D8, os quatro entram: fichas, avaliação física e mensage
 | [x] | `front-10-treinos` + `back-14-treinos` | Exercícios e fichas de treino dentro da página do aluno. | 5.5 | **Feito.** As tabelas antigas foram mantidas e ganharam colunas; as telas antigas continuam no ar. Imagem e PDF da ficha ficaram para depois (pedem biblioteca nova): por enquanto a ficha vai em texto. |
 | [x] | `front-11-avaliacoes` + `back-15-avaliacoes` | Avaliação física: agendar, registrar, comparar. | 5.6 | **Feito.** IMC e RCQ calculados no servidor; é medição, não diagnóstico. Fotos, PDF e a cobrança da avaliação avulsa ficaram de fora (ver achados). |
 | [x] | `front-12-mensagens` + `back-16-mensagens` | Mensagens do dia pelo WhatsApp (link `wa.me`, custo zero). | 5.7 | **Feito.** A1 (dada). No lançamento o sistema **não envia sozinho**: ele monta o texto e abre o WhatsApp do aparelho, e a pessoa toca em enviar. Envio automático pede a API oficial do WhatsApp, que é paga por conversa e precisa de aprovação da Meta; fica para depois do lançamento. |
-| [x] | `front-13-personal` + `back-17-personal` | Variante Personal Trainer: agenda de sessões e pacotes. | 5.11 | **Feito** (com D12 implementada como no front: o saldo que sobra soma). A1 (dada). Obrigatória: o lançamento inclui personal trainers (D1). Falta decidir se renovar o pacote soma o saldo que sobrou (D12). |
+| [x] | `front-13-personal` + `back-17-personal` | Variante Personal Trainer: agenda de sessões e pacotes. | 5.11 | **Feito** (com D12 implementada como no front: o saldo que sobra soma). A1 (dada). Obrigatória: o lançamento inclui personal trainers (D1). D12 confirmada pelo Adauto em 13/10/2026: o saldo que sobra soma. |
 
 ## Fase C — Revisão de segurança
 
@@ -112,9 +112,27 @@ Com a skill `saas-flask-seguranca`, seção por seção, cada item marcado com e
 | | Item | O que é | Trava |
 |---|---|---|---|
 | [x] | `back-20-producao` | **Feito.** Comando `flask banco-novo` para criar o banco de produção (as migrations antigas não rodam do zero); `/saude` para o monitor da hospedagem; endereço de verdade do visitante atrás do proxy (`PROXIES_NA_FRENTE`); horário de Brasília no servidor; só `DATABASE_URL` em produção e aceite do formato `postgres://`; logs com data; guia `docs/DEPLOY.md`. Sem migration e sem dependência nova. PR [#42](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/42) → `back-19-lgpd`. | 3.10; A4 (dada). **Mexe em configuração de produção: o Diogo confere no PR** |
+| [x] | `back-21-textos-legais` | **Feito.** Dados de quem oferece o Vale Tec nos dois textos legais; versão 0.3. Nos termos não sobra nada "a definir"; na política ficam só a hospedagem e o serviço de e-mail. PR a abrir → `back-20-producao`. | D13 (respondida). Falta o advogado |
 | [ ] | Ambiente | Contratar hospedagem e banco, apontar o domínio, HTTPS, variáveis de ambiente, backup automático do banco e teste de restauração. | D4, D5 |
 | [ ] | Ensaio geral | Roteiro manual completo em produção com uma conta de teste: criar conta → cadastrar aluno → matricular → cobrar → registrar entrada → fechar o mês. No iPhone e no Android de verdade. | — |
 | [ ] | Entrada dos clientes | Os clientes se cadastram sozinhos pela tela "Criar conta" (D9) e cadastram os alunos do zero (D10). Do nosso lado: publicar os termos, mandar o link e combinar o canal de suporte. | Termos revisados; `back-13` |
+
+## O que falta para lançar (levantado em 13/10/2026)
+
+O código do roadmap original está pronto. Esta lista junta o que apareceu depois: o que ainda **não existe no sistema** e os pedidos novos do Adauto. Cada item vira uma branch quando a decisão que o trava sair.
+
+| | Item | O que é | Trava |
+|---|---|---|---|
+| [ ] | Cobrança do próprio SaaS | Hoje qualquer pessoa cria conta em `/criar-conta` e usa para sempre: não há período de teste, mensalidade nem bloqueio por falta de pagamento. Mínimo para lançar: prazo de teste por conta e um jeito de bloquear e liberar uma academia. **Muda o modelo do banco** (regra 4) | Preço, dias de teste e dias até o bloqueio (decisão do Adauto e do Diogo) |
+| [ ] | Painel de administrador (Adauto e Diogo) | Não existe. Hoje ver ou bloquear uma academia é só direto no banco. Precisa de um papel acima do dono, com isolamento próprio, e de registro do que o admin viu | Decidir o que o admin pode ver e fazer; o texto da Política precisa dizer isso |
+| [ ] | Página de apresentação | Não existe: o endereço principal abre o login. O que é, preço e telas reais | Nome final, preço e domínio |
+| [ ] | Ranking de presença do mês | Pedido do Adauto: os alunos que mais foram à academia no mês. Os dados já existem (`frequencias`). Falta o desenho da tela no front do Drive | Onde aparece (painel, frequência ou relatórios) |
+| [ ] | Front mais rápido e leve | Pedido do Adauto. Medir antes (peso de CSS, JS e imagens, tempo de carga no celular), depois cortar | Nenhuma. Não bloqueia o lançamento |
+| [ ] | Front mais fácil de manter | Pedido do Adauto. Hoje o front vive em dois lugares (Drive e repositório) e cada branch deixou ajustes marcados só no repositório. Decidir uma fonte só e documentar | Decidir se o Drive continua sendo a fonte do design |
+| [ ] | Atualizar 5 dependências | Achado do `pip-audit` na `back-20` | OK para mexer no `requirements.txt` |
+| [ ] | Servidor de aplicação | Gunicorn, Waitress ou o da hospedagem | Hospedagem (D4); é dependência nova |
+| [ ] | Cancelar a conta e exportar tudo | Os termos prometem 30 dias para exportar depois do cancelamento; não existe a tela | Pode ser feito à mão no começo |
+| [ ] | Remover as telas antigas | Duas dão erro 500 (`/instrutores/painel/`, `/fichas/editar/<id>`); Flask-JWT-Extended sem uso | São arquivos do Diogo (regra 4) |
 
 ## O que está parado esperando o Adauto
 
@@ -146,8 +164,8 @@ Decisões de negócio ou de conta externa. As quatro primeiras o Adauto quer dec
 | D4 | **Hospedagem e banco de produção:** onde o backend e o Postgres vão rodar e quanto dá para gastar por mês. Como o sistema será gratuito nos 2 primeiros meses, esse custo sai do bolso. | `back-20-producao`, o ambiente e o texto da política de privacidade | Levantar 2 ou 3 opções com preço antes de decidir | Antes da Fase D |
 | D5 | **Domínio** do sistema (ex.: `app.valetec.com.br`). | Cookies seguros, link do convite, e-mails, e mais tarde o login com digital | Registrar já: demora a propagar e é barato | Antes da Fase D |
 | D6 | **Provedor de e-mail** para convite, confirmação de cadastro e "esqueci a senha". Ficou mais urgente: com os clientes se cadastrando sozinhos (D9), sem e-mail ninguém recupera a senha. | `back-13-equipe` | Escolher junto com o domínio | Antes de `back-13` **Atualização de 12/10/2026:** a `back-13` já envia por qualquer provedor com SMTP; decidir o provedor virou só preencher 5 variáveis de ambiente (`.env.example`). Sem elas o sistema funciona com link copiado e comando do suporte. |
-| D12 | **Personal:** renovar um pacote de sessões soma o saldo que sobrou do pacote anterior, ou o saldo antigo se perde? | `back-17-personal` | Perguntar aos personais que vão testar | Antes de `back-17` |
-| D13 | **Dados de quem oferece o Vale Tec** para os termos: nome ou razão social, CNPJ, cidade, e-mail de contato e canal de suporte. | Publicar os termos | Lista completa em `docs/legal/LEIA-ME.md` | Antes do lançamento |
+| D12 | **Respondida em 13/10/2026: soma.** Ao renovar um pacote de sessões, o saldo que sobrou do pacote anterior soma ao novo. | `back-17-personal` | Já era assim no código desde a `back-17`; nada a mudar | Feito |
+| D13 | **Respondida em 13/10/2026.** Dados de quem oferece o Vale Tec: razão social 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, CNPJ 60.499.733/0001-44, Tremembé, e-mail de contato e de suporte vale.informatica02@gmail.com. | Publicar os termos | Entraram nos textos na `back-21-textos-legais`. Conferir o "/SP" acrescentado à cidade | Feito |
 
 ### Decisões já tomadas pelo Adauto (10/10/2026)
 
@@ -204,7 +222,7 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | A chave **"Lembretes automáticos"** de Configurações não muda nada: o envio automático pede a API oficial do WhatsApp, que é paga | `config/index.html` | Depois do lançamento (fase 2 das mensagens). Até lá, o front pode esconder a chave |
 | Os modelos de texto **"aluno sumido"** e **"boas-vindas"** não têm fila: a tela de mensagens só tem três filtros | `mensagens/index.html` | Decisão do Adauto: dois filtros a mais no front; o backend é pequeno |
 | A **central de notificações** (o sino do painel) segue "em construção"; o front tem a tela `painel/notificacoes.html` | `painel/routes.py` | Tarefa 5.1; não está em nenhuma branch do roadmap ainda |
-| **Personal: D12 em aberto.** O saldo que sobra do pacote **soma** ao renovar (como o front diz). Validade do pacote não bloqueia nada; não há botão de "faltou" nem de "aluno confirmou" | `pacote_service.py`, `agenda_service.py` | Adauto e Diogo confirmam com o cliente; lista completa em `docs/mudancas/back-17-personal.md` |
+| **Personal: D12 confirmada em 13/10/2026.** O saldo que sobra do pacote **soma** ao renovar. Validade do pacote não bloqueia nada; não há botão de "faltou" nem de "aluno confirmou" | `pacote_service.py`, `agenda_service.py` | Adauto e Diogo confirmam com o cliente; lista completa em `docs/mudancas/back-17-personal.md` |
 | O botão do front diz **"Marcar e avisar o aluno"**, e o sistema não avisa (o lembrete fica na fila de Mensagens) | `agenda/nova.html` (front) | Ajuste de texto do Adauto no front |
 | O card "Avaliações de hoje" do painel tem número e nomes fixos de exemplo no template. Está escondido | `painel/index.html` | **Resolvido na `back-15-avaliacoes`:** mostra as avaliações do dia |
 | A recepção **não abre** as medidas da avaliação física (dado de saúde): só agenda. O front mostra os botões para todos | `avaliacao_service.py` (`PAPEIS_QUE_AVALIAM`) | Decisão do Adauto (e do advogado, na LGPD): manter ou liberar. É uma linha |
@@ -267,6 +285,7 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 12/10/2026 | `front-08-config` e `back-12-config` enviadas: configurações da academia, metas nos gráficos, modelos de mensagem, check-in ligável e inatividade automática. |
 | 12/10/2026 | `front-09-equipe` e `back-13-equipe` enviadas: criar conta, convite da equipe por link, trocar papel, remover e troca de senha. E-mail por SMTP sem dependência nova. Fecha a primeira parte da Fase B. |
 | 12/10/2026 | `front-10-treinos` e `back-14-treinos` enviadas: catálogo de exercícios, modelos prontos, ficha do aluno por treino (A a E) e envio pelo WhatsApp com o texto pronto. Sem dependência nova. |
+| 13/10/2026 | `back-21-textos-legais` enviada: razão social, CNPJ, cidade e e-mail de contato nos termos de uso e na política de privacidade (D13 respondida); versão dos textos 0.3. D12 confirmada (o saldo do pacote soma). Os 20 PRs de `back-09` a `back-20` foram abertos. O Adauto pediu três coisas novas: front mais rápido e leve, front mais fácil de manter, e ranking de presença do mês. |
 | 13/10/2026 | `back-20-producao` enviada: `flask banco-novo`, `/saude`, proxy, fuso, `DATABASE_URL` em produção, logs e `docs/DEPLOY.md`. Checklist final de segurança feita: isolamento conferido em todas as rotas; `pip-audit` apontou 5 dependências a atualizar. **Fim do que não depende de decisão.** |
 | 13/10/2026 | `back-19-lgpd` enviada: termos e política publicados como versão preliminar, aceite gravado, opção de WhatsApp por aluno, exportar e apagar os dados de um aluno. Sem dependência nova. Fecha o código da Fase C. |
 | 12/10/2026 | `back-18-seguranca` enviada: limite de tentativas, cabeçalhos e CSP, HTTPS em produção, sessão com prazo e que cai ao trocar a senha, login com mensagem única e sem popup. Dependências novas: Flask-Limiter e Flask-Talisman (A6). **Ao subir, todos entram de novo uma vez.** |

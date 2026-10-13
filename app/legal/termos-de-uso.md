@@ -1,12 +1,12 @@
 # Termos de Uso — Vale Tec
 
-> **Versão preliminar 0.2, de 13/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica. Os trechos marcados como "a definir" serão preenchidos antes da versão final.
+> **Versão preliminar 0.3, de 13/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica.
 
-**Última atualização:** `[PREENCHER: data de publicação]`
+**Última atualização:** 13/10/2026
 
 ## 1. Quem somos e o que é este documento
 
-O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers. Ele é oferecido por `[PREENCHER: nome completo ou razão social]`, inscrito no CNPJ `[PREENCHER]`, com sede em `[PREENCHER: cidade/UF]` ("Vale Tec", "nós").
+O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers. Ele é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, inscrito no CNPJ 60.499.733/0001-44, com sede em Tremembé/SP ("Vale Tec", "nós").
 
 Estes Termos são o contrato entre o Vale Tec e quem cria uma conta para usar o sistema ("você", "cliente"): a academia, o estúdio ou o profissional. Ao criar a conta, você declara que leu e aceita estes Termos e a nossa [Política de Privacidade](politica-de-privacidade).
 
@@ -29,7 +29,7 @@ O sistema é uma ferramenta de organização. Ele **não**:
 - As informações do cadastro devem ser verdadeiras e ficar atualizadas.
 - A conta tem um **responsável** (o dono), que pode convidar outras pessoas da equipe, como recepção e instrutores. Você responde pelo que essas pessoas fizerem dentro da sua conta.
 - Cada pessoa usa o próprio acesso. Não compartilhe senha.
-- Se desconfiar de acesso indevido, troque a senha e nos avise em `[PREENCHER: e-mail de contato]`.
+- Se desconfiar de acesso indevido, troque a senha e nos avise em vale.informatica02@gmail.com.
 
 ## 4. Período de teste e preço
 
@@ -88,7 +88,7 @@ Por isso:
 
 ## 8. Suporte e disponibilidade
 
-- **Suporte:** atendemos por `[PREENCHER: canal — e-mail, WhatsApp]`. Nesta fase o atendimento acontece **nos fins de semana e, em dias úteis, depois das 20h**. Respondemos assim que possível dentro desses horários.
+- **Suporte:** atendemos pelo e-mail vale.informatica02@gmail.com. Nesta fase o atendimento acontece **nos fins de semana e, em dias úteis, depois das 20h**. Respondemos assim que possível dentro desses horários.
 - **Disponibilidade:** nos esforçamos para manter o sistema no ar, mas não garantimos funcionamento ininterrupto, principalmente durante o período de teste. Manutenções programadas serão avisadas com antecedência sempre que possível.
 - **Cópias de segurança:** fazemos cópia de segurança diária dos dados, guardada por 30 dias, para recuperar o sistema em caso de falha. Essa cópia serve para restaurar o serviço como um todo; ela não substitui a exportação que você pode fazer dos seus próprios dados.
 
@@ -118,9 +118,9 @@ Podemos atualizar estes Termos. Mudanças importantes serão avisadas por e-mail
 
 ## 13. Lei e foro
 
-Estes Termos seguem as leis do Brasil. Fica eleito o foro de `[PREENCHER: cidade/UF]` para resolver qualquer questão, sem prejuízo do direito do consumidor de acionar o foro do próprio domicílio quando a lei assim garantir.
+Estes Termos seguem as leis do Brasil. Fica eleito o foro de Tremembé/SP para resolver qualquer questão, sem prejuízo do direito do consumidor de acionar o foro do próprio domicílio quando a lei assim garantir.
 
 ## 14. Contato
 
-- Dúvidas sobre o sistema ou sobre estes Termos: `[PREENCHER: e-mail]`
-- Assuntos de privacidade e proteção de dados: `[PREENCHER: e-mail, pode ser o mesmo]`
+- Dúvidas sobre o sistema ou sobre estes Termos: vale.informatica02@gmail.com
+- Assuntos de privacidade e proteção de dados: vale.informatica02@gmail.com

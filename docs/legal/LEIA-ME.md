@@ -9,7 +9,7 @@ Os dois textos que a tela "Criar conta" cita agora estão **publicados no sistem
 
 Foram escritos pelo Claude em 10/10/2026, a pedido do Adauto (decisão D7), e atualizados em 13/10/2026 na branch `back-19-lgpd` (decisão D15: deixar a LGPD funcionando no sistema; o advogado revisa depois). Os arquivos saíram desta pasta e foram para `app/legal/` porque o sistema passou a lê-los.
 
-**Os dois aparecem com o aviso "Versão preliminar 0.2, ainda em revisão".** Tire o aviso (a linha que começa com `>` no topo de cada arquivo) quando o advogado aprovar.
+**Os dois aparecem com o aviso "Versão preliminar 0.3, ainda em revisão".** Tire o aviso (a linha que começa com `>` no topo de cada arquivo) quando o advogado aprovar.
 
 ## Como editar
 
@@ -21,19 +21,33 @@ Foram escritos pelo Claude em 10/10/2026, a pedido do Adauto (decisão D7), e at
 
 O Claude não é advogado. Os textos seguem a LGPD e a prática comum de sistemas parecidos, mas não substituem a revisão de um profissional. A recomendação é passar por um advogado **antes de começar a cobrar**: enquanto o sistema é gratuito e de teste o risco é menor, e é quando entra dinheiro e mais clientes que um contrato mal escrito custa caro.
 
-## 1. O que só você sabe (aparece na página como "a definir")
+## 1. O que só você sabe
 
-No arquivo está marcado como `` `[PREENCHER: ...]` ``. Troque o trecho inteiro, com os acentos graves, pelo valor.
+**Preenchido em 13/10/2026 (branch `back-21-textos-legais`), com os dados que o Adauto passou:**
+
+| O quê | Valor | Onde aparece |
+|---|---|---|
+| Razão social | 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO | Termos §1, Política (abertura) |
+| CNPJ | 60.499.733/0001-44 | Termos §1, Política (abertura) |
+| Cidade da sede, que também define o foro | Tremembé/SP (**o Adauto informou só "Tremembé"; o "/SP" foi acrescentado pelo Claude: conferir**) | Termos §1 e §13, Política (abertura) |
+| E-mail de contato, de suporte e de assuntos de dados | vale.informatica02@gmail.com | Termos §3, §8 e §14, Política (abertura), §7 e §9 |
+| Data de publicação | 13/10/2026 | topo dos dois |
+
+**Ainda falta (aparece na página como "a definir").** No arquivo está marcado como `` `[PREENCHER: ...]` ``. Troque o trecho inteiro, com os acentos graves, pelo valor.
 
 | O quê | Onde aparece |
 |---|---|
-| Nome completo ou razão social de quem oferece o Vale Tec, e o CNPJ | Termos §1, Política (abertura) |
-| Cidade e estado da sede, que também define o foro | Termos §1 e §13 |
-| E-mail de contato e e-mail para assuntos de dados (pode ser o mesmo) | Termos §3 e §14, Política §7 e §9 |
-| Canal de suporte (e-mail, WhatsApp) | Termos §8 |
-| Data de publicação | topo dos dois |
 | Provedor de hospedagem e país onde os dados ficam (decisão D4) | Política §4 |
 | Provedor de e-mail (decisão D6) | Política §4 |
+| Se os dados saem do Brasil (depende da hospedagem) | Política §4 |
+
+**Para trocar um destes dados no futuro** (e-mail novo no domínio, outro CNPJ): procure o valor antigo nos dois arquivos de `app/legal/`, troque em todos os lugares e mude a `VERSAO`.
+
+**Atenção a três pontos que os dados de agora trazem:**
+
+- **O e-mail é um Gmail.** Serve para começar. Quando o domínio existir, vale trocar por um e-mail nele (decisão D6).
+- **O suporte ficou só por e-mail.** O WhatsApp não foi informado; se for atender por lá, acrescentar o número no §8 dos Termos.
+- **A razão social é a do MEI.** O ponto 1 da seção 3 (o MEI pode licenciar software?) continua valendo.
 
 O prazo do "lembrar de mim" saiu desta lista: o sistema usa 30 dias e o texto já diz isso.
 
