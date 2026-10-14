@@ -91,7 +91,7 @@ with sync_playwright() as p:
         pg.on("response", lambda r: r.status >= 400 and falhas_rede.append(f"{r.status} {r.url}"))
 
         # chega pedindo uma página protegida, como um usuário de verdade
-        chegada = pg.goto(BASE + "/planos/listar/")
+        chegada = pg.goto(BASE + "/planos")     # [back-27-telas-antigas] antes: /planos/listar/ (tela antiga)
         pg.wait_for_selector("#f-identificador", timeout=4000)
         # [back-18-seguranca] antes: aqui abria o popup obrigatório "Como você vai entrar?" e o teste conferia o popup
         # (não fechar com Esc, escolher, trocar). O popup saiu: o papel vem do banco. Agora o teste confere que ele não existe.
@@ -141,7 +141,7 @@ with sync_playwright() as p:
             pg.wait_for_url(lambda u: "/login" not in u, timeout=6000)
         except Exception:
             pass
-        checa(f"[{nome}] login certo volta para a página pedida (/planos/listar/)", pg.url == BASE + "/planos/listar/", pg.url)
+        checa(f"[{nome}] login certo volta para a página pedida (/planos)", pg.url == BASE + "/planos", pg.url)
         rede = [f for f in falhas_rede if not f.endswith("/favicon.ico")]
         checa(f"[{nome}] nenhum arquivo 404/500", not rede, rede[:5])
         ctx.close()

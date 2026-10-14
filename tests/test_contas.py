@@ -1,7 +1,13 @@
 """
 Testes da branch back-06-contas-e-papeis: conta (academia) separada de usuário, papéis,
 exercício com dono, e-mail e CPF únicos por conta, cadastro aberto fechado e `flask criar-conta`.
+
+[back-27-telas-antigas] Estes testes usavam as TELAS ANTIGAS (/alunos/listar/, /instrutores/..., /fichas/..., /exercicios/criar/...),
+que saíram. Os de papéis e de isolamento passaram para as telas novas; os da gestão da equipe antiga e do exercício
+antigo saíram, porque as telas novas já têm os seus (tests/test_equipe.py, tests/test_treinos.py,
+tests/test_alunos.py: e-mail e CPF por academia, catálogo e exercício de outra academia, convite, papel e remoção).
 """
+from datetime import date
 import pytest
 
 from app.cli import criar_conta_com_dono
@@ -32,35 +38,24 @@ def entrar_como(app, usuario_id):
 # ------------------------------------------------------------------ a equipe vê os mesmos dados
 @pytest.mark.parametrize("quem", ["dono", "recepcao", "instrutor"])
 def test_toda_a_equipe_ve_os_alunos_da_academia(app, equipe, quem):
-    pagina = entrar_como(app, equipe[quem]).get("/alunos/listar/")
+    pagina = entrar_como(app, equipe[quem]).get("/alunos")
     assert pagina.status_code == 200 and "Ana Souza" in pagina.get_data(as_text=True)
-
-
-def test_aluno_cadastrado_pela_recepcao_aparece_para_o_dono(app, equipe):
-    entrar_como(app, equipe["recepcao"]).post("/alunos/cadastro/", data={
-        "nome": "Bruno Lima", "email": "bruno@exemplo.com", "telefone": "11999990000",
-        "data_nascimento": "1990-01-01", "cpf": "222", "ativo": "y", "plano_id": str(equipe["plano"])})
-
-    assert contar(Aluno, email="bruno@exemplo.com", conta_id=equipe["conta"]) == 1
-    assert campo(Aluno, 2, "instrutor_id") == equipe["recepcao"]      # guarda quem cadastrou
-    assert "Bruno Lima" in entrar_como(app, equipe["dono"]).get("/alunos/listar/").get_data(as_text=True)
 
 
 def test_outra_academia_continua_sem_ver_nada(app, equipe):
     outro = criar_usuario("outro@teste.local", nome="Otto")
-    html = entrar_como(app, outro).get("/alunos/listar/").get_data(as_text=True)
+    html = entrar_como(app, outro).get("/alunos").get_data(as_text=True)
     assert "Ana Souza" not in html
-    assert entrar_como(app, outro).get(f"/alunos/editar/{equipe['aluno']}").status_code == 404
+    assert entrar_como(app, outro).get(f"/alunos/{equipe['aluno']}/editar").status_code == 404
 
 
 # ------------------------------------------------------------------ papéis
+# [back-27-telas-antigas] antes: as rotas das telas antigas. Agora as equivalentes das telas novas.
 INSTRUTOR_NAO_PODE = [
-    ("GET", "/alunos/cadastro/"), ("POST", "/alunos/cadastro/"), ("GET", "/alunos/editar/1"),
-    ("POST", "/alunos/excluir/1"), ("POST", "/alunos/status/1"),
-    ("GET", "/planos/criar/"), ("GET", "/planos/editar/1/"), ("POST", "/planos/excluir/1"),
-    ("GET", "/pagamentos/situacao/"), ("GET", "/pagamentos/registrar/1"), ("GET", "/pagamentos/listar/1"),
+    ("GET", "/alunos/novo"), ("POST", "/alunos/novo"), ("GET", "/alunos/1/editar"),
+    ("POST", "/alunos/1/excluir"), ("POST", "/alunos/1/inativar"),
+    ("GET", "/planos/novo"), ("GET", "/planos/1/editar"), ("POST", "/planos/1/alternar"),
     ("GET", "/relatorios"), ("GET", "/relatorios/painel"), ("POST", "/cobrancas/diaria"),
-    ("GET", "/instrutores/lista/"), ("POST", "/instrutores/excluir/1"),
 ]
 
 
@@ -70,8 +65,7 @@ def test_instrutor_recebe_403_no_que_nao_e_dele(app, equipe, metodo, url):
     assert resposta.status_code == 403, f"{metodo} {url} respondeu {resposta.status_code}"
 
 
-@pytest.mark.parametrize("url", ["/alunos/listar/", "/planos/listar/", "/fichas/listar/", "/exercicios/listar/",
-                                 "/fichas/novo/", "/exercicios/criar/", "/configuracoes"])
+@pytest.mark.parametrize("url", ["/alunos", "/planos", "/treinos", "/exercicios", "/exercicios/novo", "/configuracoes"])   # [back-27-telas-antigas] antes: as telas antigas
 def test_instrutor_entra_no_que_e_dele(app, equipe, url):
     assert entrar_como(app, equipe["instrutor"]).get(url).status_code == 200
 
@@ -83,9 +77,9 @@ def test_recepcao_pode_o_que_o_instrutor_nao_pode(app, equipe, metodo, url):
 
 
 def test_so_o_dono_exclui_aluno(app, equipe):
-    assert entrar_como(app, equipe["recepcao"]).post(f"/alunos/excluir/{equipe['aluno']}").status_code == 403
+    assert entrar_como(app, equipe["recepcao"]).post(f"/alunos/{equipe['aluno']}/excluir").status_code == 403
     assert contar(Aluno, id=equipe["aluno"]) == 1
-    assert entrar_como(app, equipe["dono"]).post(f"/alunos/excluir/{equipe['aluno']}").status_code == 302
+    assert entrar_como(app, equipe["dono"]).post(f"/alunos/{equipe['aluno']}/excluir").status_code == 302
     assert contar(Aluno, id=equipe["aluno"]) == 0
 
 
@@ -99,92 +93,12 @@ def test_instrutor_nao_ve_os_numeros_do_painel(app, equipe):
     assert "432" in do_dono
 
 
-# ------------------------------------------------------------------ gestão da equipe
-def test_lista_da_equipe_mostra_so_a_propria_academia(app, equipe):
-    criar_usuario("outro@teste.local", nome="Otto")
-    html = entrar_como(app, equipe["dono"]).get("/instrutores/lista/").get_data(as_text=True)
-    assert "Diana" in html and "Rita" in html and "Igor" in html and "Otto" not in html
-
-
-def test_dono_edita_colega_recepcao_nao(app, equipe):
-    dados = {"nome": "Igor", "sobrenome": "Novo", "email": "igor@exemplo.com", "senha": "", "confirmacao_senha": ""}   # o navegador sempre manda os dois campos de senha, vazios
-    assert entrar_como(app, equipe["recepcao"]).post(f"/instrutores/editar/{equipe['instrutor']}", data=dados).status_code == 403
-    assert campo(User, equipe["instrutor"], "sobrenome") == "Teste"
-    assert entrar_como(app, equipe["dono"]).post(f"/instrutores/editar/{equipe['instrutor']}", data=dados).status_code == 302
-    assert campo(User, equipe["instrutor"], "sobrenome") == "Novo"
-
-
-def test_cada_um_edita_a_si_mesmo(app, equipe):
-    dados = {"nome": "Igor", "sobrenome": "Eu Mesmo", "email": "igor@exemplo.com", "senha": "", "confirmacao_senha": ""}   # o navegador sempre manda os dois campos de senha, vazios
-    assert entrar_como(app, equipe["instrutor"]).post(f"/instrutores/editar/{equipe['instrutor']}", data=dados).status_code == 302
-    assert campo(User, equipe["instrutor"], "sobrenome") == "Eu Mesmo"
-
-
-def test_dono_tira_alguem_da_equipe_mas_nao_a_si_mesmo(app, equipe):
-    dono = entrar_como(app, equipe["dono"])
-    dono.post(f"/instrutores/excluir/{equipe['dono']}")
-    assert contar(User, id=equipe["dono"]) == 1                       # continua lá
-    dono.post(f"/instrutores/excluir/{equipe['instrutor']}")
-    assert contar(User, id=equipe["instrutor"]) == 0
-
-
-def test_usuario_de_outra_academia_nao_e_alcancado(app, equipe):
-    outro = criar_usuario("outro@teste.local", nome="Otto")
-    dono = entrar_como(app, equipe["dono"])
-    assert dono.get(f"/instrutores/editar/{outro}").status_code == 404
-    assert dono.post(f"/instrutores/excluir/{outro}").status_code == 404
-    assert contar(User, id=outro) == 1
-
-
 # ------------------------------------------------------------------ cadastro aberto fechado
-def test_cadastro_aberto_pela_internet_esta_fechado(cliente):
+def test_cadastro_aberto_pela_internet_esta_fechado(cliente):     # [back-27-telas-antigas] a rota saiu de vez; continua respondendo 404
     dados = {"nome": "Invasor", "sobrenome": "X", "email": "invasor@exemplo.com", "senha": "abc12345", "confirmacao_senha": "abc12345"}
     assert cliente.get("/instrutores/cadastro/").status_code == 404
     assert cliente.post("/instrutores/cadastro/", data=dados).status_code == 404
     assert contar(User) == 0 and contar(Conta) == 0
-
-
-# ------------------------------------------------------------------ exercício com dono
-def test_exercicio_catalogo_e_proprio(app, equipe):
-    outro = criar_usuario("outro@teste.local", nome="Otto")
-    do_catalogo = criar_exercicio("Agachamento padrao")
-    da_casa = criar_exercicio("Supino da casa", dono_id=equipe["dono"])
-    do_vizinho = criar_exercicio("Rosca do vizinho", dono_id=outro)
-    dono = entrar_como(app, equipe["dono"])
-
-    lista = dono.get("/exercicios/listar/").get_data(as_text=True)
-    assert "Agachamento padrao" in lista and "Supino da casa" in lista and "Rosca do vizinho" not in lista
-
-    novo = {"nome": "Alterado", "grupo_muscular": "peito", "ativo": "y"}
-    assert dono.post(f"/exercicios/editar/{do_catalogo}", data=novo).status_code == 404   # catálogo: ninguém edita
-    assert dono.post(f"/exercicios/editar/{do_vizinho}", data=novo).status_code == 404    # de outra academia
-    assert dono.post(f"/exercicios/excluir/{do_vizinho}").status_code == 404
-    assert dono.post(f"/exercicios/editar/{da_casa}", data=novo).status_code == 302       # o da própria academia
-    assert campo(Exercicio, do_catalogo, "nome") == "Agachamento padrao"
-    assert campo(Exercicio, do_vizinho, "nome") == "Rosca do vizinho"
-    assert campo(Exercicio, da_casa, "nome") == "Alterado"
-
-
-def test_exercicio_criado_nasce_da_academia(app, equipe):
-    entrar_como(app, equipe["instrutor"]).post("/exercicios/criar/", data={"nome": "Remada nova", "grupo_muscular": "costas", "ativo": "y"})
-    assert contar(Exercicio, nome="Remada nova", conta_id=equipe["conta"]) == 1
-
-
-# ------------------------------------------------------------------ e-mail e CPF únicos por conta
-def test_mesmo_email_e_cpf_em_academias_diferentes_pode(app, equipe):
-    outro = criar_usuario("outro@teste.local", nome="Otto")
-    plano = criar_plano(outro, nome="Plano do Otto")
-    entrar_como(app, outro).post("/alunos/cadastro/", data={
-        "nome": "Ana Souza", "email": "ana@exemplo.com", "telefone": "11999990000",
-        "data_nascimento": "1990-01-01", "cpf": "111", "ativo": "y", "plano_id": str(plano)})
-    assert contar(Aluno, email="ana@exemplo.com") == 2
-
-
-def test_mesmo_email_na_mesma_academia_nao_pode(app, equipe):
-    entrar_como(app, equipe["dono"]).post("/alunos/cadastro/", data={
-        "nome": "Outra Ana", "email": "ana@exemplo.com", "telefone": "11999990000",
-        "data_nascimento": "1990-01-01", "cpf": "999", "ativo": "y", "plano_id": str(equipe["plano"])})
-    assert contar(Aluno, email="ana@exemplo.com") == 1
 
 
 # ------------------------------------------------------------------ nome da academia e papel na tela

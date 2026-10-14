@@ -88,7 +88,7 @@ def test_sair_so_por_post_e_com_csrf(cliente_csrf):
     assert cliente_csrf.get("/sair").status_code == 405
     assert cliente_csrf.post("/sair").status_code == 400
     # qualquer página logada com formulário serve para pegar um csrf_token válido
-    tk = token(cliente_csrf.get("/planos/criar/").get_data(as_text=True))
+    tk = token(cliente_csrf.get("/planos/novo").get_data(as_text=True))     # [back-27-telas-antigas] antes: /planos/criar/ (tela antiga)
     assert tk
     resposta = cliente_csrf.post("/sair", data={"csrf_token": tk})
     assert resposta.status_code == 302 and resposta.headers["Location"] == "/login"

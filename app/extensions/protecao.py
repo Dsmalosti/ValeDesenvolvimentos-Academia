@@ -25,7 +25,8 @@ talisman = Talisman()
 # De onde cada tipo de conteúdo pode vir. O front novo não tem script nem evento embutido no HTML: tudo
 # sai de /static. As exceções:
 #   - style-src 'unsafe-inline': os templates usam o atributo style="..." em muitos lugares;
-#   - cdn.jsdelivr.net: só as telas ANTIGAS (base_antigo.html) carregam o Bootstrap de lá. Sai junto com elas;
+#   - [back-27-telas-antigas] antes: cdn.jsdelivr.net, de onde as telas ANTIGAS (base_antigo.html) carregavam o Bootstrap. Saiu com elas:
+#     agora nada vem de fora do sistema;
 #   - img-src data: ícones embutidos no CSS;
 #   - 'inline-speculation-rules': o app.js do front pede ao navegador para ir carregando a próxima página quando o mouse
 #     passa num link (deixa a troca de tela instantânea). Isso é feito com um bloco <script type="speculationrules">
@@ -33,8 +34,8 @@ talisman = Talisman()
 #     embutido no HTML continua bloqueado.
 CSP = {
     'default-src': "'self'",
-    'script-src': ["'self'", "'inline-speculation-rules'", 'https://cdn.jsdelivr.net'],
-    'style-src': ["'self'", "'unsafe-inline'", 'https://cdn.jsdelivr.net'],
+    'script-src': ["'self'", "'inline-speculation-rules'"],
+    'style-src': ["'self'", "'unsafe-inline'"],
     'img-src': ["'self'", 'data:'],
     'font-src': ["'self'", 'data:'],
     'connect-src': "'self'",
