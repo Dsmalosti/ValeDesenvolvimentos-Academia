@@ -70,7 +70,8 @@ def montar_app():
         ids["Pacote 4"] = pacotes["Pacote 4"].id
         for i, (nome, pacote, pago) in enumerate([("Ana Celular", "Pacote 8", True), ("Ana Desktop", "Pacote 8", True), ("Bia Lima", "Pacote 4", False)]):
             aluno = Aluno(nome=nome, email=f"aluno{i}@exemplo.com", cpf=f"111.222.333-0{i}", telefone="(12) 98211-4400", ativo=True,
-                          plano_id=pacotes[pacote].id, instrutor_id=paulo.id, conta_id=conta.id)
+                          plano_id=pacotes[pacote].id, instrutor_id=paulo.id, conta_id=conta.id,
+                          aceita_whatsapp=True)     # [back-22-ajustes-de-produto] só quem autorizou entra na fila de Mensagens
             db.session.add(aluno)
             db.session.flush()
             ids[nome] = aluno.id
