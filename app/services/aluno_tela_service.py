@@ -197,6 +197,8 @@ def contexto_do_perfil(aluno, hoje=None):
     })
     # [back-19-lgpd] só o dono exporta os dados do aluno (e apaga, pelo "Excluir aluno")
     perfil['pode_lgpd'] = current_user.papel == PAPEL_PROPRIETARIO
+    # [back-22-ajustes-de-produto] o perfil avisa quando o aluno ainda não autorizou avisos pelo WhatsApp (ele fica fora da fila de Mensagens)
+    perfil['whatsapp_autorizado'] = aluno.aceita_whatsapp is True
     if 'pacote' in perfil:
         # [back-17-personal] conta de personal: no lugar da data de vencimento, o saldo do pacote
         perfil['vence_completo'] = perfil['vence_txt'].capitalize()
@@ -239,7 +241,7 @@ def aluno_para_o_formulario(aluno):
         'data_inicio_txt': _dmy(aluno.data_inicio), 'plano_id': aluno.plano_id,
         'forma_pagamento': aluno.forma_pagamento or '', 'dia_vencimento': aluno.dia_vencimento or '',
         'observacoes': aluno.observacoes or '',
-        'aceita_whatsapp': aluno.aceita_whatsapp,       # [back-19-lgpd] None = ainda não perguntado (a caixa vem marcada)
+        'aceita_whatsapp': aluno.aceita_whatsapp,       # [back-19-lgpd] None = ainda não perguntado. [back-22-ajustes-de-produto] antes a caixa vinha marcada; agora, desmarcada
     }
 
 

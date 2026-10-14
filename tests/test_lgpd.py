@@ -99,7 +99,8 @@ def _cadastro(academia, **trocas):
 def test_cadastro_grava_se_o_aluno_aceita_whatsapp(app, academia):
     dono = como(app, academia["dono"])
     tela = dono.get("/alunos/novo").get_data(as_text=True)
-    assert "Aceita receber avisos pelo WhatsApp" in tela and 'name="aceita_whatsapp" value="1" aria-labelledby="lb-whats" checked' in tela     # vem marcado
+    # [back-22-ajustes-de-produto] antes a caixa vinha marcada. Agora vem desmarcada: só se marca quando o aluno autoriza.
+    assert "Aceita receber avisos pelo WhatsApp" in tela and 'name="aceita_whatsapp" value="1" aria-labelledby="lb-whats"><span' in tela
 
     dono.post("/alunos/novo", data=_cadastro(academia, whatsapp_perguntado="1", aceita_whatsapp="1"))
     dono.post("/alunos/novo", data=_cadastro(academia, nome="Dora Recusa", cpf="529.982.247-25", email="dora@exemplo.com", whatsapp_perguntado="1"))
@@ -107,7 +108,6 @@ def test_cadastro_grava_se_o_aluno_aceita_whatsapp(app, academia):
     with app.app_context():
         valores = {a.nome: a.aceita_whatsapp for a in Aluno.query.all()}
     assert valores["Carlos Prado"] is True and valores["Dora Recusa"] is False and valores["Formulario Antigo"] is None      # sem a caixa na tela, nada muda
-    assert valores["Ana Souza"] is None                                                                                    # quem já existia: ainda não perguntado
 
     with app.app_context():
         dora = Aluno.query.filter_by(nome="Dora Recusa").one().id
@@ -119,6 +119,7 @@ def test_cadastro_grava_se_o_aluno_aceita_whatsapp(app, academia):
 
 
 def test_quem_recusou_whatsapp_nao_entra_na_fila_de_mensagens(app, academia):
+    """[back-22-ajustes-de-produto] antes só ficava de fora quem recusou. Agora também quem nunca foi perguntado, e a tela avisa quem são."""
     from app.extensions.database import db
     dono = como(app, academia["dono"])
     with app.app_context():
@@ -130,7 +131,23 @@ def test_quem_recusou_whatsapp_nao_entra_na_fila_de_mensagens(app, academia):
         db.session.get(Aluno, academia["ana"]).aceita_whatsapp = False
         db.session.commit()
     fila = dono.get("/mensagens").get_data(as_text=True)
-    assert "Ana Souza" not in fila and "0 para enviar" in fila
+    assert 'class="msg-item' not in fila and "0 para enviar" in fila
+    assert "1 aluno ainda não autorizou avisos pelo WhatsApp" in fila and f'href="/alunos/{academia["ana"]}/editar">Ana Souza</a>' in fila
+    perfil = dono.get(f"/alunos/{academia['ana']}").get_data(as_text=True)
+    assert "Avisos pelo WhatsApp ainda não autorizados" in perfil                  # o perfil também avisa
+    with app.app_context():
+        db.session.get(Aluno, academia["ana"]).aceita_whatsapp = None             # nunca perguntado: também fica de fora
+        db.session.commit()
+    assert "0 para enviar" in dono.get("/mensagens").get_data(as_text=True)
+    with app.app_context():
+        db.session.get(Aluno, academia["ana"]).aceita_whatsapp = True
+        db.session.commit()
+    fila = dono.get("/mensagens").get_data(as_text=True)
+    assert "Ana Souza" in fila and "ainda não autorizou" not in fila
+    assert "Avisos pelo WhatsApp ainda não autorizados" not in dono.get(f"/alunos/{academia['ana']}").get_data(as_text=True)
+    with app.app_context():
+        db.session.get(Aluno, academia["ana"]).aceita_whatsapp = False
+        db.session.commit()
     assert dono.post("/mensagens/enviada", json={"id": f"aniversario-{academia['ana']}"}).status_code == 404     # nem dá para marcar
 
 

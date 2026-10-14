@@ -63,7 +63,9 @@ class Conta(db.Model):
     meta_faturamento = db.Column(db.Numeric(10, 2), nullable=True)
     meta_retencao = db.Column(db.Integer, nullable=True)            # % que continua depois de 90 dias
     # "O aluno vira Inativo sozinho depois de X dias sem renovar a matrícula"
-    inatividade_ligada = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())
+    # [back-22-ajustes-de-produto] antes: default=True (toda conta nova nascia com a regra ligada). Decisão do Adauto em 14/10/2026:
+    # nasce DESLIGADA; o dono liga em Configurações se quiser. Contas que já existem não mudam.
+    inatividade_ligada = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
     inatividade_dias = db.Column(db.Integer, nullable=False, default=60, server_default='60')
     inatividade_conferida_em = db.Column(db.Date, nullable=True)    # último dia em que a regra rodou para esta conta
     lembretes_ligados = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true())

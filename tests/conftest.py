@@ -105,8 +105,10 @@ def criar_plano(dono_id, nome="Mensal"):
                          conta_id=conta_de(dono_id)))
 
 
-def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=None, nascimento=date(1990, 1, 1)):
-    aluno = Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo,
+def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=None, nascimento=date(1990, 1, 1), whatsapp=True):
+    # [back-22-ajustes-de-produto] `whatsapp`: o aluno autorizou avisos pelo WhatsApp? Antes não havia o parâmetro e o campo ficava vazio, o que
+    # bastava para entrar na fila de Mensagens. Agora só entra quem autorizou, então os alunos de teste nascem autorizados.
+    aluno = Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo, aceita_whatsapp=whatsapp,
                   data_nascimento=nascimento, plano_id=plano_id, instrutor_id=dono_id, conta_id=conta_de(dono_id))
     if cadastrado_em:  # um `date`; sem isso o banco usa o momento atual
         aluno.data_cadastro = datetime(cadastrado_em.year, cadastrado_em.month, cadastrado_em.day)

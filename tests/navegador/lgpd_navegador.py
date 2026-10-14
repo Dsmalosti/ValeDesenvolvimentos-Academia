@@ -72,7 +72,8 @@ def montar_app():
             # CPF de verdade e todos os campos obrigatórios: o formulário de edição confere tudo antes de enviar
             aluno = Aluno(nome=nome, email=f"aluno{i}@exemplo.com", cpf=["529.982.247-25", "168.995.350-09", "111.444.777-35"][i],
                           telefone="(12) 98211-4400", ativo=True, data_nascimento=date(1990, 5, 20), data_inicio=HOJE - timedelta(days=5),
-                          forma_pagamento="pix", dia_vencimento=10, plano_id=plano.id, instrutor_id=dona.id, conta_id=conta.id)
+                          forma_pagamento="pix", dia_vencimento=10, plano_id=plano.id, instrutor_id=dona.id, conta_id=conta.id,
+                          aceita_whatsapp=True)     # [back-22-ajustes-de-produto] antes vazio (a caixa vinha marcada); agora começa autorizado
             db.session.add(aluno)
             db.session.flush()
             ids[nome] = aluno.id

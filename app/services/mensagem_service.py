@@ -62,7 +62,7 @@ def _faz_aniversario(nascimento, hoje):
     return (nascimento.day, nascimento.month) == (29, 2) and (hoje.day, hoje.month) == (28, 2) and not calendar.isleap(hoje.year)
 
 
-def fila(hoje=None):
+def fila(hoje=None, com_sem_autorizacao=False):     # [back-22-ajustes-de-produto] `com_sem_autorizacao`: devolve também quem ficou de fora
     """
     A fila de hoje para quem está logado:
     [{id, tipo, aluno{id, nome, telefone}, contexto, texto, wa, enviada, referencia}]
@@ -79,10 +79,15 @@ def fila(hoje=None):
     cobrados_ha_pouco = {m.aluno_id for m in recentes if m.tipo == MENSAGEM_COBRANCA and m.data < hoje}
 
     itens = []
+    sem_autorizacao = {}
 
     def entra(tipo, aluno, referencia, contexto, **variaveis):
-        if aluno.aceita_whatsapp is False:
-            return      # [back-19-lgpd] o aluno pediu para não receber avisos pelo WhatsApp (antes não havia como registrar isso)
+        # [back-22-ajustes-de-produto] antes: ficava de fora só quem RECUSOU (aceita_whatsapp False); quem nunca foi perguntado (None) entrava.
+        # Decisão do Adauto em 14/10/2026: a autorização vem desligada; só entra quem autorizou. Quem ficou de fora
+        # vai para `sem_autorizacao`, que a tela mostra como aviso ("pergunte ao aluno").
+        if aluno.aceita_whatsapp is not True:
+            sem_autorizacao[aluno.id] = aluno.nome or 'Aluno sem nome'
+            return
         texto = preencher(modelos.get(tipo, ''), nome=(aluno.nome or 'aluno').split()[0], academia=academia, **variaveis)
         itens.append({'id': f'{tipo}-{referencia}', 'tipo': tipo, 'referencia': str(referencia), 'contexto': contexto, 'texto': texto,
                       'aluno': {'id': aluno.id, 'nome': aluno.nome or 'Aluno sem nome', 'telefone': aluno.telefone or ''},
@@ -120,19 +125,22 @@ def fila(hoje=None):
             venceu = linha['vence'] if linha['vence_data'] else None
             entra(MENSAGEM_COBRANCA, aluno, aluno.id, (f'Venceu {venceu}' if venceu else ('Pacote em aberto' if personal else 'Cobrança em aberto')) + f' · {valor}',
                   valor=valor, data=venceu or 'data combinada', plano=linha['plano'], dias=linha['dias_atraso'])
+    if com_sem_autorizacao:     # [back-22-ajustes-de-produto]
+        return itens, [{'id': i, 'nome': n} for i, n in sorted(sem_autorizacao.items(), key=lambda x: x[1].lower())]
     return itens
 
 
 def contexto_da_tela(hoje=None):
     """Variáveis de mensagens/index.html."""
-    itens = fila(hoje)
+    itens, sem_whatsapp = fila(hoje, com_sem_autorizacao=True)     # [back-22-ajustes-de-produto] antes: só os itens
     tipos = [(tipo, rotulo, icone, cor, sum(1 for i in itens if i['tipo'] == tipo))
              for tipo, rotulo, icone, cor in (TIPOS_DO_PERSONAL if pacote_service.e_personal() else TIPOS)
              if tipo != MENSAGEM_COBRANCA or ve_cobrancas()]
     # `lembretes_auto` faz a tela dizer que a fila "sai sozinha às 9h". Isso só existe com a API oficial do WhatsApp (paga,
     # fica para depois do lançamento), então hoje é sempre False, esteja a chave de Configurações ligada ou não:
     # a tela descreve o que o sistema faz de verdade ("você toca, o WhatsApp abre pronto").
-    return {'itens': itens, 'tipos': tipos, 'lembretes_auto': False, 'pendentes': sum(1 for i in itens if not i['enviada'])}
+    return {'itens': itens, 'tipos': tipos, 'lembretes_auto': False, 'pendentes': sum(1 for i in itens if not i['enviada']),
+            'sem_whatsapp': sem_whatsapp}     # [back-22-ajustes-de-produto] alunos com mensagem hoje que ainda não autorizaram o WhatsApp
 
 
 def marcar_enviada(id_do_item, hoje=None):

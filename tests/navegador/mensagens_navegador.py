@@ -73,7 +73,8 @@ def montar_app():
         for i, (nome, nascimento) in enumerate([("Ana Celular", NASCEU_HOJE), ("Ana Desktop", NASCEU_HOJE), ("Bia Lima", OUTRO_DIA),
                                                  ("Caio Dias", OUTRO_DIA), ("Duda Reis", OUTRO_DIA)]):
             aluno = Aluno(nome=nome, email=f"aluno{i}@exemplo.com", cpf=f"111.222.333-0{i}", telefone="(12) 98211-4400", ativo=True,
-                          data_nascimento=nascimento, plano_id=plano.id, instrutor_id=dona.id, conta_id=conta.id)
+                          data_nascimento=nascimento, plano_id=plano.id, instrutor_id=dona.id, conta_id=conta.id,
+                          aceita_whatsapp=True)     # [back-22-ajustes-de-produto] só quem autorizou entra na fila
             db.session.add(aluno)
             db.session.flush()
             ids[nome] = aluno.id

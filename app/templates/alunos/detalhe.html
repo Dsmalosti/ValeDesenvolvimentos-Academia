@@ -57,6 +57,9 @@
   <a class="btn btn-ghost btn-block" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('scale', 18) }}Iniciar avaliação física</a>
 </section>
 
+{# [back-22-ajustes-de-produto] Aviso NOVO, que o front do Drive não tem: o aluno ainda não autorizou avisos pelo WhatsApp e por isso não entra
+   na fila de Mensagens. `aluno.whatsapp_autorizado` (bool); sem a variável, nada aparece. #}
+{% if aluno.whatsapp_autorizado is defined and not aluno.whatsapp_autorizado %}<div class="note note--yellow" style="margin-bottom:12px">{{ icon('info', 20) }}<span><strong>Avisos pelo WhatsApp ainda não autorizados</strong>Enquanto não autorizar, {{ aluno.nome.split()[0] }} não entra na fila de Mensagens. Pergunte e marque em <a href="{{ url_for('alunos.editar', id=aluno.id) }}">Editar</a>.</span></div>{% endif %}
 <div class="detalhe-grid">
   <div class="detalhe-col">
     <section class="card card--pad card--plano" aria-labelledby="h-plano">

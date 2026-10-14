@@ -215,7 +215,8 @@ def test_botoes_de_whatsapp_viraram_links(app, academia):
 
 
 def test_aluno_sem_telefone(app, academia):
-    sem = _salvar(Aluno(nome="Sem Fone", email="s@exemplo.com", cpf="444.555.666-07", telefone=None, ativo=True, data_nascimento=NASCEU_HOJE,
+    # [back-22-ajustes-de-produto] aceita_whatsapp=True: sem a autorização o aluno nem entraria na fila
+    sem = _salvar(Aluno(nome="Sem Fone", email="s@exemplo.com", cpf="444.555.666-07", telefone=None, ativo=True, data_nascimento=NASCEU_HOJE, aceita_whatsapp=True,
                         plano_id=academia["plano"], instrutor_id=academia["dono"], conta_id=academia["conta"]))
     dono = como(app, academia["dono"])
     fila = linha(dono.get("/mensagens").get_data(as_text=True), "Sem Fone")
@@ -226,7 +227,8 @@ def test_aluno_sem_telefone(app, academia):
 
 def test_excluir_aluno_leva_junto_o_registro_de_mensagem(app, academia):
     """O registro de envio é só um toque: não segura a exclusão de um cadastro feito por engano."""
-    novo = _salvar(Aluno(nome="Engano Total", email="e@exemplo.com", cpf="666.777.888-08", telefone="11999990000", ativo=True, data_nascimento=NASCEU_HOJE,
+    # [back-22-ajustes-de-produto] aceita_whatsapp=True: sem a autorização o aluno nem entraria na fila
+    novo = _salvar(Aluno(nome="Engano Total", email="e@exemplo.com", cpf="666.777.888-08", telefone="11999990000", ativo=True, data_nascimento=NASCEU_HOJE, aceita_whatsapp=True,
                          plano_id=academia["plano"], instrutor_id=academia["dono"], conta_id=academia["conta"]))
     dono = como(app, academia["dono"])
     assert marcar(dono, f"aniversario-{novo}").status_code == 200 and contar(MensagemEnviada) == 1

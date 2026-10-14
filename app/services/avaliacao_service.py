@@ -5,7 +5,8 @@ São duas coisas separadas:
 
   - a AGENDA (`AvaliacaoAgendada`): o horário marcado. Qualquer pessoa da equipe marca e vê.
   - a AVALIAÇÃO FEITA (`AvaliacaoFisica`): anamnese, medidas, dobras e testes. São dados de saúde
-    (sensíveis pela LGPD): só o dono e os instrutores registram e abrem (PAPEIS_QUE_AVALIAM).
+    (sensíveis pela LGPD): só o dono e os instrutores registram (PAPEIS_QUE_AVALIAM); a equipe toda
+    abre o resultado (PAPEIS_QUE_VEEM_O_RESULTADO). [back-22-ajustes-de-produto] antes: a recepção não abria.
 
 Três regras que valem para o módulo inteiro:
 
@@ -26,10 +27,13 @@ from app.extensions.database import db
 from app.helpers.conta import da_conta
 from app.helpers.whatsapp import link_do_whatsapp, so_numeros
 from app.models import (AGENDA_A_CONFIRMAR, AGENDA_CONFIRMADA, AGENDA_REALIZADA, AGENDA_REMARCADA, AVALIACAO_AVULSA, AVALIACAO_INCLUSA,
-                        AVALIACAO_PRIMEIRA, AVALIACAO_REAVALIACAO, PAPEL_INSTRUTOR, PAPEL_PROPRIETARIO, Aluno, AvaliacaoAgendada,
+                        AVALIACAO_PRIMEIRA, AVALIACAO_REAVALIACAO, PAPEL_INSTRUTOR, PAPEL_PROPRIETARIO, PAPEL_RECEPCAO, Aluno, AvaliacaoAgendada,
                         AvaliacaoFisica, User)
 
-PAPEIS_QUE_AVALIAM = (PAPEL_PROPRIETARIO, PAPEL_INSTRUTOR)   # quem registra e abre o resultado (dado de saúde)
+PAPEIS_QUE_AVALIAM = (PAPEL_PROPRIETARIO, PAPEL_INSTRUTOR)   # quem registra a avaliação (dado de saúde)
+# [back-22-ajustes-de-produto] quem abre o resultado e o histórico. Antes: os mesmos de PAPEIS_QUE_AVALIAM (a recepção não via as medidas).
+# Decisão do Adauto em 14/10/2026: a recepção pode ver.
+PAPEIS_QUE_VEEM_O_RESULTADO = (PAPEL_PROPRIETARIO, PAPEL_RECEPCAO, PAPEL_INSTRUTOR)
 HORARIOS = [f'{h:02d}:00' for h in range(6, 21)]              # 06:00 a 20:00, de hora em hora
 VALIDADE_DIAS = 180                                           # depois disso a avaliação do aluno conta como "vencida"
 DIAS_ATE_A_DATA_SUGERIDA = 2
@@ -61,8 +65,13 @@ class AvaliacaoInvalida(Exception):
 
 # ------------------------------------------------------------------ ajudantes
 def pode_avaliar():
-    """Quem está logado registra e abre resultado de avaliação? (dono e instrutor)"""
+    """Quem está logado registra avaliação? (dono e instrutor)"""
     return current_user.papel in PAPEIS_QUE_AVALIAM
+
+
+def pode_ver_o_resultado():
+    """[back-22-ajustes-de-produto] Quem está logado abre o resultado e o histórico de avaliações? (hoje, a equipe toda)"""
+    return current_user.papel in PAPEIS_QUE_VEEM_O_RESULTADO
 
 
 def _dmy(d):
@@ -413,14 +422,14 @@ def contexto_do_resultado(avaliacao):
 def resumo_para_o_perfil(aluno, hoje=None):
     """
     O cartão "Avaliação física" do perfil: {data, em_dia, resumo}, ou None para quem nunca foi avaliado.
-    A recepção vê só a data: peso e IMC são dados de saúde.
+    [back-22-ajustes-de-produto] antes: a recepção via só a data. Agora quem pode ver o resultado vê peso e IMC.
     """
     hoje = hoje or date.today()
     feitas = historico_do(aluno)[:2]
     if not feitas:
         return None
     ultima = feitas[0]
-    if not pode_avaliar():
+    if not pode_ver_o_resultado():
         resumo = 'Resultado visível para o dono e os instrutores'
     else:
         resumo = f'{_br(ultima.peso_kg)} kg · IMC {_br(ultima.imc)}'

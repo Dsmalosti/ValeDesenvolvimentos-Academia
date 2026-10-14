@@ -308,8 +308,9 @@ def test_perfil_do_aluno_mostra_a_ultima_avaliacao(app, academia):
     html = como(app, academia["instrutor"]).get(f"/alunos/{ana}").get_data(as_text=True)
     assert f"Última: {br(HOJE)}" in html and "68,4 kg · IMC 24,5 · −2,8 kg desde a anterior" in html and ">Em dia<" in html
 
-    recepcao = como(app, academia["recepcao"]).get(f"/alunos/{ana}").get_data(as_text=True)    # a recepção vê a data, não as medidas
-    assert f"Última: {br(HOJE)}" in recepcao and "68,4" not in recepcao and "IMC" not in recepcao
+    # [back-22-ajustes-de-produto] antes: a recepção via só a data, sem as medidas. Agora vê o mesmo resumo que o instrutor.
+    recepcao = como(app, academia["recepcao"]).get(f"/alunos/{ana}").get_data(as_text=True)
+    assert f"Última: {br(HOJE)}" in recepcao and "68,4 kg · IMC 24,5" in recepcao
 
 
 def test_painel_avisa_das_avaliacoes_de_hoje(app, academia):
@@ -331,11 +332,14 @@ def test_painel_avisa_das_avaliacoes_de_hoje(app, academia):
 
 
 # ------------------------------------------------------------------ quem pode e isolamento
-def test_recepcao_agenda_mas_nao_abre_medidas(app, academia):
-    e = criar_avaliacao(academia["dono"], academia["ana"], HOJE)
+def test_recepcao_ve_os_resultados_mas_nao_registra(app, academia):
+    """[back-22-ajustes-de-produto] antes a recepção não abria nem o resultado nem o histórico. Agora abre os dois; registrar continua só com dono e instrutor."""
+    e = criar_avaliacao(academia["dono"], academia["ana"], HOJE, peso=68.4)
     recepcao = como(app, academia["recepcao"])
-    for url in (f"/alunos/{academia['ana']}/avaliacoes", f"/alunos/{academia['ana']}/avaliacoes/nova", f"/avaliacoes/{e}"):
-        assert recepcao.get(url).headers["Location"] == "/avaliacoes", url                     # avisa e leva à agenda
+    for url in (f"/alunos/{academia['ana']}/avaliacoes", f"/avaliacoes/{e}"):
+        assert recepcao.get(url).status_code == 200, url
+    assert "Peso%3A%2068%2C4%20kg" in recepcao.get(f"/avaliacoes/{e}").get_data(as_text=True)     # o resultado traz as medidas
+    assert recepcao.get(f"/alunos/{academia['ana']}/avaliacoes/nova").headers["Location"] == "/avaliacoes"   # registrar: avisa e leva à agenda
     assert recepcao.post(f"/alunos/{academia['ana']}/avaliacoes/nova", data=MEDIDAS).status_code == 403
     assert contar(AvaliacaoFisica) == 1
     for url in ("/avaliacoes", "/avaliacoes/agendar", f"/avaliacoes/agendar?aluno={academia['ana']}"):
