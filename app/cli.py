@@ -150,3 +150,16 @@ def registrar_comandos(app):
         except ValueError as erro:
             raise click.ClickException(str(erro))
         click.echo(f'Teste grátis de {conta.nome} vai até {conta.teste_ate.strftime("%d/%m/%Y")}.')
+
+    # [back-25-admin] quem é administrador do Vale Tec (só por aqui: não existe tela que torne alguém admin)
+    @app.cli.command('admin-do-sistema')
+    @click.option('--email', required=True, help='E-mail de login da pessoa (ela já precisa ter conta no sistema).')
+    @click.option('--remover', is_flag=True, help='Tira o acesso de administrador.')
+    def admin_do_sistema(email, remover):
+        """Liga (ou desliga, com --remover) o acesso ao painel de administração /admin para um usuário."""
+        usuario = User.query.filter(db.func.lower(User.email) == email.strip().lower()).first()
+        if usuario is None:
+            raise click.ClickException(f'Não existe usuário com o e-mail {email}. Crie a conta primeiro (tela /criar-conta).')
+        usuario.admin_sistema = not remover
+        db.session.commit()
+        click.echo(f"{usuario.email} {'não é mais' if remover else 'agora é'} administrador do Vale Tec (painel em /admin).")

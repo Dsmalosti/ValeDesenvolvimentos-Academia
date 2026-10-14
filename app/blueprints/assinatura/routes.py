@@ -9,7 +9,7 @@ Três peças (as regras ficam em services/assinatura_service.py):
      Continuam abrindo: sair, os termos, a política e o /saude.
 Antes desta branch não existia nada disso: qualquer conta usava o sistema para sempre, sem pagar.
 """
-from flask import Blueprint, abort, redirect, render_template, request, url_for
+from flask import Blueprint, abort, redirect, render_template, request, session, url_for
 from flask_login import current_user
 
 from app.helpers.conta import exigir_login_em
@@ -25,6 +25,10 @@ LIBERADAS_NO_BLOQUEIO = {'assinatura.index', 'auth.logout', 'auth.login', 'stati
 @assinatura_blueprint.before_app_request
 def barrar_conta_bloqueada():
     if not current_user.is_authenticated or request.endpoint is None or request.endpoint in LIBERADAS_NO_BLOQUEIO:
+        return None
+    # [back-25-admin] o admin nunca é barrado: nem na própria conta, nem quando entra na conta de um cliente (para ajudar
+    # quem está bloqueado). As rotas do /admin também passam. Antes: não havia admin.
+    if getattr(current_user, 'admin_sistema', False) or session.get('admin_original') or (request.endpoint or '').startswith('admin.'):
         return None
     if not assinatura_service.bloqueada(current_user.conta):
         return None

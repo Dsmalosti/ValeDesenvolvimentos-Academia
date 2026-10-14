@@ -80,6 +80,9 @@ class Conta(db.Model):
     # mudar, ex.: o piloto ganha 3 meses). `pago_ate`: último dia do período pago; vazio = nunca pagou.
     teste_ate = db.Column(db.Date, nullable=True, default=lambda: _fim_do_teste_de_uma_conta_nova())
     pago_ate = db.Column(db.Date, nullable=True)
+    # [back-25-admin] bloqueio feito à mão por um admin (independe do pagamento): o dia e o motivo, que o cliente vê. Vazio = sem bloqueio.
+    bloqueio_manual_em = db.Column(db.Date, nullable=True)
+    bloqueio_motivo = db.Column(db.String(200), nullable=True)
 
     def __repr__(self):
         return f'<Conta {self.nome}>'
@@ -109,6 +112,11 @@ class User(db.Model, UserMixin):
     # Vazio para quem entrou antes desta branch e para quem entrou por convite (o contrato é com o dono da conta).
     termos_versao = db.Column(db.String(30), nullable=True)
     termos_aceitos_em = db.Column(db.DateTime, nullable=True)
+    # [back-25-admin] ADMINISTRADOR DO VALE TEC (o Adauto e o Diogo): vê todas as contas no /admin. Só se liga pela linha de comando
+    # (`flask admin-do-sistema`), nunca por tela: como qualquer um cria conta, ninguém pode virar admin pelo e-mail.
+    admin_sistema = db.Column(db.Boolean, nullable=False, default=False, server_default=db.false())
+    # quando a pessoa usou o sistema pela última vez (gravado no máximo a cada 10 minutos); o /admin mostra
+    ultimo_acesso_em = db.Column(db.DateTime, nullable=True)
 
     # [back-18-seguranca] ver load_user, lá em cima.
     def marca_da_senha(self):
@@ -677,3 +685,23 @@ class Mensalidade(db.Model):
 
     def __repr__(self):
         return f'<Mensalidade conta={self.conta_id} até {self.periodo_fim}>'
+
+
+class AcaoAdmin(db.Model):
+    """
+    [back-25-admin] O que um administrador fez numa conta: confirmou pagamento, mudou o teste, bloqueou, entrou como o dono,
+    apagou. SEM chave estrangeira de propósito: o registro continua depois de a conta (ou o admin) ser apagada.
+    """
+    __tablename__ = 'acoes_admin'
+
+    id = db.Column(db.Integer, primary_key=True)
+    admin_id = db.Column(db.Integer, nullable=True)
+    admin_email = db.Column(db.String(120), nullable=False, default='')
+    conta_id = db.Column(db.Integer, nullable=True, index=True)
+    conta_nome = db.Column(db.String(120), nullable=False, default='')
+    acao = db.Column(db.String(30), nullable=False)          # pagamento | teste | bloqueio | desbloqueio | entrou | saiu | apagou
+    detalhe = db.Column(db.String(300), nullable=True)
+    quando = db.Column(db.DateTime, nullable=False, default=datetime.now)
+
+    def __repr__(self):
+        return f'<AcaoAdmin {self.acao} conta={self.conta_id}>'

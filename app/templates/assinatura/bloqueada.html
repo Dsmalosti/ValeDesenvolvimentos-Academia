@@ -16,8 +16,18 @@
 {% block content %}
 <span class="tile tile--lg tone-red" style="margin-bottom:14px">{{ icon('lock', 24) }}</span>
 <h2>Sua conta está bloqueada</h2>
+{# [back-25-admin] bloqueio feito à mão pelo suporte: mostra o motivo e o contato, sem o PIX #}
+{% if s.manual %}
+<p class="lead">A conta foi bloqueada pelo suporte do Vale Tec em {{ dmy(s.bloqueia_em) }}. Motivo: {{ s.motivo }}</p>
+<p>Seus dados continuam guardados até {{ dmy(s.guardar_ate) }}. Fale com o suporte para resolver.</p>
+<div class="row-flex gap-2" style="flex-wrap:wrap;margin-top:12px">
+  {% if contato.email %}<a class="btn btn-ghost" href="mailto:{{ contato.email }}">{{ icon('send', 18) }}{{ contato.email }}</a>{% endif %}
+  {% if contato.whatsapp %}<a class="btn btn-green" href="https://wa.me/{{ contato.whatsapp }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp do suporte</a>{% endif %}
+</div>
+{% else %}
 <p class="lead">A mensalidade do Vale Tec venceu em {{ dmy(s.vence) }} e o pagamento não chegou em 7 dias. Seus dados continuam guardados até {{ dmy(s.guardar_ate) }}: pagando, tudo volta como estava.</p>
 {% include 'assinatura/_pagar.html' %}
+{% endif %}
 <form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:18px">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
   <button type="submit" class="btn btn-ghost btn-block">{{ icon('logout', 18) }}Sair</button>

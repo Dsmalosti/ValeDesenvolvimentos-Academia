@@ -1,0 +1,120 @@
+{#
+  GET /admin/contas/<id> (admin.conta) — uma conta vista pelo admin: números, assinatura e as ações.
+  [back-25-admin] ESTE TEMPLATE NÃO VEIO DO DRIVE. Montado com as peças do front (card, kpi, chip, dtable, field).
+  Só admin abre (os outros recebem 404). Adauto: revise o visual e leve para o front.
+  Contexto: o de admin/index.html para uma conta (conta, s, dono, alunos_ativos, ...) e mais: equipe[User], planos (int),
+            mensalidades[Mensalidade], acoes[AcaoAdmin], pode_apagar, motivo_de_nao_apagar, reais(), hoje.
+  POSTs: admin.pagamento (meses, valor) | admin.teste (ate) | admin.bloquear (motivo) | admin.desbloquear |
+         admin.entrar | admin.apagar (confirmacao)
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import kpi %}
+{% set pagina_titulo = conta.nome %}
+{% set pagina_sub = ('Personal Trainer' if conta.modelo == 'personal' else 'Academia') ~ ' · criada em ' ~ (conta.criado_em.strftime('%d/%m/%Y') if conta.criado_em else '—') %}
+{% set m_voltar = true %}
+{% macro token() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">{% endmacro %}
+{% block crumbs %}<a class="faint fs-13" href="{{ url_for('admin.index') }}">Administração</a>{% endblock %}
+{% block content %}
+<div class="kpi-grid" style="margin-bottom:16px">
+  {{ kpi(alunos_ativos, 'Alunos ativos', 'users', 'blue') }}
+  {{ kpi(pagamentos_mes, 'Pagamentos registrados no mês', 'cash', 'green') }}
+  {{ kpi(reais(saldo_mes), 'Entradas − saídas no mês', 'trend', 'teal' if saldo_mes >= 0 else 'red') }}
+  {{ kpi(checkins_mes, 'Check-ins no mês', 'user-check', 'yellow') }}
+</div>
+
+<div class="stack gap-4" style="max-width:900px">
+  <section class="card card--pad" aria-labelledby="h-uso">
+    <h2 class="ctitle" id="h-uso">Como a conta usa o sistema</h2>
+    <div class="stack gap-2" style="margin-top:10px;font-size:14.5px">
+      <div>Dono: <b>{{ (dono.nome ~ ' ' ~ (dono.sobrenome or '')) if dono else '—' }}</b>{% if dono %} · {{ dono.email }}{% endif %}</div>
+      <div>Último acesso: <b>{{ ultimo_acesso.strftime('%d/%m/%Y %Hh%M') if ultimo_acesso else 'nunca' }}</b>{% if parado %} <span class="chip chip--yellow">parada há mais de 7 dias</span>{% endif %}</div>
+      <div>Equipe: <b>{{ equipe|length }}</b> {{ 'pessoa' if equipe|length == 1 else 'pessoas' }} · Planos ativos: <b>{{ planos }}</b></div>
+      <div>Entradas no mês: <b class="tone-txt-teal">{{ reais(entradas_mes) }}</b> · Saídas (custos fixos): <b class="tone-txt-red">{{ reais(saidas_mes) }}</b></div>
+    </div>
+    {# no conteúdo (e não no cabeçalho da página), para aparecer também no celular #}
+    {% if dono %}<form method="post" action="{{ url_for('admin.entrar', id=conta.id) }}" style="margin-top:14px">{{ token() }}
+      <button type="submit" class="btn btn-primary btn-lg">{{ icon('logout', 18) }}Entrar na conta como o dono</button>
+      <div class="faint fs-12" style="margin-top:6px">Você usa o sistema como {{ dono.nome }}, para ajudar. Fica registrado.</div></form>{% endif %}
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-ass">
+    <div class="row-flex" style="justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <h2 class="ctitle" id="h-ass">Assinatura</h2><span class="chip chip--{{ s.tom }}">{{ s.rotulo }}</span>
+    </div>
+    <div class="stack gap-2" style="margin-top:10px;font-size:14.5px">
+      <div>Teste grátis até <b>{{ s.fim_do_teste.strftime('%d/%m/%Y') }}</b>{% if dias_de_teste is not none %} ({{ dias_de_teste }} {{ 'dia' if dias_de_teste == 1 else 'dias' }}){% endif %}</div>
+      <div>Pago até <b>{{ s.pago_ate.strftime('%d/%m/%Y') if s.pago_ate else 'nunca pagou' }}</b> · {{ reais(s.preco) }} por mês</div>
+      {% if s.manual %}<div class="note note--red">{{ icon('lock', 20) }}<span><strong>Bloqueada pelo suporte em {{ s.bloqueia_em.strftime('%d/%m/%Y') }}</strong>{{ conta.bloqueio_motivo }}</span></div>
+      {% elif s.estado in ('vencida', 'bloqueada') %}<div>Venceu em <b>{{ s.vence.strftime('%d/%m/%Y') }}</b>; {{ 'bloqueada desde' if s.estado == 'bloqueada' else 'será bloqueada em' }} <b>{{ s.bloqueia_em.strftime('%d/%m/%Y') }}</b>.</div>{% endif %}
+    </div>
+
+    <div class="stack gap-4" style="margin-top:16px">
+      <form method="post" action="{{ url_for('admin.pagamento', id=conta.id) }}" class="row-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
+        {{ token() }}
+        <div class="field-group" style="width:110px"><label class="label" for="f-meses">Meses</label><input class="input" id="f-meses" name="meses" type="number" min="1" max="24" value="1" inputmode="numeric"></div>
+        <div class="field-group" style="width:160px"><label class="label" for="f-valor">Valor recebido</label><input class="input" id="f-valor" name="valor" placeholder="{{ reais(s.preco) }}" inputmode="decimal"></div>
+        <button type="submit" class="btn btn-green">{{ icon('check', 18) }}Confirmar pagamento</button>
+      </form>
+      <p class="faint fs-12" style="margin:-8px 0 0">Confira no aplicativo do banco antes. Sem valor, vale o preço da conta vezes os meses.</p>
+
+      <form method="post" action="{{ url_for('admin.teste', id=conta.id) }}" class="row-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
+        {{ token() }}
+        <div class="field-group" style="width:190px"><label class="label" for="f-ate">Fim do teste grátis</label><input class="input" id="f-ate" name="ate" type="date" value="{{ s.fim_do_teste.isoformat() }}"></div>
+        <button type="submit" class="btn btn-ghost">{{ icon('calendar', 18) }}Mudar o fim do teste</button>
+      </form>
+
+      {% if s.manual %}
+      <form method="post" action="{{ url_for('admin.desbloquear', id=conta.id) }}">{{ token() }}<button type="submit" class="btn btn-ghost">{{ icon('unlock', 18) }}Retirar o bloqueio</button></form>
+      {% else %}
+      <form method="post" action="{{ url_for('admin.bloquear', id=conta.id) }}" class="row-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
+        {{ token() }}
+        <div class="field-group grow" style="min-width:220px"><label class="label" for="f-motivo">Motivo do bloqueio (o cliente vê)</label><input class="input" id="f-motivo" name="motivo" maxlength="200" placeholder="Ex.: uso em desacordo com os termos"></div>
+        <button type="submit" class="btn btn-danger">{{ icon('lock', 18) }}Bloquear agora</button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if mensalidades %}
+  <section class="card card--flush" aria-labelledby="h-mens">
+    <h2 class="ctitle" id="h-mens" style="padding:18px 22px 10px">Mensalidades pagas</h2>
+    <div class="table-scroll"><table class="dtable">
+      <thead><tr><th scope="col">Pago em</th><th scope="col">Período</th><th scope="col">Valor</th></tr></thead>
+      <tbody>{% for m in mensalidades %}<tr><td>{{ m.pago_em.strftime('%d/%m/%Y') }}</td><td>{{ m.periodo_inicio.strftime('%d/%m/%Y') }} a {{ m.periodo_fim.strftime('%d/%m/%Y') }}</td><td class="strong">{{ reais(m.valor) }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+  {% endif %}
+
+  <section class="card card--flush" aria-labelledby="h-equipe">
+    <h2 class="ctitle" id="h-equipe" style="padding:18px 22px 10px">Equipe</h2>
+    <div class="table-scroll"><table class="dtable">
+      <thead><tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Papel</th><th scope="col">Último acesso</th></tr></thead>
+      <tbody>{% for u in equipe %}<tr><td>{{ u.nome }} {{ u.sobrenome or '' }}{% if not u.ativo %} <span class="chip chip--slate">removido</span>{% endif %}</td><td>{{ u.email }}</td>
+        <td>{{ {'proprietario': 'Dono', 'recepcao': 'Recepção', 'instrutor': 'Instrutor'}.get(u.papel, u.papel) }}</td>
+        <td>{{ u.ultimo_acesso_em.strftime('%d/%m %Hh%M') if u.ultimo_acesso_em else 'nunca' }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+
+  {% if acoes %}
+  <section class="card card--pad" aria-labelledby="h-acoes">
+    <h2 class="ctitle" id="h-acoes">O que os administradores fizeram nesta conta</h2>
+    <ul class="agora-list">{% for a in acoes %}<li><span class="faint fs-12" style="min-width:96px">{{ a.quando.strftime('%d/%m %Hh%M') }}</span><span class="grow">{{ a.acao|capitalize }}{% if a.detalhe %}: {{ a.detalhe }}{% endif %}</span><span class="faint fs-12">{{ a.admin_email }}</span></li>{% endfor %}</ul>
+  </section>
+  {% endif %}
+
+  <section class="card card--pad" aria-labelledby="h-apagar" style="border-color:var(--red, #c0392b)">
+    <h2 class="ctitle" id="h-apagar">Apagar a conta</h2>
+    {% if pode_apagar %}
+    <p class="muted" style="margin:6px 0 12px">Apaga a conta e todos os dados dela (alunos, pagamentos, fichas, avaliações, equipe). Não tem volta.</p>
+    <form method="post" action="{{ url_for('admin.apagar', id=conta.id) }}" class="row-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
+      {{ token() }}
+      <div class="field-group grow" style="min-width:220px"><label class="label" for="f-confirmacao">Digite o nome da conta para confirmar</label><input class="input" id="f-confirmacao" name="confirmacao" autocomplete="off" placeholder="{{ conta.nome }}"></div>
+      <button type="submit" class="btn btn-danger">{{ icon('trash', 18) }}Apagar tudo</button>
+    </form>
+    {% else %}
+    <p class="muted" style="margin:6px 0 0">Ainda não pode ser apagada. {{ motivo_de_nao_apagar }}</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

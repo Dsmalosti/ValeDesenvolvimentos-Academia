@@ -79,6 +79,9 @@
         {% endblock %}
         {# [back-24-assinatura] Aviso NOVO, que o front do Drive não tem: a mensalidade do Vale Tec vencendo ou vencida.
            `aviso_assinatura` = {tom (yellow|red), titulo, texto, link (bool)}; sem a variável, nada aparece. #}
+        {# [back-25-admin] Aviso NOVO, que o front do Drive não tem: um administrador do Vale Tec está usando esta conta como o dono.
+           `admin_dentro` = {conta}; sem a variável, nada aparece. O botão volta ao painel de administração. #}
+        {% if admin_dentro %}<div class="note note--blue" role="status" style="margin-bottom:14px">{{ icon('info', 20) }}<span><strong>Você está na conta "{{ admin_dentro.conta }}" como administrador</strong>Tudo o que fizer aqui é feito como o dono da conta.<form method="post" action="{{ url_for('admin.voltar') }}" style="margin-top:8px"><input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}"><button type="submit" class="btn btn-primary btn-sm">Voltar ao painel de administração</button></form></span></div>{% endif %}
         {% if aviso_assinatura %}<div class="note note--{{ aviso_assinatura.tom }}" role="status" style="margin-bottom:14px">{{ icon('alert', 20) }}<span><strong>{{ aviso_assinatura.titulo }}</strong>{{ aviso_assinatura.texto }}{% if aviso_assinatura.link %} <a href="{{ url_for('assinatura.index') }}">Ver como pagar</a>{% endif %}</span></div>{% endif %}
         {% block content %}{% endblock %}
       </div>

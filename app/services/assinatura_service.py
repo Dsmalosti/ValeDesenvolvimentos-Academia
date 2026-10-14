@@ -73,7 +73,10 @@ def situacao(conta, hoje=None):
     fim = fim_do_teste(conta)
     bloqueia_em = vence + timedelta(days=DIAS_DE_TOLERANCIA + 1)      # primeiro dia bloqueado
     em_teste = conta.pago_ate is None or conta.pago_ate <= fim        # ainda não pagou nenhum mês além do teste
-    if hoje <= vence:
+    manual = bool(conta.bloqueio_manual_em)        # [back-25-admin] bloqueio feito à mão por um admin: vale acima de tudo
+    if manual:
+        estado, bloqueia_em = BLOQUEADA, conta.bloqueio_manual_em
+    elif hoje <= vence:
         estado = TESTE if em_teste else EM_DIA
     elif hoje < bloqueia_em:
         estado = VENCIDA
@@ -82,7 +85,8 @@ def situacao(conta, hoje=None):
     return {'estado': estado, 'rotulo': ROTULOS[estado], 'tom': TONS[estado], 'vence': vence,
             'dias_para_vencer': (vence - hoje).days, 'dias_vencida': max(0, (hoje - vence).days),
             'bloqueia_em': bloqueia_em, 'guardar_ate': bloqueia_em + timedelta(days=DIAS_GUARDANDO_OS_DADOS),
-            'preco': preco(conta), 'em_teste': em_teste, 'fim_do_teste': fim, 'pago_ate': conta.pago_ate}
+            'preco': preco(conta), 'em_teste': em_teste, 'fim_do_teste': fim, 'pago_ate': conta.pago_ate,
+            'manual': manual, 'motivo': conta.bloqueio_motivo or ''}
 
 
 def bloqueada(conta, hoje=None):
@@ -96,7 +100,7 @@ def aviso_do_topo(conta, papel, hoje=None):
     """
     s = situacao(conta, hoje)
     dono = papel == PAPEL_PROPRIETARIO
-    if s['estado'] == VENCIDA:
+    if s['estado'] == VENCIDA and not s['manual']:
         texto = f"O pagamento não chegou. A conta será bloqueada em {_dmy(s['bloqueia_em'])}."
         if not dono:
             texto += ' Avise o responsável pela conta.'
@@ -155,10 +159,12 @@ def registrar_pagamento(conta, meses=1, valor=None, quem=None, observacao='', ho
         raise ValueError('Informe de 1 a 24 meses.')
     hoje = hoje or date.today()
     s = situacao(conta, hoje)
-    base = hoje if s['estado'] == BLOQUEADA else s['vence']
+    # [back-25-admin] o bloqueio feito à mão não conta aqui: o período pago segue as datas, como se ele não existisse
+    atrasada_demais = hoje >= s['vence'] + timedelta(days=DIAS_DE_TOLERANCIA + 1)
+    base = hoje if atrasada_demais else s['vence']
     fim = somar_meses(base, int(meses))
     registro = Mensalidade(conta_id=conta.id, valor=Decimal(valor) if valor is not None else preco(conta) * int(meses), meses=int(meses),
-                           periodo_inicio=hoje if s['estado'] == BLOQUEADA else base + timedelta(days=1), periodo_fim=fim,
+                           periodo_inicio=hoje if atrasada_demais else base + timedelta(days=1), periodo_fim=fim,
                            pago_em=datetime.now(), forma='pix', registrado_por_id=quem.id if quem else None, observacao=(observacao or '')[:200] or None)
     conta.pago_ate = fim
     db.session.add(registro)
