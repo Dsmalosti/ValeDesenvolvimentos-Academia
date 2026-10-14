@@ -221,7 +221,9 @@ def test_data_de_inativacao_e_guardada_e_apagada_sozinha(app, academia):
     dono.post(f"/cobrancas/{cobranca}/confirmar", data={"forma": "pix"})          # pagar reativa
     assert campo(Aluno, academia["ana"], "ativo") is True and campo(Aluno, academia["ana"], "data_inativacao") is None
 
-    dono.post(f"/alunos/status/{academia['bruno']}")                              # o botão de status da tela antiga também conta
+    # [back-27-telas-antigas] antes também conferia o botão de status da tela antiga (/alunos/status/<id>), que saiu.
+    # A data continua sendo gravada pelo modelo, venha a inativação de onde vier:
+    mexer(app, academia["bruno"], ativo=False)
     assert campo(Aluno, academia["bruno"], "ativo") is False and campo(Aluno, academia["bruno"], "data_inativacao") is not None
 
 

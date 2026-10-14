@@ -7,6 +7,8 @@ defeito que faz uma academia enxergar os alunos da concorrente.
 """
 import re
 
+from datetime import date
+
 import pytest
 
 from app.models import Aluno, Ficha, Plano, Treino, User
@@ -15,7 +17,7 @@ from tests.conftest import (campo, contar, criar_aluno, criar_ficha, criar_plano
 
 # Páginas que existem para quem NÃO está logado. Qualquer outra rota tem que exigir login.
 ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_conta", "auth.convite", "auth.nova_senha",
-                  "instrutores.login", "instrutores.cadastroInstrutor",
+                  # [back-27-telas-antigas] antes também "instrutores.login" e "instrutores.cadastroInstrutor" (telas antigas, saíram)
                   # [back-19-lgpd] termos de uso e política de privacidade: quem ainda vai criar a conta precisa conseguir ler
                   "legal.termos", "legal.privacidade",
                   # [back-20-producao] /saude: a hospedagem pergunta se o app está de pé; responde só "ok"
@@ -44,26 +46,21 @@ def logado_como_a(cliente, contas):
 
 def test_pagina_com_id_de_outra_conta_da_404(logado_como_a, contas):
     b = contas["b"]
+    # [back-27-telas-antigas] antes: as rotas das telas antigas (fichas, pagamentos, instrutores). Agora as das telas novas.
     tentativas = [
-        ("GET", f"/alunos/editar/{b['aluno']}"),
-        ("GET", f"/planos/editar/{b['plano']}/"),
-        ("GET", f"/fichas/detalhes/{b['ficha']}"),
-        ("GET", f"/fichas/editar/{b['ficha']}"),
-        ("POST", f"/fichas/editar/{b['ficha']}"),
-        ("POST", f"/fichas/excluir/{b['ficha']}"),
-        ("GET", f"/fichas/{b['ficha']}/treino/novo"),
-        ("POST", f"/fichas/{b['ficha']}/treino/novo"),
-        ("GET", f"/fichas/treino/{b['treino']}/editar"),
-        ("POST", f"/fichas/treino/{b['treino']}/editar"),
-        ("POST", f"/fichas/treino/{b['treino']}/excluir"),
-        ("GET", f"/fichas/treino/{b['treino']}/exercicio/adicionar"),
-        ("POST", f"/fichas/treino/{b['treino']}/exercicio/adicionar"),
-        ("GET", f"/pagamentos/registrar/{b['aluno']}"),
-        ("POST", f"/pagamentos/registrar/{b['aluno']}"),
-        ("GET", f"/pagamentos/listar/{b['aluno']}"),
-        ("GET", f"/instrutores/editar/{b['dono']}"),
-        ("POST", f"/instrutores/editar/{b['dono']}"),
-        ("POST", f"/instrutores/excluir/{b['dono']}"),
+        ("GET", f"/alunos/{b['aluno']}"),
+        ("GET", f"/alunos/{b['aluno']}/editar"),
+        ("POST", f"/alunos/{b['aluno']}/editar"),
+        ("GET", f"/alunos/{b['aluno']}/pagamentos"),
+        ("GET", f"/alunos/{b['aluno']}/renovar"),
+        ("GET", f"/alunos/{b['aluno']}/dados"),
+        ("GET", f"/alunos/{b['aluno']}/ficha"),
+        ("POST", f"/alunos/{b['aluno']}/ficha"),
+        ("POST", f"/alunos/{b['aluno']}/ficha/excluir"),
+        ("POST", f"/alunos/{b['aluno']}/ficha/treino"),
+        ("GET", f"/planos/{b['plano']}/editar"),
+        ("POST", f"/planos/{b['plano']}/editar"),
+        ("POST", f"/planos/{b['plano']}/alternar"),
     ]
     for metodo, url in tentativas:
         resposta = logado_como_a.open(url, method=metodo, data={"dia_semana": "terca", "nome": "invadido"})
@@ -73,11 +70,13 @@ def test_pagina_com_id_de_outra_conta_da_404(logado_como_a, contas):
 def test_acao_em_registro_de_outra_conta_nao_altera_nada(logado_como_a, contas):
     """Estas rotas respondem com um aviso de "não encontrado" em vez de 404; o que importa é não mudar nada."""
     b = contas["b"]
-    logado_como_a.post(f"/alunos/excluir/{b['aluno']}")
-    logado_como_a.post(f"/alunos/status/{b['aluno']}")
-    logado_como_a.post(f"/alunos/editar/{b['aluno']}", data={"nome": "invadido"})
-    logado_como_a.post(f"/planos/excluir/{b['plano']}")
-    logado_como_a.post(f"/planos/editar/{b['plano']}/", data={"nome": "invadido"})
+    # [back-27-telas-antigas] antes: as rotas das telas antigas. Agora as das telas novas.
+    logado_como_a.post(f"/alunos/{b['aluno']}/excluir")
+    logado_como_a.post(f"/alunos/{b['aluno']}/inativar")
+    logado_como_a.post(f"/alunos/{b['aluno']}/acesso")
+    logado_como_a.post(f"/alunos/{b['aluno']}/editar", data={"nome": "invadido"})
+    logado_como_a.post(f"/planos/{b['plano']}/alternar")
+    logado_como_a.post(f"/planos/{b['plano']}/editar", data={"nome": "invadido"})
 
     assert campo(Aluno, b["aluno"], "nome") == "Aluno-B"
     assert campo(Aluno, b["aluno"], "ativo") is True
@@ -86,11 +85,9 @@ def test_acao_em_registro_de_outra_conta_nao_altera_nada(logado_como_a, contas):
 
 def test_nada_da_outra_conta_foi_tocado_depois_das_tentativas(logado_como_a, contas):
     b = contas["b"]
-    for metodo, url in [("POST", f"/fichas/excluir/{b['ficha']}"),
-                        ("POST", f"/fichas/treino/{b['treino']}/excluir"),
-                        ("POST", f"/fichas/editar/{b['ficha']}"),
-                        ("POST", f"/instrutores/excluir/{b['dono']}"),
-                        ("POST", f"/instrutores/editar/{b['dono']}")]:
+    for metodo, url in [("POST", f"/alunos/{b['aluno']}/ficha/excluir"),     # [back-27-telas-antigas] antes: rotas de fichas e instrutores antigas
+                        ("POST", f"/alunos/{b['aluno']}/ficha/treino"),
+                        ("POST", f"/alunos/{b['aluno']}/ficha")]:
         logado_como_a.open(url, method=metodo, data={"nome": "invadido", "sobrenome": "x",
                                                      "email": "tomei@teste.local", "senha": "nova-senha",
                                                      "confirmacao_senha": "nova-senha"})
@@ -100,8 +97,7 @@ def test_nada_da_outra_conta_foi_tocado_depois_das_tentativas(logado_como_a, con
     assert campo(User, b["dono"], "email") == "dono-b@teste.local"
 
 
-@pytest.mark.parametrize("url", ["/alunos/listar/", "/planos/listar/", "/fichas/listar/",
-                                 "/instrutores/lista/"])   # /pagamentos/situacao/ virou atalho para /alunos (back-09)
+@pytest.mark.parametrize("url", ["/alunos", "/planos", "/treinos", "/configuracoes?aba=equipe"])   # [back-27-telas-antigas] antes: as listas antigas
 def test_listas_so_mostram_a_propria_conta(logado_como_a, url):
     pagina = logado_como_a.get(url)
     html = pagina.get_data(as_text=True)
@@ -112,41 +108,36 @@ def test_listas_so_mostram_a_propria_conta(logado_como_a, url):
 
 def test_listas_mostram_o_que_e_da_propria_conta(logado_como_a):
     """Garante que o teste acima não passa só porque a lista veio vazia."""
-    assert "Aluno-A" in logado_como_a.get("/alunos/listar/").get_data(as_text=True)
-    assert "Plano-A" in logado_como_a.get("/planos/listar/").get_data(as_text=True)
-    assert "Ficha-A" in logado_como_a.get("/fichas/listar/").get_data(as_text=True)
+    assert "Aluno-A" in logado_como_a.get("/alunos").get_data(as_text=True)     # [back-27-telas-antigas] antes: as listas antigas
+    assert "Plano-A" in logado_como_a.get("/planos").get_data(as_text=True)
+    assert "Dono-A" in logado_como_a.get("/configuracoes?aba=equipe").get_data(as_text=True)
 
 
 def test_selects_so_oferecem_o_que_e_da_propria_conta(logado_como_a):
-    cadastro_aluno = logado_como_a.get("/alunos/cadastro/").get_data(as_text=True)
-    nova_ficha = logado_como_a.get("/fichas/novo/").get_data(as_text=True)
+    cadastro_aluno = logado_como_a.get("/alunos/novo").get_data(as_text=True)     # [back-27-telas-antigas] antes: as telas antigas de cadastro e de ficha
+    busca = logado_como_a.get("/alunos/buscar?q=aluno").get_data(as_text=True)
 
     assert "Plano-A" in cadastro_aluno and "Plano-B" not in cadastro_aluno
-    assert "Aluno-A" in nova_ficha and "Aluno-B" not in nova_ficha
+    assert "Aluno-A" in busca and "Aluno-B" not in busca
 
 
 def test_envio_forjado_com_id_de_outra_conta_e_recusado(logado_como_a, contas):
     """Mesmo mandando o id direto no POST (sem passar pelo select), nada é criado."""
     b = contas["b"]
-    logado_como_a.post("/alunos/cadastro/", data={
-        "nome": "Forjado", "email": "forjado@exemplo.com", "telefone": "11999990000",
-        "data_nascimento": "1990-01-01", "cpf": "cpf-forjado", "ativo": "y", "plano_id": str(b["plano"])})
-    logado_como_a.post("/fichas/novo/", data={"nome": "Ficha forjada", "aluno_id": str(b["aluno"]), "ativo": "y"})
+    # [back-27-telas-antigas] antes: as telas antigas de cadastro de aluno e de ficha. Agora o cadastro novo, com o plano da conta B.
+    logado_como_a.post("/alunos/novo", data={"nome": "Forjado Silva", "cpf": "529.982.247-25", "telefone": "(12) 98211-4432", "email": "forjado@exemplo.com", "data_nascimento": "25/12/1990",
+        "plano_id": str(b["plano"]), "data_inicio": date.today().strftime("%d/%m/%Y"), "forma_pagamento": "pix", "dia_vencimento": "10"})
 
     assert contar(Aluno, email="forjado@exemplo.com") == 0
-    assert contar(Ficha, nome="Ficha forjada") == 0
 
 
 def test_o_mesmo_envio_com_id_da_propria_conta_funciona(logado_como_a, contas):
     """Par do teste acima: prova que o envio é recusado pelo id, e não por outro motivo."""
     a = contas["a"]
-    logado_como_a.post("/alunos/cadastro/", data={
-        "nome": "Legitimo", "email": "legitimo@exemplo.com", "telefone": "11999990000",
-        "data_nascimento": "1990-01-01", "cpf": "cpf-legitimo", "ativo": "y", "plano_id": str(a["plano"])})
-    logado_como_a.post("/fichas/novo/", data={"nome": "Ficha legitima", "aluno_id": str(a["aluno"]), "ativo": "y"})
+    logado_como_a.post("/alunos/novo", data={"nome": "Legitimo Silva", "cpf": "529.982.247-25", "telefone": "(12) 98211-4432", "email": "legitimo@exemplo.com", "data_nascimento": "25/12/1990",
+        "plano_id": str(a["plano"]), "data_inicio": date.today().strftime("%d/%m/%Y"), "forma_pagamento": "pix", "dia_vencimento": "10"})   # [back-27-telas-antigas]
 
     assert contar(Aluno, email="legitimo@exemplo.com") == 1
-    assert contar(Ficha, nome="Ficha legitima") == 1
 
 
 def test_painel_conta_so_os_alunos_da_propria_conta(cliente, contas):

@@ -73,16 +73,14 @@ def test_criar_conta_e_pedido_de_senha_tem_limite_por_hora(app, com_limite):
     assert tentar(cliente, url="/esqueci-senha", ip="10.2.0.2").status_code == 429
 
 
-def test_links_de_convite_e_de_senha_e_a_tela_antiga_de_login_tem_limite(app, com_limite):
+def test_links_de_convite_e_de_senha_tem_limite(app, com_limite):
+    # [back-27-telas-antigas] antes também conferia o limite na tela antiga de login (/instrutores/login/), que saiu: agora ela nem existe
     cliente = app.test_client()
     for url in ("/convite/codigo-inventado", "/nova-senha/codigo-inventado"):
         for _ in range(20):
             assert cliente.get(url, environ_overrides={"REMOTE_ADDR": "10.3.0.1"}).status_code == 404
         assert cliente.get(url, environ_overrides={"REMOTE_ADDR": "10.3.0.1"}).status_code == 429       # 21 códigos chutados em uma hora
-    for _ in range(10):
-        cliente.post("/instrutores/login/", data={"email": "x@teste.local", "senha": "errada"}, environ_overrides={"REMOTE_ADDR": "10.3.0.2"})
-    assert cliente.post("/instrutores/login/", data={"email": "x@teste.local", "senha": "errada"},
-                        environ_overrides={"REMOTE_ADDR": "10.3.0.2"}).status_code == 429
+    assert cliente.post("/instrutores/login/", data={"email": "x@teste.local", "senha": "errada"}).status_code == 404
 
 
 def test_sem_o_limite_ligado_nada_e_barrado(app, dono):

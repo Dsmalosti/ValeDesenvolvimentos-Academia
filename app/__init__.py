@@ -92,23 +92,17 @@ def create_app():
     protecao.init_app(app)      # [back-18-seguranca] limite de tentativas e cabeçalhos de segurança
 
     # Blueprints
-    from app.routes import main_blueprint
+    # [back-27-telas-antigas] saíram os blueprints só das telas antigas: main (início antigo), instrutores (login, painel e equipe antigos),
+    # fichas (fichas antigas) e pagamentos (redirecionamentos das telas antigas de pagamento).
     from app.blueprints.alunos.routes import alunos_blueprint
-    from app.blueprints.instrutores.routes import instrutores_blueprint
     from app.blueprints.planos.routes import planos_blueprint
     from app.blueprints.exercicios.routes import exercicios_blueprint
-    from app.blueprints.fichas.routes import fichas_blueprint
-    from app.blueprints.pagamentos.routes import pagamentos_blueprint
     from app.blueprints.auth.routes import auth_blueprint  # [back-01-auth-login] login/sair da tela nova
 
 
-    app.register_blueprint(main_blueprint)
     app.register_blueprint(alunos_blueprint)
-    app.register_blueprint(instrutores_blueprint)
     app.register_blueprint(planos_blueprint)
     app.register_blueprint(exercicios_blueprint)
-    app.register_blueprint(fichas_blueprint)
-    app.register_blueprint(pagamentos_blueprint)
     app.register_blueprint(auth_blueprint)  # [back-01-auth-login]
 
     # [back-04-painel] painel do front novo, e as seções que ainda não têm backend

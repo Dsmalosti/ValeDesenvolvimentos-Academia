@@ -138,19 +138,7 @@ def test_login_leva_para_o_painel_novo(cliente):
     logar(cliente, dono)
 
     assert cliente.get("/login").headers["Location"] == "/"
-    assert cliente.get("/inicio-antigo/").headers["Location"] == "/"   # a tela inicial antiga virou atalho
-
-
-@pytest.mark.parametrize("origem, destino", [
-    # as pontes de alunos viraram telas de verdade na back-07 (lista, cadastro, busca, perfil) e na back-09 (renovar, extrato)
-    # as pontes de planos (/planos e /planos/novo) viraram telas de verdade na back-08
-    # exercícios e fichas de treino viraram telas de verdade na back-14: não sobrou nenhuma ponte em pendentes.py
-    ("/pagamentos/situacao/", "/alunos?status=pendente"),      # as telas antigas de pagamento levam às novas (back-09)
-])
-def test_pontes_levam_para_as_telas_antigas(cliente, origem, destino):
-    logar(cliente, criar_usuario("dono@teste.local"))
-    resposta = cliente.get(origem)
-    assert resposta.status_code == 302 and resposta.headers["Location"] == destino
+    assert cliente.get("/inicio-antigo/").status_code == 404           # [back-27-telas-antigas] antes: atalho da tela inicial antiga; saiu
 
 
 def test_telas_pendentes_respondem_em_construcao(cliente):

@@ -133,7 +133,7 @@ O código do roadmap original está pronto. Esta lista junta o que apareceu depo
 | [ ] | Atualizar 5 dependências | Achado do `pip-audit` na `back-20` | OK para mexer no `requirements.txt` |
 | [ ] | Servidor de aplicação | Gunicorn, Waitress ou o da hospedagem | Hospedagem (D4); é dependência nova |
 | [ ] | Cancelar a conta e exportar tudo | Os termos prometem 30 dias para exportar depois do cancelamento; não existe a tela | Pode ser feito à mão no começo |
-| [ ] | Remover as telas antigas | Duas dão erro 500 (`/instrutores/painel/`, `/fichas/editar/<id>`); Flask-JWT-Extended sem uso | São arquivos do Diogo (regra 4) |
+| [x] | Remover as telas antigas | **Feito na `back-27-telas-antigas` (14/10/2026), com o OK do Adauto:** 50 arquivos do layout antigo saíram (4 blueprints, rotas antigas de alunos, exercícios e planos, templates, CSS e serviços), e com eles os dois erros 500. A regra de conteúdo não libera mais o CDN do Bootstrap. Falta: tirar o Flask-JWT-Extended, que não é usado (dependência: pede OK) | — |
 
 ## O que está parado esperando o Adauto
 
@@ -299,3 +299,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 14/10/2026 | `back-24-assinatura` enviada: teste grátis de 2 meses, mensalidade por PIX (código copia e cola montado pelo sistema, confirmação manual), aviso de vencimento e bloqueio automático 7 dias depois. Migration `b24c6d7e8f90`. |
 | 14/10/2026 | `back-25-admin` enviada: painel de administração `/admin` (contas, números de uso, assinatura, bloqueio à mão, entrar como o dono, apagar depois do prazo, registro de tudo). Migration `b25d7e8f9a00`. Correção na `back-22` (teste de navegador do Personal) levada às branches seguintes. |
 | 14/10/2026 | `back-26-lgpd-final` enviada: textos legais 0.4 (teste grátis, PIX, bloqueio, acesso dos administradores, suporte sem horário) e registro de acessos de 6 meses (Marco Civil). PDF dos textos entregue ao Adauto para ele e o advogado revisarem. Migration `b26e8f9a0b10`. |
+| 14/10/2026 | `back-27-telas-antigas` enviada: o layout antigo saiu (50 arquivos, cerca de 2.300 linhas), com os dois erros 500 que vinham da `main`; os testes de papéis e isolamento passaram para as telas novas. |
