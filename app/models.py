@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import event
 from app.extensions.database import db
@@ -75,9 +75,23 @@ class Conta(db.Model):
     # Locais de atendimento LIGADOS, separados por vírgula ("estudio,casa"). Vazio = todos ligados.
     locais_ativos = db.Column(db.String(60), nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    # [back-24-assinatura] ASSINATURA no Vale Tec (as regras ficam em services/assinatura_service.py). Antes não existia: toda conta
+    # usava o sistema para sempre. `teste_ate`: último dia do teste grátis (conta nova: hoje + 2 meses; o admin pode
+    # mudar, ex.: o piloto ganha 3 meses). `pago_ate`: último dia do período pago; vazio = nunca pagou.
+    teste_ate = db.Column(db.Date, nullable=True, default=lambda: _fim_do_teste_de_uma_conta_nova())
+    pago_ate = db.Column(db.Date, nullable=True)
 
     def __repr__(self):
         return f'<Conta {self.nome}>'
+
+
+# [back-24-assinatura] quanto dura o teste grátis de uma conta nova (decisão do Adauto, 14/10/2026)
+MESES_DE_TESTE_GRATIS = 2
+
+
+def _fim_do_teste_de_uma_conta_nova():
+    from app.helpers.datas import somar_meses
+    return somar_meses(date.today(), MESES_DE_TESTE_GRATIS)
 
 
 class User(db.Model, UserMixin):
@@ -640,3 +654,26 @@ class Sessao(db.Model):
 
     def __repr__(self):
         return f'<Sessao aluno={self.aluno_id} {self.data} {self.hora} {self.status}>'
+
+
+class Mensalidade(db.Model):
+    """
+    [back-24-assinatura] Um pagamento da mensalidade do Vale Tec feito por uma conta (academia ou personal).
+    O pagamento é por PIX e a confirmação é feita à mão por um administrador (o sistema não recebe aviso do banco).
+    Cada linha estende contas.pago_ate até `periodo_fim`.
+    """
+    __tablename__ = 'mensalidades'
+
+    id = db.Column(db.Integer, primary_key=True)
+    conta_id = db.Column(db.Integer, db.ForeignKey('contas.id'), nullable=False, index=True)
+    valor = db.Column(db.Numeric(10, 2), nullable=False)
+    meses = db.Column(db.Integer, nullable=False, default=1)
+    periodo_inicio = db.Column(db.Date, nullable=False)
+    periodo_fim = db.Column(db.Date, nullable=False)
+    pago_em = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    forma = db.Column(db.String(20), nullable=False, default='pix')
+    registrado_por_id = db.Column(db.Integer, db.ForeignKey('instrutores.id'), nullable=True)    # quem confirmou (admin); vazio = linha de comando
+    observacao = db.Column(db.String(200), nullable=True)
+
+    def __repr__(self):
+        return f'<Mensalidade conta={self.conta_id} até {self.periodo_fim}>'

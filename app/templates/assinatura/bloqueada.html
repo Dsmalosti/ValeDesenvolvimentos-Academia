@@ -1,0 +1,26 @@
+{#
+  GET /assinatura com a conta BLOQUEADA (assinatura.index) — a única tela que a conta bloqueada abre.
+  [back-24-assinatura] ESTE TEMPLATE NÃO VEIO DO DRIVE. Usa o layout das telas sem login (base_auth.html), sem o
+  menu: com a conta bloqueada, nenhuma outra tela abre. Explica o motivo, mostra o código para pagar e o contato.
+  Adauto: revise o visual e leve para o front.
+  Contexto: o mesmo de assinatura/index.html.
+#}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% block titulo %}Conta bloqueada{% endblock %}
+{% block hero %}
+<span class="auth__logo">{{ icon('lock', 28) }}</span>
+<h1>Conta bloqueada</h1>
+<p>Falta o pagamento da mensalidade</p>
+{% endblock %}
+{% block content %}
+<span class="tile tile--lg tone-red" style="margin-bottom:14px">{{ icon('lock', 24) }}</span>
+<h2>Sua conta está bloqueada</h2>
+<p class="lead">A mensalidade do Vale Tec venceu em {{ dmy(s.vence) }} e o pagamento não chegou em 7 dias. Seus dados continuam guardados até {{ dmy(s.guardar_ate) }}: pagando, tudo volta como estava.</p>
+{% include 'assinatura/_pagar.html' %}
+<form method="post" action="{{ url_for('auth.logout') }}" style="margin-top:18px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <button type="submit" class="btn btn-ghost btn-block">{{ icon('logout', 18) }}Sair</button>
+</form>
+<p class="faint fs-12" style="margin-top:14px;text-align:center"><a href="{{ url_for('legal.termos') }}">Termos de uso</a> · <a href="{{ url_for('legal.privacidade') }}">Política de privacidade</a></p>
+{% endblock %}

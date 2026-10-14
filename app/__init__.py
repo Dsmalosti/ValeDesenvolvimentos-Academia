@@ -124,6 +124,7 @@ def create_app():
     from app.blueprints.agenda.routes import agenda_blueprint  # [back-17-personal]
     from app.blueprints.legal.routes import legal_blueprint  # [back-19-lgpd] termos de uso e política de privacidade
     from app.blueprints.saude import saude_blueprint  # [back-20-producao] /saude: a hospedagem pergunta se o app está de pé
+    from app.blueprints.assinatura.routes import assinatura_blueprint  # [back-24-assinatura] teste grátis, mensalidade e bloqueio
     from app.blueprints.pendentes import blueprints_pendentes
     app.register_blueprint(painel_blueprint)
     app.register_blueprint(cobrancas_blueprint)  # [back-09-cobranca]
@@ -136,6 +137,7 @@ def create_app():
     app.register_blueprint(agenda_blueprint)  # [back-17-personal]
     app.register_blueprint(legal_blueprint)  # [back-19-lgpd]
     app.register_blueprint(saude_blueprint)  # [back-20-producao]
+    app.register_blueprint(assinatura_blueprint)  # [back-24-assinatura]
     for blueprint_pendente in blueprints_pendentes():
         app.register_blueprint(blueprint_pendente)
 

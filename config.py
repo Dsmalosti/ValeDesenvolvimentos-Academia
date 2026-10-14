@@ -34,6 +34,14 @@ class Config:
     # Em produção: HTTPS obrigatório e cookie só por HTTPS (ver app/extensions/protecao.py).
     EM_PRODUCAO = False
 
+    # [back-24-assinatura] Para onde os clientes pagam a mensalidade do Vale Tec (o "PIX copia e cola" da tela /assinatura) e o
+    # contato do suporte que aparece nessa tela. Antes não existia. Sem a chave, a tela manda falar com o suporte.
+    VALE_TEC_PIX_CHAVE = os.getenv("VALE_TEC_PIX_CHAVE") or ""
+    VALE_TEC_PIX_NOME = os.getenv("VALE_TEC_PIX_NOME") or "VALE TEC"
+    VALE_TEC_PIX_CIDADE = os.getenv("VALE_TEC_PIX_CIDADE") or "TREMEMBE"
+    VALE_TEC_SUPORTE_EMAIL = os.getenv("VALE_TEC_SUPORTE_EMAIL") or "vale.informatica02@gmail.com"
+    VALE_TEC_SUPORTE_WHATSAPP = os.getenv("VALE_TEC_SUPORTE_WHATSAPP") or ""
+
 
 class DevelopmentConfig(Config):
     """

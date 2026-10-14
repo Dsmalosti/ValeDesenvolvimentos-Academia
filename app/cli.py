@@ -109,3 +109,44 @@ def registrar_comandos(app):
         exercicios = semear_catalogo_padrao()
         click.echo(f'Banco criado: {len(inspect(db.engine).get_table_names())} tabelas, {exercicios} exercícios no catálogo padrão.')
         click.echo('Próximo passo: crie a primeira conta pela tela /criar-conta (ou com: flask criar-conta).')
+
+    # [back-24-assinatura] assinatura do Vale Tec pela linha de comando (o painel de administração faz o mesmo pela tela)
+    @app.cli.command('assinaturas')
+    def assinaturas():
+        """Lista as contas com a situação da assinatura (teste, em dia, vencida, bloqueada) e o vencimento."""
+        from app.services import assinatura_service
+        for conta in Conta.query.order_by(Conta.id).all():
+            s = assinatura_service.situacao(conta)
+            click.echo(f"{conta.id:>4}  {conta.nome[:34]:<34}  {s['rotulo']:<13}  vence {s['vence'].strftime('%d/%m/%Y')}")
+
+    @app.cli.command('assinatura-paga')
+    @click.option('--conta', 'conta_id', type=int, required=True, help='Número (id) da conta.')
+    @click.option('--meses', type=int, default=1, show_default=True)
+    @click.option('--valor', default=None, help='Valor recebido. Sem ele, o preço da conta vezes os meses.')
+    def assinatura_paga(conta_id, meses, valor):
+        """Confirma o pagamento da mensalidade de uma conta (depois de conferir no banco)."""
+        from app.services import assinatura_service
+        conta = db.session.get(Conta, conta_id)
+        if conta is None:
+            raise click.ClickException(f'Não existe conta com o número {conta_id}.')
+        try:
+            registro = assinatura_service.registrar_pagamento(conta, meses=meses, valor=valor, observacao='linha de comando')
+        except ValueError as erro:
+            raise click.ClickException(str(erro))
+        click.echo(f'Pagamento registrado: {conta.nome}, paga até {registro.periodo_fim.strftime("%d/%m/%Y")}.')
+
+    @app.cli.command('assinatura-teste')
+    @click.option('--conta', 'conta_id', type=int, required=True, help='Número (id) da conta.')
+    @click.option('--ate', required=True, help='Último dia do teste grátis, no formato AAAA-MM-DD.')
+    def assinatura_teste(conta_id, ate):
+        """Muda o fim do teste grátis de uma conta (ex.: o cliente piloto ganha 3 meses no total)."""
+        from datetime import date as _date
+        from app.services import assinatura_service
+        conta = db.session.get(Conta, conta_id)
+        if conta is None:
+            raise click.ClickException(f'Não existe conta com o número {conta_id}.')
+        try:
+            assinatura_service.mudar_fim_do_teste(conta, _date.fromisoformat(ate))
+        except ValueError as erro:
+            raise click.ClickException(str(erro))
+        click.echo(f'Teste grátis de {conta.nome} vai até {conta.teste_ate.strftime("%d/%m/%Y")}.')
