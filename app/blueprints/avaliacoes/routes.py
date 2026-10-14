@@ -34,15 +34,17 @@ def _aluno(id):
 
 def so_quem_avalia(funcao):
     """
-    Dado de saúde: só dono e instrutor. Para os outros papéis: abrir a tela (GET) avisa e leva à
-    agenda; enviar dado (POST) responde 403.
+    REGISTRAR avaliação (dado de saúde): só dono e instrutor. Para os outros papéis: abrir a tela (GET) avisa e
+    leva à agenda; enviar dado (POST) responde 403.
+    [back-22-ajustes-de-produto] antes valia também para abrir o resultado e o histórico. Agora a recepção abre os dois (só não registra).
     """
     @wraps(funcao)
     def conferida(*args, **kwargs):
         if not avaliacoes.pode_avaliar():
             if request.method != 'GET':
                 abort(403)
-            flash('As medidas da avaliação são dados de saúde: só o dono e os instrutores abrem. Você pode agendar.', 'info')
+            # [back-22-ajustes-de-produto] antes: 'As medidas da avaliação são dados de saúde: só o dono e os instrutores abrem. Você pode agendar.'
+            flash('Só o dono e os instrutores registram a avaliação. Você pode agendar e ver os resultados.', 'info')
             return redirect(url_for('avaliacoes.agenda'))
         return funcao(*args, **kwargs)
     return conferida
@@ -84,8 +86,7 @@ def agendar():
 
 
 @avaliacoes_blueprint.route('/alunos/<int:id>/avaliacoes')
-@so_quem_avalia
-def aluno(id):
+def aluno(id):     # [back-22-ajustes-de-produto] antes: @so_quem_avalia (a recepção não abria)
     return render_template('avaliacoes/aluno.html', **avaliacoes.contexto_do_historico(_aluno(id)))
 
 
@@ -104,7 +105,6 @@ def registrar(id):
 
 
 @avaliacoes_blueprint.route('/avaliacoes/<int:id>')
-@so_quem_avalia
-def resultado(id):
+def resultado(id):     # [back-22-ajustes-de-produto] antes: @so_quem_avalia (a recepção não abria)
     feita = avaliacoes.avaliacao_da_conta(id) or abort(404)
     return render_template('avaliacoes/resultado.html', **avaliacoes.contexto_do_resultado(feita))

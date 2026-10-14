@@ -35,8 +35,9 @@
    desmarcada não entra na fila de Mensagens. `whatsapp_perguntado` avisa o servidor de que a caixa estava na tela. #}
 <input type="hidden" name="whatsapp_perguntado" value="1">
 <div class="switch-row" style="margin-top:14px">
-  <div><b id="lb-whats">Aceita receber avisos pelo WhatsApp</b><div class="csub" style="margin:0">Lembretes, aniversário e cobrança. Desmarque se o aluno pediu para não receber.</div></div>
-  <label class="switch"><input type="checkbox" name="aceita_whatsapp" value="1" aria-labelledby="lb-whats"{% if a.aceita_whatsapp is not defined or a.aceita_whatsapp is none or a.aceita_whatsapp %} checked{% endif %}><span class="switch__track"></span></label>
+  {# [back-22-ajustes-de-produto] antes: a caixa vinha MARCADA para aluno novo e para quem nunca foi perguntado. Agora só vem marcada para quem já autorizou. #}
+  <div><b id="lb-whats">Aceita receber avisos pelo WhatsApp</b><div class="csub" style="margin:0">Lembretes, aniversário e cobrança. Marque só se o aluno autorizou.</div></div>
+  <label class="switch"><input type="checkbox" name="aceita_whatsapp" value="1" aria-labelledby="lb-whats"{% if a.aceita_whatsapp is defined and a.aceita_whatsapp %} checked{% endif %}><span class="switch__track"></span></label>
 </div>
 {%- endmacro %}
 

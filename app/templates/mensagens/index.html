@@ -21,6 +21,10 @@
 {% block page_acoes %}<a class="btn btn-ghost" href="{{ url_for('config.index', aba='mensagens') }}">{{ icon('edit', 18) }}Editar textos</a>{% endblock %}
 
 {% block content %}
+{# [back-22-ajustes-de-produto] Aviso NOVO, que o front do Drive não tem: a autorização de WhatsApp vem desligada, e quem tem mensagem hoje
+   mas não autorizou fica fora da fila. O aviso diz quem são, para a equipe perguntar e marcar no cadastro.
+   `sem_whatsapp` = [{id, nome}]; sem a variável, nada aparece. #}
+{% if sem_whatsapp %}<div class="note note--yellow" style="margin-bottom:12px">{{ icon('info', 20) }}<span><strong>{{ sem_whatsapp|length }} {{ 'aluno ainda não autorizou' if sem_whatsapp|length == 1 else 'alunos ainda não autorizaram' }} avisos pelo WhatsApp</strong>Por isso {{ 'ficou' if sem_whatsapp|length == 1 else 'ficaram' }} fora da fila de hoje: {% for a in sem_whatsapp %}<a href="{{ url_for('alunos.editar', id=a.id) }}">{{ a.nome }}</a>{{ ', ' if not loop.last }}{% endfor %}. Pergunte se aceita{{ 'm' if sem_whatsapp|length > 1 }} e marque no cadastro.</span></div>{% endif %}
 <div class="note note--blue">{{ icon('info', 20) }}<span><strong>{{ 'Lembretes automáticos ligados' if lembretes_auto else 'Você toca, o WhatsApp abre pronto' }}</strong>{% if lembretes_auto %}Quando o WhatsApp oficial da {{ 'sua conta' if academia.modelo == 'personal' else 'academia' }} estiver conectado, esta fila sai sozinha às 9h. Até lá, envie daqui com um toque.{% else %}Cada mensagem já vem escrita com o nome, a data e o valor. Toque em enviar e confirme no WhatsApp.{% endif %}</span></div>
 
 <nav class="pills" data-filtro-grupo data-alvo="lista-msgs" aria-label="Filtrar mensagens">

@@ -7,7 +7,12 @@ from werkzeug.datastructures import MultiDict
 
 from app.models import Aluno, Conta, ModeloMensagem
 from app.services import painel_service, relatorio_service
+from tests import conftest
 from tests.conftest import (campo, conta_de, contar, criar_aluno, criar_pagamento, criar_plano, criar_usuario, logar)
+
+
+def app_do_teste():
+    return conftest._APP
 
 HOJE = date.today()
 DIA = timedelta(days=1)
@@ -132,7 +137,8 @@ def test_ligar_e_desligar_o_checkin_persiste(app, academia):
 
 def test_inatividade_e_lembretes(app, academia):
     dono = como(app, academia["dono"])
-    assert (da_conta_(academia, "inatividade_ligada"), da_conta_(academia, "inatividade_dias"), da_conta_(academia, "lembretes_ligados")) == (True, 60, True)
+    # [back-22-ajustes-de-produto] antes: (True, 60, True). A inatividade automática nasce desligada.
+    assert (da_conta_(academia, "inatividade_ligada"), da_conta_(academia, "inatividade_dias"), da_conta_(academia, "lembretes_ligados")) == (False, 60, True)
 
     dono.post("/configuracoes/funcionalidade", data={"chave": "inatividade", "ligado": "1", "dias": "30"})
     dono.post("/configuracoes/funcionalidade", data={"chave": "lembretes", "ligado": "0"})
@@ -208,7 +214,21 @@ def test_so_o_dono_muda_a_academia_e_a_recepcao_so_as_mensagens(app, academia):
 
 
 # ------------------------------------------------------------------ inatividade automática
+def ligar_inatividade(academia):
+    """[back-22-ajustes-de-produto] a regra nasce desligada; os testes dela ligam pela tela de Configurações, como o dono faria."""
+    como(app_do_teste(), academia["dono"]).post("/configuracoes/funcionalidade", data={"chave": "inatividade", "ligado": "1", "dias": "60"})
+    assert da_conta_(academia, "inatividade_ligada") is True
+
+
+def test_nasce_desligada_e_ninguem_e_desativado(app, academia):
+    """[back-22-ajustes-de-produto] sem ligar a regra, abrir o painel não desativa ninguém."""
+    criar_pagamento(academia["dono"], academia["ana"], 100, HOJE - 100 * DIA, HOJE - 70 * DIA)       # venceu há 70 dias
+    como(app, academia["dono"]).get("/")
+    assert campo(Aluno, academia["ana"], "ativo") is True
+
+
 def test_quem_nao_renova_ha_mais_de_60_dias_vira_inativo_sozinho(app, academia):
+    ligar_inatividade(academia)
     bruno = criar_aluno(academia["dono"], academia["plano"], "Bruno Dias", "bruno@exemplo.com", "555.666.777-20")
     nunca = criar_aluno(academia["dono"], academia["plano"], "Nunca Pagou", "nunca@exemplo.com", "123.456.789-09")
     criar_pagamento(academia["dono"], academia["ana"], 100, HOJE - 100 * DIA, HOJE - 70 * DIA)       # venceu há 70 dias
@@ -226,6 +246,7 @@ def test_quem_nao_renova_ha_mais_de_60_dias_vira_inativo_sozinho(app, academia):
 
 
 def test_regra_roda_uma_vez_por_dia_e_respeita_o_desligado(app, academia):
+    ligar_inatividade(academia)
     dono = como(app, academia["dono"])
     dono.get("/")                                                                # já rodou hoje (ninguém para desativar)
     criar_pagamento(academia["dono"], academia["ana"], 100, HOJE - 100 * DIA, HOJE - 70 * DIA)
