@@ -160,6 +160,8 @@ def test_entrar_na_conta_como_o_dono_e_voltar(app, cenario):
     assert admin.get("/admin").status_code == 200 and "como administrador" not in admin.get("/").get_data(as_text=True)
     with conftest._APP.app_context():
         assert [a.acao for a in AcaoAdmin.query.order_by(AcaoAdmin.id)] == ["entrou", "saiu"]
+        from app.models import RegistroDeAcesso      # [back-26-lgpd-final] o acesso do admin à conta também vai para o registro do Marco Civil
+        assert [(r.email, r.evento) for r in RegistroDeAcesso.query.all()] == [("adauto@teste.local", "admin_entrou")]
         assert db.session.get(User, cenario["dono"]).ultimo_acesso_em is None     # o que o admin fez não conta como acesso do dono
     assert como(app, cenario["dono"]).post("/admin/voltar").status_code == 404    # sem ter entrado como admin, não existe
 

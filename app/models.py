@@ -705,3 +705,23 @@ class AcaoAdmin(db.Model):
 
     def __repr__(self):
         return f'<AcaoAdmin {self.acao} conta={self.conta_id}>'
+
+
+class RegistroDeAcesso(db.Model):
+    """
+    [back-26-lgpd-final] Data, hora e IP de cada entrada no sistema (Marco Civil da Internet, art. 15: guardar por 6 meses).
+    SEM chave estrangeira de propósito: o registro dura os 6 meses mesmo que a conta seja apagada antes.
+    Regras em services/registro_de_acesso_service.py.
+    """
+    __tablename__ = 'registros_de_acesso'
+
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, nullable=True)
+    conta_id = db.Column(db.Integer, nullable=True)
+    email = db.Column(db.String(120), nullable=False, default='')
+    ip = db.Column(db.String(45), nullable=False, default='')           # cabe um endereço IPv6
+    evento = db.Column(db.String(20), nullable=False, default='login')  # login | admin_entrou
+    quando = db.Column(db.DateTime, nullable=False, default=datetime.now, index=True)
+
+    def __repr__(self):
+        return f'<RegistroDeAcesso {self.email} {self.quando}>'

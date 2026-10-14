@@ -24,7 +24,7 @@ from app.extensions.database import db
 from app.models import (PAPEL_PROPRIETARIO, AcaoAdmin, Aluno, AvaliacaoAgendada, AvaliacaoFisica, Cobranca, Conta, Convite, Custo,
                         Exercicio, Ficha, Frequencia, Mensalidade, MensagemEnviada, ModeloMensagem, Pagamento, Plano, RedefinicaoSenha,
                         Sessao, Treino, TreinoExercicio, User, load_user)
-from app.services import assinatura_service
+from app.services import assinatura_service, registro_de_acesso_service
 
 CHAVE_DA_SESSAO = 'admin_original'      # na sessão, enquanto o admin está "dentro" de uma conta: quem ele é de verdade
 DIAS_DE_INATIVIDADE = 7                 # conta sem acesso há mais que isso aparece com aviso na lista
@@ -162,6 +162,7 @@ def entrar(admin, conta):
     registrar(admin, conta, 'entrou', f'como {dono.email}')
     db.session.commit()
     original = admin.get_id()
+    registro_de_acesso_service.registrar(admin, evento='admin_entrou')     # [back-26-lgpd-final] o acesso do admin também entra no registro
     login_user(dono)
     session[CHAVE_DA_SESSAO] = original
 

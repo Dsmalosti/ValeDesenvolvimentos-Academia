@@ -9,7 +9,7 @@ Os dois textos que a tela "Criar conta" cita agora estão **publicados no sistem
 
 Foram escritos pelo Claude em 10/10/2026, a pedido do Adauto (decisão D7), e atualizados em 13/10/2026 na branch `back-19-lgpd` (decisão D15: deixar a LGPD funcionando no sistema; o advogado revisa depois). Os arquivos saíram desta pasta e foram para `app/legal/` porque o sistema passou a lê-los.
 
-**Os dois aparecem com o aviso "Versão preliminar 0.3, ainda em revisão".** Tire o aviso (a linha que começa com `>` no topo de cada arquivo) quando o advogado aprovar.
+**Os dois aparecem com o aviso "Versão preliminar 0.4, ainda em revisão".** Tire o aviso (a linha que começa com `>` no topo de cada arquivo) quando o advogado aprovar.
 
 ## Como editar
 
@@ -53,17 +53,18 @@ O prazo do "lembrar de mim" saiu desta lista: o sistema usa 30 dias e o texto j�
 
 ## 2. O que o texto promete e se o sistema já cumpre
 
-Cada linha é uma promessa feita ao cliente. Atualizado em 13/10/2026.
+Cada linha é uma promessa feita ao cliente. Atualizado em 14/10/2026 (branch `back-26-lgpd-final`).
 
 | Promessa no texto | Já é verdade no sistema? |
 |---|---|
-| Teste gratuito de cerca de 2 meses; preço avisado com 30 dias de antecedência | Não depende do sistema (os 30 dias são sugestão do Claude) |
-| Suporte nos fins de semana e depois das 20h em dias úteis | Não depende do sistema |
+| Teste grátis de 2 meses; aviso 7 dias antes do fim; 7 dias de tolerância depois do vencimento; dados guardados 30 dias depois do bloqueio | **Sim** (`back-24`). Avisar mudança de preço com 30 dias é compromisso de vocês |
+| Suporte por e-mail, sem horário fixo | Não depende do sistema |
 | Uma conta não enxerga nada de outra | **Sim.** Vale também para exercícios, desde a `back-06` |
-| Cada pessoa da equipe vê só o que o papel dela permite | **Sim**, desde a `back-06`. Medidas de avaliação física: só dono e instrutor (`back-15`) |
+| Cada pessoa da equipe vê só o que o papel dela permite | **Sim**, desde a `back-06`. Avaliação física: dono, recepção e instrutor veem; só dono e instrutor registram (`back-22`) |
+| Os administradores do Vale Tec veem os dados das contas, podem entrar como o dono, e cada acesso fica registrado | **Sim** (`back-25`) |
 | A academia consegue exportar os dados de um aluno | **Sim** (`back-19`): botão no perfil do aluno, só para o dono |
 | A academia consegue excluir os dados de um aluno | **Sim** (`back-19`): "Excluir aluno" apaga os dados pessoais e de saúde; os pagamentos ficam, sem identificação |
-| Marcação de "aceita receber mensagens" por aluno | **Sim** (`back-19`): no cadastro do aluno; quem recusou não entra na fila de mensagens |
+| Marcação de "aceita receber mensagens" por aluno | **Sim** (`back-19`; desde a `back-22` começa desligada e só quem autorizou entra na fila de mensagens) |
 | O sistema não envia mensagem sozinho | **Sim** (`back-16`): prepara o texto e abre o WhatsApp de quem usa |
 | Senha guardada só como hash | **Sim** (bcrypt) |
 | Não coletamos dados de cartão | **Sim**: o sistema não processa pagamento |
@@ -72,8 +73,8 @@ Cada linha é uma promessa feita ao cliente. Atualizado em 13/10/2026.
 | Logs sem CPF, telefone nem senha | **Sim**, e há um teste que vigia isso (`tests/test_lgpd.py`) |
 | Conexão por HTTPS | **Na produção, sim:** a `back-18` obriga. Depende de a hospedagem estar no ar (Fase D) |
 | Cópia de segurança diária, guardada por 30 dias | **Ainda não.** É do ambiente de produção (Fase D) |
-| Depois do cancelamento da conta, 30 dias para exportar e depois os dados são apagados | **Ainda não.** Não existe "cancelar conta" no sistema; hoje seria feito à mão, a pedido |
-| Registros de acesso (data, hora, IP) guardados por 6 meses | **Ainda não.** É do servidor de produção (Fase D) |
+| Depois do cancelamento da conta, 30 dias para exportar e depois os dados são apagados | **Em parte.** Não existe botão de cancelar: é pelo e-mail. Apagar a conta é feito pelo painel de administração (`back-25`), só depois dos 30 dias |
+| Registros de acesso (data, hora, IP) guardados por 6 meses | **Sim** (`back-26`): cada entrada no sistema grava data, hora e IP; os registros com mais de 6 meses são apagados sozinhos, e continuam guardados se a conta for apagada antes |
 | Aviso de incidente à academia em até 48 horas | É compromisso seu, não do sistema |
 
 **Regra prática:** antes de tirar o aviso de "versão preliminar", cada "Ainda não" precisa virar "Sim", ou a promessa sai do texto.
@@ -85,7 +86,7 @@ Cada linha é uma promessa feita ao cliente. Atualizado em 13/10/2026.
 3. **Encarregado de dados (DPO).** Empresas pequenas têm regras mais leves na ANPD e, em geral, não precisam nomear um encarregado, mas precisam manter um canal de contato. Confirmar se o seu caso se enquadra.
 4. **Contrato de tratamento de dados com a academia.** Hoje está embutido nos Termos (§7). Para clientes maiores, costuma virar um documento separado.
 5. **Consentimento do aluno para a avaliação física.** O texto põe essa obrigação na academia. Vale oferecer a ela um modelo de termo de consentimento, para facilitar.
-6. **A opção de WhatsApp vem marcada.** No cadastro do aluno, "Aceita receber avisos pelo WhatsApp" começa ligada e a academia desmarca se o aluno não quiser. Para lembrete e cobrança isso costuma bastar; para mensagem com oferta (o parabéns com desconto, por exemplo), o advogado pode pedir que comece desligada.
+6. **A opção de WhatsApp começa desligada** (decisão do Adauto, 14/10/2026): só recebe aviso quem autorizou, e o sistema avisa a academia de quem ainda não autorizou.
 7. **O que fica depois de apagar um aluno.** Os pagamentos continuam, sem nome. Confirmar o prazo de guarda desses registros.
 8. **Foro.** Está como a sua cidade, com a ressalva do consumidor.
 

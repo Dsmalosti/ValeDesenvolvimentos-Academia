@@ -40,12 +40,12 @@ def como(app, usuario_id):
 
 
 # ------------------------------------------------------------------ páginas públicas
-@pytest.mark.parametrize("url, titulo, trecho", [("/termos", "Termos de Uso", "Período de teste e preço"), ("/privacidade", "Política de Privacidade", "Seus direitos")])
+@pytest.mark.parametrize("url, titulo, trecho", [("/termos", "Termos de Uso", "Teste grátis, preço e pagamento"), ("/privacidade", "Política de Privacidade", "Seus direitos")])
 def test_termos_e_politica_sao_paginas_publicas(app, url, titulo, trecho):
     resposta = app.test_client().get(url)                                        # sem login
     html = resposta.get_data(as_text=True)
     assert resposta.status_code == 200 and titulo in html and trecho in html and f"Versão {legal_service.VERSAO}" in html
-    assert "Versão preliminar 0.3" in html and "ainda em revisão" in html         # avisa que o texto vai passar por revisão
+    assert "Versão preliminar 0.4" in html and "ainda em revisão" in html         # avisa que o texto vai passar por revisão  [back-26-lgpd-final] antes: 0.3
     # [back-21-textos-legais] antes: os dois textos tinham trechos "a definir". Agora os dois trazem quem oferece o sistema;
     # nos termos não sobra nada a definir, e na política ficam só a hospedagem e o serviço de e-mail (decisões D4 e D6).
     assert "60.499.733/0001-44" in html and "ADAUTO RODRIGUES DOS SANTOS NETTO" in html and "vale.informatica02@gmail.com" in html
@@ -252,3 +252,32 @@ def test_o_codigo_nao_imprime_nem_registra_dado_pessoal():
                 if re.search(r"\b(logger|logging|log)\.\w+\(", codigo) and re.search(r"cpf|telefone|senha|\.email|token", codigo, re.IGNORECASE):
                     problemas.append(f"{nome}:{numero} registra dado pessoal: {codigo.strip()[:80]}")
     assert problemas == []
+
+
+# ------------------------------------------------------------------ [back-26-lgpd-final] registros de acesso (Marco Civil, art. 15)
+def test_login_grava_data_hora_e_ip_e_apaga_os_de_mais_de_6_meses(app, academia):
+    from app.models import RegistroDeAcesso
+    from app.extensions.database import db
+    with app.app_context():
+        db.session.add(RegistroDeAcesso(usuario_id=1, conta_id=1, email="antigo@x.com", ip="1.1.1.1", quando=datetime.now() - timedelta(days=200)))
+        db.session.add(RegistroDeAcesso(usuario_id=1, conta_id=1, email="recente@x.com", ip="1.1.1.1", quando=datetime.now() - timedelta(days=150)))
+        db.session.commit()
+    cliente = app.test_client()
+    resposta = cliente.post("/login", data={"identificador": "dono@teste.local", "senha": SENHA_TESTE}, environ_overrides={"REMOTE_ADDR": "200.10.20.30"})
+    assert resposta.status_code == 302
+    with app.app_context():
+        registros = {r.email: r for r in RegistroDeAcesso.query.all()}
+        assert "antigo@x.com" not in registros and "recente@x.com" in registros          # mais de 6 meses: apagado; menos: fica
+        novo = registros["dono@teste.local"]
+        assert (novo.ip, novo.evento, novo.conta_id) == ("200.10.20.30", "login", conta_de(academia["dono"]))
+        assert abs((datetime.now() - novo.quando).total_seconds()) < 60
+    cliente.post("/login", data={"identificador": "dono@teste.local", "senha": "errada"})
+    assert contar(RegistroDeAcesso) == 2                                                   # senha errada não é acesso
+
+
+def test_textos_descrevem_o_teste_o_bloqueio_e_o_acesso_dos_admins(app, academia):
+    termos = app.test_client().get("/termos").get_data(as_text=True)
+    assert "de graça por 2 meses" in termos and "<strong>7 dias</strong>" in termos and "bloqueada" in termos and "administradores do Vale Tec" in termos
+    assert "20h" not in termos and "fins de semana" not in termos                          # suporte sem horário fixo
+    politica = app.test_client().get("/privacidade").get_data(as_text=True)
+    assert "A equipe do Vale Tec" in politica and "cada acesso fica registrado" in politica and "a marcação começa desligada" in politica

@@ -18,7 +18,9 @@ from markupsafe import Markup, escape
 
 # [back-21-textos-legais] antes: '0.2-2026-10-13'. Mudou porque os textos ganharam os dados de quem oferece o Vale Tec
 # (razão social, CNPJ, cidade e e-mail de contato).
-VERSAO = '0.3-2026-10-13'
+# [back-26-lgpd-final] antes: '0.3-2026-10-13'. Mudou porque os textos passaram a descrever o teste grátis, o pagamento, o bloqueio,
+# o acesso dos administradores e o suporte sem horário fixo.
+VERSAO = '0.4-2026-10-14'
 PASTA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'legal')
 DOCUMENTOS = {
     'termos': ('termos-de-uso.md', 'Termos de Uso'),

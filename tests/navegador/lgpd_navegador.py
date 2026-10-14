@@ -111,8 +111,8 @@ with sync_playwright() as p:
         termos = aba.value
         termos.wait_for_load_state()
         texto = termos.inner_text("#conteudo")
-        checa(f"[{nome}] o link de 'Criar conta' abre os termos de uso, sem login", termos.url.endswith("/termos") and "Período de teste e preço" in texto
-              and "Versão preliminar 0.3" in texto and "60.499.733/0001-44" in texto and "vale.informatica02@gmail.com" in texto
+        checa(f"[{nome}] o link de 'Criar conta' abre os termos de uso, sem login", termos.url.endswith("/termos") and "Teste grátis, preço e pagamento" in texto
+              and "Versão preliminar 0.4" in texto and "60.499.733/0001-44" in texto and "vale.informatica02@gmail.com" in texto
               and "a definir" not in texto and "PREENCHER" not in texto and "**" not in texto)      # [back-21-textos-legais] antes: versão 0.2, com trechos "a definir"
         checa(f"[{nome}] termos: sem rolagem lateral e sem 'None'", sem_none_nem_rolagem(termos))
         termos.wait_for_timeout(400)

@@ -15,6 +15,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from flask_login import login_user, logout_user, current_user, login_required
 
 from app.services.auth_service import AuthService
+from app.services import registro_de_acesso_service  # [back-26-lgpd-final]
 from app.exceptions import BusinessError
 from app.extensions.protecao import limiter  # [back-18-seguranca] limite de tentativas nas telas públicas
 from app.helpers.email import email_configurado  # [back-13-equipe]
@@ -99,6 +100,7 @@ def login():
         session.clear()
         session.permanent = True        # [back-18-seguranca] a sessão passa a ter prazo (PERMANENT_SESSION_LIFETIME, 12 horas sem uso)
         login_user(usuario, remember=lembrar)
+        registro_de_acesso_service.registrar(usuario)     # [back-26-lgpd-final] data, hora e IP (Marco Civil). Antes: não era guardado
         # [back-04-painel] antes: 'main.homepage' (tela inicial antiga)
         return redirect(proximo or url_for('painel.index'))
 
