@@ -56,6 +56,23 @@
     <button type="button" class="btn-link-soft agora-todos" data-open="dlg-agora">Ver todos os {{ na_academia|length }}</button>
   </section>
 
+  {# [back-23-ranking-frequencia] Card NOVO, que o front do Drive não tem (pedido do Adauto em 14/10/2026): os alunos que mais vieram no mês.
+     `ranking` = {mes, alunos[{posicao, id, nome, dias}]}; sem a variável, o card não aparece. Ocupa a largura toda no
+     desktop (grid-column) e fica depois de "Na academia agora" no celular. #}
+  {% if ranking is defined %}
+  <section class="card card--pad freq-ranking" aria-labelledby="h-ranking" style="grid-column:1 / -1">
+    <div class="row-flex" style="justify-content:space-between"><h2 class="ctitle" id="h-ranking">Ranking do mês</h2><span class="chip chip--blue">{{ ranking.mes|capitalize }}</span></div>
+    <p class="csub" style="margin:2px 0 0">Quem mais veio à academia este mês, contando os dias com entrada</p>
+    {% if ranking.alunos %}
+    <ol class="agora-list" aria-label="Ranking do mês">
+      {% for r in ranking.alunos %}
+      <li><b class="num tone-txt-{{ 'orange' if r.posicao == 1 else 'blue' }}" style="min-width:28px;text-align:center">{{ r.posicao }}º</b>{{ avatar(r.nome, 'sm') }}<a class="grow truncate fw-7" href="{{ url_for('alunos.detalhe', id=r.id) }}">{{ r.nome }}</a><span class="chip chip--{{ 'yellow' if r.posicao == 1 else 'slate' }}">{{ r.dias }} {{ 'dia' if r.dias == 1 else 'dias' }}</span></li>
+      {% endfor %}
+    </ol>
+    {% else %}<p class="muted" style="margin:12px 0 0">Nenhuma entrada registrada este mês ainda.</p>{% endif %}
+  </section>
+  {% endif %}
+
   <section class="card card--flush freq-tabela d-only" aria-labelledby="h-checkins">
     <div class="row-flex" style="justify-content:space-between;padding:20px 24px 18px">
       <h2 class="ctitle" id="h-checkins" style="font-size:16px">Check-ins de hoje</h2>

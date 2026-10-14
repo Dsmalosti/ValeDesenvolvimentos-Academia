@@ -266,3 +266,49 @@ def test_excluir_aluno_com_entrada_apaga_as_entradas(app, academia):
     criar_entrada(academia["dono"], academia["ana"], AGORA)
     como(app, academia["dono"]).post(f"/alunos/{academia['ana']}/excluir")
     assert campo(Aluno, academia["ana"], "nome") == "Aluno removido" and contar(Frequencia) == 0
+
+
+# ------------------------------------------------------------------ [back-23-ranking-frequencia] ranking do mês
+def test_ranking_do_mes_conta_dias_com_entrada_e_divide_empate(app, academia):
+    """Conta dias (não entradas), só deste mês, só alunos ativos, só da própria academia; empate divide a posição."""
+    agora = datetime(HOJE.year, HOJE.month, 28, 20, 0) if HOJE.day >= 28 else datetime(HOJE.year, HOJE.month, HOJE.day, 20, 0)
+    dono = academia["dono"]
+    plano = academia["plano"]
+    davi = criar_aluno(dono, plano, "Davi Lima", "davi@exemplo.com", "529.982.247-25")
+    inicio = datetime(agora.year, agora.month, 1, 7, 0)
+    dias_no_mes = (agora.date() - inicio.date()).days + 1
+    # Ana: até 3 dias, com duas entradas no primeiro (conta um dia só). Bruno e Davi: até 2 dias cada (empate).
+    for d in range(min(3, dias_no_mes)):
+        criar_entrada(dono, academia["ana"], inicio + d * DIA)
+    criar_entrada(dono, academia["ana"], inicio + timedelta(hours=10))
+    for d in range(min(2, dias_no_mes)):
+        criar_entrada(dono, academia["bruno"], inicio + d * DIA)
+        criar_entrada(dono, davi, inicio + d * DIA)
+    criar_entrada(dono, academia["caio"], inicio)                                          # inativo: fica de fora
+    criar_entrada(dono, academia["bruno"], inicio - 5 * DIA)                               # mês passado: não conta
+    outro = criar_usuario("outro@teste.local", nome="Otto")
+    vizinho = criar_aluno(outro, criar_plano(outro, nome="B"), "Vizinho", "v@exemplo.com", "987.654.321-00")
+    for d in range(min(3, dias_no_mes)):
+        criar_entrada(outro, vizinho, inicio + d * DIA)                                    # outra academia: não aparece
+
+    r = do_servico(app, dono, frequencia_service.ranking_do_mes, agora=agora)
+
+    assert r["mes"] == frequencia_service.MESES[agora.month - 1]
+    linhas = [(a["posicao"], a["nome"], a["dias"]) for a in r["alunos"]]
+    if dias_no_mes >= 3:
+        assert linhas == [(1, "Ana Souza", 3), (2, "Bruno Dias", 2), (2, "Davi Lima", 2)]
+    else:                                   # primeiro ou segundo dia do mês: a ordem continua valendo, com menos dias
+        assert [n for _, n, _ in linhas][0] == "Ana Souza" and {n for _, n, _ in linhas} == {"Ana Souza", "Bruno Dias", "Davi Lima"}
+
+
+def test_ranking_aparece_na_tela_de_frequencia(app, academia):
+    dono = como(app, academia["dono"])
+    vazio = dono.get("/frequencia").get_data(as_text=True)
+    assert "Ranking do mês" in vazio and "Nenhuma entrada registrada este mês ainda." in vazio
+
+    criar_entrada(academia["dono"], academia["ana"], AGORA - timedelta(minutes=5))
+    html = dono.get("/frequencia").get_data(as_text=True)
+    card = html.split('id="h-ranking"')[1].split("</section>")[0]
+    assert "Ana Souza" in card and "1º" in card and "1 dia<" in card and f'href="/alunos/{academia["ana"]}"' in card
+    assert frequencia_service.MESES[HOJE.month - 1].capitalize() in card and ">None<" not in card
+    assert "Ranking do mês" in como(app, academia["recepcao"]).get("/frequencia").get_data(as_text=True)    # a recepção também vê

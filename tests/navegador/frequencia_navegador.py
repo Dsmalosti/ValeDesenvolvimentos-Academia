@@ -166,6 +166,14 @@ with sync_playwright() as p:
             planilha = ctx.request.get(BASE + "/frequencia/exportar")
             checa(f"[{nome}] exportar devolve a planilha do dia", planilha.status == 200 and camila in planilha.text() and "Horário" in planilha.text())
         pg.wait_for_timeout(600)
+        # [back-23-ranking-frequencia] o card novo "Ranking do mês": aparece, lista quem veio, leva ao perfil e não estoura a largura
+        ranking = pg.locator(".freq-ranking")
+        ranking.scroll_into_view_if_needed()
+        caixa = ranking.bounding_box()
+        largura = pg.evaluate("document.querySelector('.freq-ranking').scrollWidth <= document.querySelector('.freq-ranking').clientWidth")
+        checa(f"[{nome}] o card Ranking do mês aparece com quem veio, sem estourar a largura", ranking.count() == 1 and "Ranking do mês" in ranking.inner_text()
+              and camila in ranking.inner_text() and "1º" in ranking.inner_text() and largura and caixa["width"] > 200, caixa)
+        checa(f"[{nome}] cada nome do ranking leva ao perfil do aluno", ranking.locator("a[href^='/alunos/']").count() >= 1)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-2-depois-do-checkin.png"), full_page=True)
 
         # --- perfil: cartão de frequência, e "sem dado" para quem nunca veio ---

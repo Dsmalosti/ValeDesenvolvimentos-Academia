@@ -12,7 +12,9 @@ Definições (são escolhas simples, fáceis de explicar para o dono):
   - o sistema não registra saída. "Na academia agora" = quem entrou há menos de PERMANENCIA_MIN;
   - toque duplo: a mesma pessoa não ganha outra entrada antes de INTERVALO_MIN;
   - ausente = aluno ativo cuja ÚLTIMA entrada foi há mais de DIAS_AUSENTE dias;
-  - assiduidade = em quantos dos últimos 30 dias o aluno veio, sobre 30.
+  - assiduidade = em quantos dos últimos 30 dias o aluno veio, sobre 30;
+  - [back-23-ranking-frequencia] ranking do mês = os alunos ativos que vieram em mais DIAS do mês corrente (duas entradas no
+    mesmo dia contam como um dia). Empate divide a posição: 1º, 2º, 2º, 4º.
 """
 import csv
 import io
@@ -34,6 +36,8 @@ DIAS_AUSENTE = 15           # o card do painel é "Ausentes há mais de 15 dias"
 HORAS = list(range(6, 23))  # barras do gráfico: das 06h às 22h
 ORIGENS = {'recepcao': 'Recepção', 'app': 'App'}
 DIAS_DA_SEMANA = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+RANKING_TAMANHO = 10        # [back-23-ranking-frequencia] quantos alunos o ranking do mês mostra
+MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
 
 
 class EntradaRecusada(Exception):
@@ -154,6 +158,7 @@ def contexto_da_tela(q='', agora=None):
         'na_academia': agora_la,
         'entradas': [{'aluno': linhas[e.aluno_id], 'hora': _hm(e.data_hora_entrada), 'origem': ORIGENS.get(e.origem, e.origem)}
                      for e in entradas],
+        'ranking': ranking_do_mes(agora),     # [back-23-ranking-frequencia] antes não existia
     }
 
 
@@ -212,3 +217,28 @@ def dias_sem_vir(hoje=None):
             ultima = datetime.fromisoformat(ultima)
         resultado[aluno_id] = (hoje - ultima.date()).days
     return resultado
+
+
+# ------------------------------------------------------------------ ranking do mês
+def ranking_do_mes(agora=None, limite=RANKING_TAMANHO):
+    """
+    [back-23-ranking-frequencia] Os alunos ativos que mais vieram no mês corrente, para o card "Ranking do mês" da tela de Frequência.
+    Conta DIAS com entrada (duas entradas no mesmo dia valem um dia). Desempate: mais entradas no total, depois o nome.
+    Devolve {'mes': 'outubro', 'alunos': [{'posicao', 'id', 'nome', 'dias'}]}. Mês sem nenhuma entrada: lista vazia.
+    """
+    agora = agora or datetime.now()
+    inicio = datetime(agora.year, agora.month, 1)
+    dias, entradas = {}, Counter()
+    for aluno_id, momento in (da_conta(Frequencia).with_entities(Frequencia.aluno_id, Frequencia.data_hora_entrada)
+                              .filter(Frequencia.data_hora_entrada >= inicio, Frequencia.data_hora_entrada <= agora)):
+        dias.setdefault(aluno_id, set()).add(momento.date())
+        entradas[aluno_id] += 1
+    ativos = {a.id: a for a in da_conta(Aluno).filter(Aluno.ativo.is_(True), Aluno.id.in_(list(dias) or [0])).all()}
+    ordem = sorted(ativos, key=lambda i: (-len(dias[i]), -entradas[i], (ativos[i].nome or '').lower()))[:limite]
+    alunos, anterior, posicao = [], None, 0
+    for n, aluno_id in enumerate(ordem, start=1):
+        total = len(dias[aluno_id])
+        if total != anterior:         # empate fica com a mesma posição; o próximo pula (1º, 2º, 2º, 4º)
+            posicao, anterior = n, total
+        alunos.append({'posicao': posicao, 'id': aluno_id, 'nome': ativos[aluno_id].nome or 'Aluno sem nome', 'dias': total})
+    return {'mes': MESES[agora.month - 1], 'alunos': alunos}
