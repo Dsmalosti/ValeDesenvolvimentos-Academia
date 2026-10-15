@@ -30,15 +30,13 @@ _CHAVE_PROXIMO = 'login_proximo'
 def _destino_seguro(proximo):
     """
     Devolve `proximo` só se for uma página do próprio sistema; senão None.
-
-    O Flask-Login manda quem não está logado para /login?next=/pagina-que-pediu.
-    Sem essa checagem, um link /login?next=https://site-falso.com mandaria a pessoa,
-    já logada, para um site de golpe (open redirect).
     """
     if not proximo:
         return None
+    # navegadores leem "\" como "/", então "/\site.com" viraria "//site.com"
+    if '\\' in proximo or any(ord(c) < 32 for c in proximo):
+        return None
     partes = urlsplit(proximo)
-    # precisa ser caminho relativo: começa com "/", não "//" (que o navegador lê como outro site)
     if partes.scheme or partes.netloc or not proximo.startswith('/') or proximo.startswith('//'):
         return None
     return proximo
