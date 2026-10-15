@@ -322,8 +322,8 @@ def test_pix_automatico_ainda_nao_existe(app, academia):
     assert campo(Cobranca, cobranca, "status") == "pendente" and contar(Pagamento) == 0
 
 
-def test_telas_antigas_de_pagamento_levam_para_as_novas(app, academia):
+def test_telas_antigas_de_pagamento_nao_existem_mais(app, academia):
+    """[back-27-telas-antigas] antes: as telas antigas de pagamento levavam às novas (back-09). Agora saíram de vez."""
     dono = como(app, academia["dono"])
-    assert dono.get(f"/pagamentos/registrar/{academia['ana']}").headers["Location"] == f"/alunos/{academia['ana']}/renovar"
-    assert dono.get(f"/pagamentos/listar/{academia['ana']}").headers["Location"] == f"/alunos/{academia['ana']}/pagamentos"
-    assert dono.get("/pagamentos/situacao/").headers["Location"] == "/alunos?status=pendente"
+    for url in (f"/pagamentos/registrar/{academia['ana']}", f"/pagamentos/listar/{academia['ana']}", "/pagamentos/situacao/"):
+        assert dono.get(url).status_code == 404, url

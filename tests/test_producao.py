@@ -205,6 +205,6 @@ def test_a_conta_b_nao_ve_nada_da_conta_a_em_nenhuma_rota(app):
 
     vazamentos, quebras, conferidas = varrer(b)
     assert vazamentos == [], "a conta B viu dado da conta A em: " + ", ".join(vazamentos)
-    assert conferidas >= 70
+    assert conferidas >= 50     # [back-27-telas-antigas] antes: 70. As rotas das telas antigas saíram (sobraram umas 55 com GET)
     # a única quebra aceita é a da tela antiga /instrutores/painel/, que já quebra na main (anotada no roadmap)
     assert {q.split(":")[0] for q in quebras} <= {"/instrutores/painel/"}, quebras
