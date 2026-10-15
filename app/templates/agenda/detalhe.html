@@ -1,0 +1,96 @@
+{#
+  GET /agenda/<id> (agenda.detalhe) — só variante PERSONAL.  Figma: personal/Celular/62-celular-sessao
+  Contexto:
+    s         {id, hora, fim, dur_txt, data_txt, quando_txt, hoje, tipo, treino, status, chip(tom, rótulo), confirmou?, faltas_3m?,
+               local_obj{nome, sub}, aluno{id, nome}, pacote{nome, total, usadas, saldo, valor_sessao}}
+    telefone  só dígitos, para o link do WhatsApp
+  POSTs: agenda.concluir (marca presença, abate 1 do saldo) · agenda.cancelar (não abate)
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, brl, dialog_head %}
+{% set nav_ativo = 'agenda' %}
+{% set pagina_titulo = 'Sessão' %}
+{% set pagina_sub = s.aluno.nome ~ ' · ' ~ s.quando_txt %}
+{% set m_sub = s.quando_txt %}
+{% set m_voltar = url_for('agenda.index') %}
+{% set corpo_classe = 'page--narrow' %}
+{% set fechada = s.status in ('concluida', 'cancelada') %}
+{% set nome1 = s.aluno.nome.split()[0] %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('agenda.index') }}">Agenda</a>{{ icon('chevron-right', 14) }}<span aria-current="page">Sessão</span></nav>{% endblock %}
+
+{% block content %}
+<section class="card card--pad stack gap-3" aria-label="Aluno">
+  <div class="row-flex gap-3">
+    {{ avatar(s.aluno.nome, 'lg', 'blue') }}
+    <div class="grow" style="min-width:0"><b style="font-size:16px;display:block" class="truncate">{{ s.aluno.nome }}</b><div class="faint fs-13 linha1">{{ s.tipo }} · {{ s.treino }}</div></div>
+    <span class="chip chip--{{ s.chip[0] }} nowrap">{{ s.chip[1] }}</span>
+  </div>
+  <div class="sessao-acoes">
+    <a class="btn btn-green" href="https://wa.me/55{{ telefone }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp</a>
+    <a class="btn btn-ghost" href="{{ url_for('treinos.ficha_aluno', id=s.aluno.id) }}">{{ icon('clipboard', 18) }}Ver ficha</a>
+  </div>
+</section>
+
+<section class="card card--pad" aria-labelledby="h-quando">
+  <h2 class="ctitle" id="h-quando" style="margin-bottom:6px">Quando e onde</h2>
+  <dl class="kvs">
+    <div class="kv"><dt>Data</dt><dd>{{ s.data_txt }}</dd></div>
+    <div class="kv"><dt>Horário</dt><dd>{{ s.hora }} — {{ s.fim }}</dd></div>
+    <div class="kv"><dt>Duração</dt><dd>{{ s.dur_longo }}</dd></div>
+    <div class="kv"><dt>Local</dt><dd>{{ s.local_obj.nome }} · {{ s.local_obj.sub }}</dd></div>
+  </dl>
+</section>
+
+<section class="card card--pad" aria-labelledby="h-pac">
+  <div class="row-flex" style="justify-content:space-between;gap:10px"><h2 class="ctitle" id="h-pac">Pacote de {{ nome1 }}</h2>
+    <span class="chip chip--blue nowrap">{{ s.pacote.usadas }} de {{ s.pacote.total }} {{ 'usada' if s.pacote.usadas == 1 else 'usadas' }}</span></div>
+  <div class="bar" style="margin:12px 0 4px" role="img" aria-label="{{ s.pacote.usadas }} de {{ s.pacote.total }} sessões usadas"><div style="width:{{ (100 * s.pacote.usadas / s.pacote.total)|round|int if s.pacote.total else 0 }}%;background:var(--blue)"></div></div>
+  <dl class="kvs">
+    <div class="kv"><dt>Pacote</dt><dd>{{ s.pacote.total }} {{ 'sessão' if s.pacote.total == 1 else 'sessões' }} · {{ brl(s.aluno.valor) }}</dd></div>
+    <div class="kv"><dt>Valor da sessão</dt><dd>{{ brl(s.pacote.valor_sessao) }}</dd></div>
+    <div class="kv"><dt>Sobram</dt><dd class="{{ 'warn' if s.pacote.saldo <= 1 else 'info' }}">{{ s.pacote.saldo }} {{ 'sessão' if s.pacote.saldo == 1 else 'sessões' }}</dd></div>
+  </dl>
+</section>
+
+{% if s.status == 'confirmada' %}
+<div class="note" style="border-color:var(--green-line)"><span class="tile tone-teal" style="width:36px;height:36px">{{ icon('bell', 18) }}</span><span><strong>{{ nome1 }} já confirmou</strong>{{ s.confirmou or 'Respondeu o lembrete do WhatsApp.' }}{% if s.faltas_3m %} Faltou sem avisar <b>{{ s.faltas_3m }} {{ 'vez' if s.faltas_3m == 1 else 'vezes' }}</b> nos últimos 3 meses.{% endif %}</span></div>
+{% elif s.status == 'a_confirmar' %}
+<div class="note note--yellow"><span class="tile tone-yellow" style="width:36px;height:36px">{{ icon('bell', 18) }}</span><span><strong>Ainda não confirmou</strong>O lembrete saiu ontem no WhatsApp. Vale chamar {{ nome1 }} pra confirmar o horário.</span></div>
+{% elif s.status == 'remarcada' %}
+<div class="note"><span class="tile tone-slate" style="width:36px;height:36px">{{ icon('calendar', 18) }}</span><span><strong>Sessão remarcada</strong>{{ nome1 }} recebeu o novo horário no WhatsApp e ainda precisa confirmar.</span></div>
+{% elif s.status == 'concluida' %}
+<div class="note note--blue"><span class="tile tone-blue" style="width:36px;height:36px">{{ icon('check', 18) }}</span><span><strong>Sessão fechada</strong>A presença foi marcada e 1 sessão saiu do saldo do pacote.</span></div>
+{% elif s.status == 'cancelada' %}
+<div class="note"><span class="tile tone-slate" style="width:36px;height:36px">{{ icon('close', 18) }}</span><span><strong>Sessão cancelada</strong>Não abateu do saldo do pacote.</span></div>
+{% endif %}
+
+{% if not fechada %}
+<div class="stack gap-3">
+  {% if s.hoje %}
+  <form method="post" action="{{ url_for('agenda.concluir', id=s.id) }}" style="margin:0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>{{ icon('check', 18) }}Marcar presença e fechar sessão</button>
+  </form>
+  {% endif %}
+  <div class="sessao-acoes">
+    <a class="btn btn-ghost" href="{{ url_for('agenda.nova', aluno=s.aluno.id, remarcar=s.id) }}">{{ icon('refresh', 18) }}Remarcar</a>
+    <button type="button" class="btn btn-danger-ghost" data-open="dlg-cancelar">{{ icon('close', 18) }}Cancelar</button>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block dialogs %}
+{% if not fechada %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-cancelar" aria-label="Cancelar sessão">
+  <span class="vt-dialog__grip"></span>
+  {{ dialog_head('Cancelar a sessão?', s.aluno.nome ~ ' · ' ~ s.quando_txt, 'close', 'red') }}
+  <form method="post" action="{{ url_for('agenda.cancelar', id=s.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    <div class="vt-dialog__body"><p class="muted" style="margin:0">A sessão sai da agenda e não abate do saldo do pacote de {{ nome1 }}.</p></div>
+    <div class="vt-dialog__foot"><button type="button" class="btn btn-ghost" data-close>Voltar</button><button class="btn btn-danger" type="submit">Cancelar sessão</button></div>
+  </form>
+</dialog>
+{% endif %}
+{% endblock %}

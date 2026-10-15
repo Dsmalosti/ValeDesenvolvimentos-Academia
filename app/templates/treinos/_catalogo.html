@@ -1,0 +1,20 @@
+{# Catálogo para adicionar exercício à ficha. Parâmetros: lista_id (único na página), aluno, letra, catalogo, grupos #}
+{% from '_macros/icons.html' import icon %}
+<label class="field-icon" style="display:block">{{ icon('search', 18) }}<input class="input" id="f-cat-busca-{{ lista_id[-1:] }}" type="search" placeholder="Buscar exercício" aria-label="Buscar exercício" data-busca data-alvo="{{ lista_id }}" autocomplete="off"></label>
+<div class="pills" data-filtro-grupo data-alvo="{{ lista_id }}" role="group" aria-label="Grupo muscular" style="margin:12px 0 4px">
+  <button type="button" class="pill" data-filtro="todos" aria-pressed="true">Todos</button>
+  {% for g in grupos %}<button type="button" class="pill" data-filtro="{{ g }}" aria-pressed="false">{{ g }}</button>{% endfor %}
+</div>
+<ul class="cat-lista" id="{{ lista_id }}">
+  {% for e in catalogo %}
+  <li class="cat-item" data-status="{{ e.grupo_muscular }}" data-nome="{{ e.nome }}">
+    <span class="ex-mini" aria-hidden="true">{{ icon('play', 16) }}</span>
+    <span class="grow"><b class="truncate" style="display:block">{{ e.nome }}</b><span class="faint fs-12">{{ e.grupo_muscular }} · {{ e.equipamento|lower }}</span></span>
+    <form method="post" action="{{ url_for('treinos.ex_salvar', id=aluno.id) }}" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}"><input type="hidden" name="acao" value="adicionar"><input type="hidden" name="t" value="{{ letra }}"><input type="hidden" name="exercicio_id" value="{{ e.id }}">
+      <button class="iconbtn iconbtn--soft" type="submit" aria-label="Adicionar {{ e.nome }} ao Treino {{ letra }}">{{ icon('plus', 18) }}</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+<p class="muted" data-vazio hidden style="margin:12px 0 0">Nenhum exercício encontrado.</p>

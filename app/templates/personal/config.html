@@ -1,0 +1,169 @@
+{#
+  GET /configuracoes (config.index) — variante PERSONAL.  Figma: personal/Celular/18-celular-configuracoes
+  ?aba=perfil|locais|mensagens|cobranca|metas   (sem ?aba: menu de seções)
+  Diferença pra academia: sem equipe, sem horário de funcionamento e sem check-in; entra o perfil do profissional (CPF + CREF)
+  e os locais de atendimento (usados em Marcar sessão).
+  Contexto: aba|None, abas[(chave, rótulo)], cfg{func{inatividade, lembretes}, inatividade_dias, mensagens[{tipo, nome, cor, texto}]},
+            locais[{chave, nome, sub, ativo}], pacotes_ativos
+  Desktop: cópia do layout da academia — abas no topo (sem ?aba abre "Perfil") e, ao lado, o resumo (marca + recebimento).
+  Formulários: config.salvar (nome, cpf, cref, telefone, email, cidade, endereco) · config.locais (ativos[], endereco_estudio)
+               config.funcionalidade · config.mensagem · config.metas (config/_metas.html)   (todos POST + csrf_token)
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, dialog_head %}
+{% set nav_ativo = 'config' %}
+{% set hub = not aba %}
+{% set atual = aba or 'perfil' %}
+{% set pagina_titulo = 'Configurações' %}
+{% set m_titulo = 'Configurações' if hub else dict(abas)[aba] %}
+{% set pagina_sub = 'Perfil, locais e recebimento' %}
+{% set m_voltar = url_for('painel.index') if hub else url_for('config.index') %}
+
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">{% endmacro %}
+{# mesmas linhas do menu de configurações da academia (config/index.html) #}
+{% macro linha(icone, tom, titulo, sub, href=None, chip=None, chip_tom='green') %}
+<{{ 'a' if href else 'div' }} class="set-row"{% if href %} href="{{ href }}"{% endif %}>
+  <span class="tile tone-{{ tom }}">{{ icon(icone, 20) }}</span>
+  <span class="grow"><b class="set-row__t">{{ titulo }}</b><span class="set-row__s">{{ sub }}</span></span>
+  {% if chip %}<span class="chip chip--{{ chip_tom }} nowrap">{{ chip }}</span>{% elif href %}<span class="faint">{{ icon('chevron-right', 18) }}</span>{% endif %}
+</{{ 'a' if href else 'div' }}>
+{% endmacro %}
+{% macro func(chave, icone, tom, titulo, sub) %}
+<form method="post" action="{{ url_for('config.funcionalidade') }}" data-auto-submit class="set-row">
+  {{ csrf() }}<input type="hidden" name="chave" value="{{ chave }}"><input type="hidden" name="ligado" value="{{ '1' if cfg.func[chave] else '0' }}">
+  <span class="tile tone-{{ tom }}">{{ icon(icone, 20) }}</span>
+  <span class="grow"><b class="set-row__t" id="lb-f-{{ chave }}">{{ titulo }}</b><span class="set-row__s">{{ sub }}</span></span>
+  <label class="switch"><input type="checkbox" aria-labelledby="lb-f-{{ chave }}"{% if cfg.func[chave] %} checked{% endif %}><span class="switch__track"></span></label>
+</form>
+{% endmacro %}
+
+{% block content %}
+{% if hub %}
+<div class="m-only stack gap-3">
+  <a class="card card--pad set-marca" href="{{ url_for('config.index', aba='perfil') }}">
+    <span class="set-logo">{{ icon('crown', 26) }}</span>
+    <span class="grow" style="min-width:0"><b class="linha1" style="font-size:16px">{{ academia.nome }}</b><span class="faint fs-13 linha1">CREF {{ academia.cref }} · {{ academia.cidade.split(' /')[0] }}</span></span>
+    <span class="faint">{{ icon('chevron-right', 18) }}</span>
+  </a>
+  <section class="card card--pad" aria-labelledby="s1"><h2 class="ctitle" id="s1">Perfil</h2>
+    {{ linha('home', 'blue', 'Dados e contato', 'Nome, CPF, CREF e telefone', url_for('config.index', aba='perfil')) }}
+    {% set _n = locais|selectattr('ativo')|map(attribute='nome')|map('lower')|list %}
+    {{ linha('clock', 'slate', 'Locais de atendimento', ((_n[:-1]|join(', ') ~ ' e ' ~ _n[-1]) if _n|length > 1 else _n|first or 'nenhum ligado')|capitalize, url_for('config.index', aba='locais')) }}
+  </section>
+  {% include '_digital_linha.html' %}
+  <section class="card card--pad" aria-labelledby="s2"><h2 class="ctitle" id="s2">Recebimento</h2>
+    {{ linha('bolt', 'teal', 'PIX automático', 'Conectado · o dinheiro cai direto na sua conta' if academia.pix_ligado else 'Desligado · você confirma cada pagamento', url_for('config.recebimento'), 'Ligado' if academia.pix_ligado else 'Desligado', 'green' if academia.pix_ligado else 'slate') }}
+    {{ linha('card', 'blue', 'Maquininha', 'Confirmação manual, feita por você', url_for('config.recebimento'), 'Manual', 'yellow') }}
+    {{ linha('grid', 'slate', 'Pacotes', pacotes_ativos ~ (' pacote ativo' if pacotes_ativos == 1 else ' pacotes ativos'), url_for('planos.lista')) }}
+  </section>
+  <section class="card card--pad" aria-labelledby="s3"><h2 class="ctitle" id="s3">Funcionalidades</h2>
+    {{ linha('user-x', 'slate', 'Inatividade automática', 'O aluno vira Inativo sozinho depois de ' ~ cfg.inatividade_dias ~ ' dias sem renovar o pacote', url_for('config.index', aba='cobranca'), cfg.inatividade_dias ~ ' dias', 'slate') }}
+    {{ func('lembretes', 'bell', 'teal', 'Lembretes automáticos', 'Sessão, pacote acabando e aniversário no WhatsApp') }}
+  </section>
+  <section class="card card--pad" aria-labelledby="s5"><h2 class="ctitle" id="s5">Metas</h2>
+    {{ linha('target', 'yellow', 'Metas do painel', 'Alunos ativos, faturamento e retenção · linha tracejada dos gráficos', url_for('config.index', aba='metas')) }}
+  </section>
+  <section class="card card--pad" aria-labelledby="s4"><h2 class="ctitle" id="s4">Mensagens</h2>
+    {{ linha('chat', 'teal', 'Modelos de WhatsApp', 'Cobrança, aniversário, ficha e avaliação', url_for('config.index', aba='mensagens')) }}
+  </section>
+  <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="btn btn-danger-ghost btn-block btn-lg" type="submit">{{ icon('logout', 18) }}Sair da conta</button></form>
+</div>
+{% endif %}
+
+<div class="stack gap-4{{ ' d-only' if hub }}">
+  <nav class="seg cfg-tabs d-only" aria-label="Seções das configurações">
+    {% for k, r in abas %}<a class="seg__btn" href="{{ url_for('config.index', aba=k) }}"{% if k == atual %} aria-current="true"{% endif %}>{{ r }}</a>{% endfor %}
+  </nav>
+  <div class="cfg-grid">
+  <div class="stack gap-4" style="min-width:0">
+{% if atual == 'perfil' %}
+<section class="card card--pad" aria-labelledby="h-dados">
+  <h2 class="ctitle" id="h-dados" style="font-size:16px">Dados e contato</h2><div class="csub" style="margin-bottom:14px">Aparece no recibo e nas mensagens pro aluno.</div>
+  <form method="post" action="{{ url_for('config.salvar') }}" data-validate novalidate class="stack gap-3">
+    {{ csrf() }}
+    {{ campo('nome', 'Nome', academia.nome, obrigatorio=True, autocomplete='name') }}
+    <div class="cfg-2">{{ campo('cpf', 'CPF', academia.cpf, mask='cpf', inputmode='numeric', placeholder='000.000.000-00') }}{{ campo('cref', 'CREF', academia.cref, placeholder='000000-G/SP') }}</div>
+    <div class="cfg-2">{{ campo('telefone', 'Telefone / WhatsApp', academia.telefone, mask='telefone', inputmode='tel', tipo='tel') }}{{ campo('email', 'E-mail', academia.email, tipo='email', autocomplete='email') }}</div>
+    {{ campo('cidade', 'Cidade', academia.cidade) }}
+    <button class="btn btn-primary btn-lg btn-block" type="submit" data-carregando>{{ icon('check', 18) }}Salvar dados</button>
+  </form>
+</section>
+
+{% elif atual == 'locais' %}
+<form method="post" action="{{ url_for('config.locais') }}" class="stack gap-3">
+  {{ csrf() }}
+  <section class="card card--pad" aria-labelledby="h-loc">
+    <h2 class="ctitle" id="h-loc" style="font-size:16px">Locais de atendimento</h2><div class="csub" style="margin-bottom:6px">Só os ligados aparecem em Marcar sessão.</div>
+    {% for l in locais %}
+    <div class="set-row">
+      <span class="tile tone-{{ 'blue' if l.ativo else 'slate' }}">{{ icon({'estudio': 'home', 'casa': 'user', 'parque': 'target', 'online': 'phone'}[l.chave], 20) }}</span>
+      <span class="grow"><b class="set-row__t" id="lb-l-{{ l.chave }}">{{ l.nome }}</b><span class="set-row__s">{{ l.sub }}</span></span>
+      <label class="switch"><input type="checkbox" name="ativos" value="{{ l.chave }}" aria-labelledby="lb-l-{{ l.chave }}"{% if l.ativo %} checked{% endif %}><span class="switch__track"></span></label>
+    </div>
+    {% endfor %}
+  </section>
+  <section class="card card--pad">
+    {{ campo('endereco_estudio', 'Endereço do estúdio', (locais|selectattr('chave', 'equalto', 'estudio')|first).sub, placeholder='Rua, número') }}
+  </section>
+  <button class="btn btn-primary btn-lg btn-block" type="submit" data-carregando>{{ icon('check', 18) }}Salvar locais</button>
+</form>
+
+{% elif atual == 'cobranca' %}
+<section class="card card--pad" aria-labelledby="h-cob"><h2 class="ctitle" id="h-cob" style="font-size:16px">Cobrança e pacote</h2><div class="csub" style="margin-bottom:6px">Regras que o sistema aplica sozinho.</div>
+  {{ func('lembretes', 'bell', 'teal', 'Lembretes automáticos', 'Sessão, pacote acabando e aniversário no WhatsApp') }}
+  <form method="post" action="{{ url_for('config.funcionalidade') }}" class="set-row" data-validate novalidate style="align-items:flex-end">
+    {{ csrf() }}<input type="hidden" name="chave" value="inatividade"><input type="hidden" name="ligado" value="{{ '1' if cfg.func.inatividade else '0' }}">
+    <span class="tile tone-slate">{{ icon('user-x', 20) }}</span>
+    <span class="grow"><b class="set-row__t">Inatividade automática</b><span class="set-row__s">O aluno vira Inativo sozinho depois de X dias sem renovar o pacote.</span></span>
+    <div style="width:110px">{{ campo('dias', 'Dias', cfg.inatividade_dias, tipo='number', inputmode='numeric', extra='min="15" max="365"') }}</div>
+    <button class="btn btn-ghost btn-sm" type="submit">Salvar</button>
+  </form>
+</section>
+
+{% elif atual == 'metas' %}
+{% include 'config/_metas.html' %}
+
+{% else %}{# mensagens #}
+<section class="card card--pad" aria-labelledby="h-msg1">
+  <h2 class="ctitle" id="h-msg1" style="font-size:16px">Mensagens automáticas</h2><div class="csub">O que o sistema sugere quando você aperta o botão de WhatsApp. [nome] vira o nome do aluno.</div>
+  <div class="msgs">
+    {% for m in cfg.mensagens %}
+    <div class="msg"><div class="row-flex" style="justify-content:space-between"><b class="row-flex gap-2"><i class="mdot mdot--{{ m.cor }}"></i>{{ m.nome }}</b><button type="button" class="fs-13 fw-7 btn-link" data-open="dlg-msg-{{ m.tipo }}">Editar</button></div>
+      <p class="msg__txt">{{ m.texto }}</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+  </div>
+  {# desktop: o que no celular fica no menu — perfil profissional e recebimento — vira a coluna da direita #}
+  <aside class="stack gap-4 d-only" aria-label="Resumo">
+    <a class="card card--pad set-marca" href="{{ url_for('config.index', aba='perfil') }}">
+      <span class="set-logo">{{ icon('crown', 26) }}</span>
+      <span class="grow" style="min-width:0"><b class="linha1" style="font-size:16px">{{ academia.nome }}</b><span class="faint fs-13 linha1">CREF {{ academia.cref }} · {{ academia.cidade.split(' /')[0] }}</span></span>
+    </a>
+    {% set acesso_sfx = '-d' %}{% include '_digital_linha.html' %}
+    <section class="card card--pad" aria-labelledby="s2-d"><h2 class="ctitle" id="s2-d">Recebimento</h2>
+      {{ linha('bolt', 'teal', 'PIX automático', 'Conectado · o dinheiro cai direto na sua conta' if academia.pix_ligado else 'Desligado · você confirma cada pagamento', url_for('config.recebimento'), 'Ligado' if academia.pix_ligado else 'Desligado', 'green' if academia.pix_ligado else 'slate') }}
+      {{ linha('card', 'blue', 'Maquininha', 'Confirmação manual, feita por você', url_for('config.recebimento'), 'Manual', 'yellow') }}
+      {{ linha('grid', 'slate', 'Pacotes', pacotes_ativos ~ (' pacote ativo' if pacotes_ativos == 1 else ' pacotes ativos'), url_for('planos.lista')) }}
+    </section>
+  </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+{% if atual == 'mensagens' %}
+{% for m in cfg.mensagens %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-msg-{{ m.tipo }}" aria-label="Editar mensagem {{ m.nome }}">
+  {{ dialog_head(m.nome, 'Use [nome], [data], [valor], [academia], [plano] e [dias]', 'chat', 'teal') }}
+  <form method="post" action="{{ url_for('config.mensagem') }}" data-validate novalidate>
+    {{ csrf() }}<input type="hidden" name="tipo" value="{{ m.tipo }}">
+    <div class="vt-dialog__body"><div class="field-group"><label class="label" for="f-texto-{{ m.tipo }}">Texto da mensagem</label><textarea class="input" id="f-texto-{{ m.tipo }}" name="texto" rows="5" maxlength="500" required>{{ m.texto }}</textarea></div></div>
+    <div class="vt-dialog__foot"><button class="btn btn-primary" type="submit">Salvar mensagem</button></div>
+  </form>
+</dialog>
+{% endfor %}
+{% endif %}
+{% endblock %}

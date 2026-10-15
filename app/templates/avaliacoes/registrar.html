@@ -1,0 +1,76 @@
+{#
+  GET/POST /alunos/<id>/avaliacoes/nova (avaliacoes.registrar)  ?ag=<agenda_id>   (assistente em 4 etapas: app.js [data-passos])
+  IMC e relação cintura/quadril aparecem só como PRÉVIA (JS); quem grava é o servidor. Campos: ver docstring da rota.
+  Contexto: aluno, base{...última avaliação, para preencher altura}|{}, ag, f{}
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo %}
+{% set nav_ativo = 'avaliacoes' %}
+{% set pagina_titulo = 'Avaliação de ' ~ aluno.nome.split()[0] %}
+{% set m_sub = 'Quatro etapas · medidas e testes' %}
+{% set m_voltar = url_for('avaliacoes.aluno', id=aluno.id) %}
+{% set corpo_classe = 'page--narrow' %}
+{% macro med(nome, rotulo, un, valor, extra='') %}
+<div class="field-group"><label class="label" for="f-{{ nome }}">{{ rotulo }}</label><div class="input-un"><input class="input" id="f-{{ nome }}" name="{{ nome }}" inputmode="decimal" value="{{ valor if valor not in (none, 0, '') else '' }}" autocomplete="off" {{ extra|safe }}><span class="un">{{ un }}</span></div></div>
+{% endmacro %}
+{% block content %}
+<form method="post" action="{{ url_for('avaliacoes.registrar', id=aluno.id) }}" enctype="multipart/form-data" class="stack gap-3" data-passos novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">{% if ag %}<input type="hidden" name="ag" value="{{ ag }}">{% endif %}
+  <ol class="stepper card card--pad" aria-label="Etapas da avaliação">
+    {% for n in ['Anamnese', 'Medidas', 'Dobras', 'Testes'] %}<li data-passo-ind><span class="stepper__n">{{ loop.index }}</span><span class="stepper__t">{{ n }}</span></li>{% endfor %}
+  </ol>
+
+  <div data-passo data-passo-nome="Anamnese" class="stack gap-3">
+    <section class="card card--pad"><h2 class="ctitle">Anamnese</h2><div class="csub" style="margin-bottom:12px">Conversa rápida antes de medir</div>
+      <div class="stack gap-3">
+        <div class="field-group"><label class="label" for="f-objetivo">Objetivo principal</label><input class="input" id="f-objetivo" name="objetivo" value="{{ f.get('objetivo', '') }}" placeholder="Ex.: perder gordura e ganhar força"></div>
+        <div class="field-group"><label class="label" for="f-restricoes">Lesões ou restrições</label><textarea class="input" id="f-restricoes" name="restricoes" rows="3" placeholder="Ex.: dor no joelho direito ao agachar">{{ f.get('restricoes', '') }}</textarea></div>
+        <div class="field-group"><label class="label" for="f-medicamentos">Medicamentos em uso</label><input class="input" id="f-medicamentos" name="medicamentos" value="{{ f.get('medicamentos', '') }}" placeholder="Se não usa, deixe em branco"></div>
+        <div class="switch-row"><span id="lb-lib"><b>Liberação médica</b><span class="faint fs-12" style="display:block">O aluno trouxe atestado ou liberação para atividade física</span></span><label class="switch"><input type="checkbox" name="liberacao_medica" value="1" aria-labelledby="lb-lib"><span class="switch__track"></span></label></div>
+      </div>
+    </section>
+  </div>
+
+  <div data-passo data-passo-nome="Medidas" class="stack gap-3" hidden>
+    <section class="card card--pad"><h2 class="ctitle">Medidas básicas</h2><div class="csub" style="margin-bottom:12px">O IMC sai sozinho de peso e altura</div>
+      <div class="cfg-2">{{ med('peso_kg', 'Peso', 'kg', f.get('peso_kg', base.get('peso', '')), 'required') }}{{ med('altura_cm', 'Altura', 'cm', f.get('altura_cm', base.get('altura', '')), 'required') }}</div>
+      <div class="calc-row"><span>IMC calculado</span><span class="row-flex gap-2"><b class="num" data-imc-previa>—</b><span class="chip" data-imc-chip hidden></span></span></div>
+    </section>
+    <section class="card card--pad"><h2 class="ctitle">Perimetria</h2><div class="csub" style="margin-bottom:12px">Circunferências em centímetros</div>
+      <div class="cfg-2">{{ med('cintura_cm', 'Cintura', 'cm', f.get('cintura_cm', base.get('cintura', ''))) }}{{ med('quadril_cm', 'Quadril', 'cm', f.get('quadril_cm', base.get('quadril', ''))) }}
+        {{ med('braco_d_cm', 'Braço direito', 'cm', f.get('braco_d_cm', base.get('braco', ''))) }}{{ med('coxa_d_cm', 'Coxa direita', 'cm', f.get('coxa_d_cm', base.get('coxa', ''))) }}
+        {{ med('torax_cm', 'Tórax', 'cm', f.get('torax_cm', base.get('torax', ''))) }}{{ med('panturrilha_cm', 'Panturrilha', 'cm', f.get('panturrilha_cm', base.get('panturrilha', ''))) }}</div>
+      <div class="calc-row"><span>Relação cintura/quadril</span><b class="num" data-rcq-previa>—</b></div>
+    </section>
+    {# [back-15-avaliacoes] `fotos_ligadas` (bool): o servidor ainda não guarda as fotos (falta decidir onde ficam, e é dado sensível). Desligado, a tela não oferece o envio. Sem a variável, aparece como antes. #}
+    {% if fotos_ligadas is not defined or fotos_ligadas %}
+    <section class="card card--pad"><h2 class="ctitle">Fotos de acompanhamento</h2><div class="csub" style="margin-bottom:12px">Frente, lado e costas — é o que mostra a evolução melhor que número</div>
+      <div class="foto-slots">{% for k, r in [('frente', 'Frente'), ('lado', 'Lado'), ('costas', 'Costas')] %}<label class="foto-slot">{{ icon('camera', 20) }}<span>{{ r }}</span><input class="visually-hidden" type="file" name="foto_{{ k }}" accept="image/*" capture="environment"></label>{% endfor %}</div>
+    </section>
+    <div class="note"><span class="tile tone-slate" style="width:36px;height:36px">{{ icon('lock', 18) }}</span><span><strong>Foto é dado sensível</strong>Peça autorização do aluno por escrito. Só quem tem acesso à avaliação vê essas imagens.</span></div>
+    {% endif %}
+    <div class="note"><span class="tile tone-yellow" style="width:36px;height:36px">{{ icon('alert', 18) }}</span><span><strong>Isso é medida, não diagnóstico</strong>A ficha registra número. Interpretação clínica é do médico — a academia não emite laudo.</span></div>
+  </div>
+
+  <div data-passo data-passo-nome="Dobras" class="stack gap-3" hidden>
+    <section class="card card--pad"><h2 class="ctitle">Dobras cutâneas</h2><div class="csub" style="margin-bottom:12px">Em milímetros. O percentual de gordura é calculado pelo sistema, não digitado.</div>
+      <div class="cfg-2">{{ med('dobra_triceps', 'Tríceps', 'mm', f.get('dobra_triceps', '')) }}{{ med('dobra_subescapular', 'Subescapular', 'mm', f.get('dobra_subescapular', '')) }}{{ med('dobra_suprailiaca', 'Supra-ilíaca', 'mm', f.get('dobra_suprailiaca', '')) }}{{ med('dobra_abdominal', 'Abdominal', 'mm', f.get('dobra_abdominal', '')) }}{{ med('dobra_coxa', 'Coxa', 'mm', f.get('dobra_coxa', '')) }}</div>
+    </section>
+  </div>
+
+  <div data-passo data-passo-nome="Testes" class="stack gap-3" hidden>
+    <section class="card card--pad"><h2 class="ctitle">Testes físicos</h2><div class="csub" style="margin-bottom:12px">Só o que foi feito hoje. Pode deixar em branco.</div>
+      <div class="cfg-2">{{ med('teste_flexao', 'Flexões em 1 min', 'reps', f.get('teste_flexao', '')) }}{{ med('teste_abdominal', 'Abdominais em 1 min', 'reps', f.get('teste_abdominal', '')) }}{{ med('teste_flexibilidade', 'Sentar e alcançar', 'cm', f.get('teste_flexibilidade', '')) }}</div>
+    </section>
+    <section class="card card--pad"><h2 class="ctitle" style="margin-bottom:10px">Anotação do avaliador</h2>
+      <textarea class="input" name="anotacao" rows="4" aria-label="Anotação do avaliador" placeholder="O que mudou, o que ajustar no treino…">{{ f.get('anotacao', '') }}</textarea></section>
+  </div>
+
+  <div class="passos-nav">
+    <button type="button" class="btn btn-ghost" data-ant hidden>Voltar</button>
+    <button type="button" class="btn btn-primary grow" data-prox>Próxima etapa</button>
+    <button type="submit" class="btn btn-primary grow" hidden>{{ icon('check', 18) }}Salvar avaliação</button>
+  </div>
+</form>
+{% endblock %}

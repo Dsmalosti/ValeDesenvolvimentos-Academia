@@ -1,0 +1,54 @@
+{#
+  GET /mensagens (mensagens.index) — central de mensagens: a FILA DO DIA de WhatsApp pros alunos.
+  Contexto: itens [{id, tipo (aniversario|avaliacao|sessao|cobranca), aluno{id,nome,telefone}, contexto, texto, wa, enviada}],
+            tipos [(chave, rótulo, ícone, tom, qtd)], lembretes_auto (bool), pendentes (int)
+  Como funciona (MVP, custo zero): cada linha já vem com o texto pronto (modelo de Configurações > Mensagens, com o nome,
+  data, hora e valor preenchidos). "Enviar no WhatsApp" abre o WhatsApp do aparelho com o texto; a pessoa só aperta enviar.
+  Ao tocar, a linha vira "Enviada" (POST mensagens.enviada) — o backend guarda pra ninguém mandar a mesma cobrança 2x no dia.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar %}
+{% set nav_ativo = 'mensagens' %}
+{% set pagina_titulo = 'Mensagens' %}
+{% set pagina_sub = 'Fila de hoje · ' ~ pendentes ~ ' para enviar' %}
+{% set m_sub = pagina_sub %}
+{% set m_voltar = url_for('painel.index') %}
+{% set corpo_classe = 'page--narrow' %}
+{% set _tom = {'aniversario': 'blue', 'avaliacao': 'teal', 'sessao': 'teal', 'cobranca': 'red'} %}
+{% set _rot = {'aniversario': 'Aniversário', 'avaliacao': 'Avaliação', 'sessao': 'Sessão', 'cobranca': 'Cobrança'} %}
+
+{% block page_acoes %}<a class="btn btn-ghost" href="{{ url_for('config.index', aba='mensagens') }}">{{ icon('edit', 18) }}Editar textos</a>{% endblock %}
+
+{% block content %}
+{# [back-22-ajustes-de-produto] Aviso NOVO, que o front do Drive não tem: a autorização de WhatsApp vem desligada, e quem tem mensagem hoje
+   mas não autorizou fica fora da fila. O aviso diz quem são, para a equipe perguntar e marcar no cadastro.
+   `sem_whatsapp` = [{id, nome}]; sem a variável, nada aparece. #}
+{% if sem_whatsapp %}<div class="note note--yellow" style="margin-bottom:12px">{{ icon('info', 20) }}<span><strong>{{ sem_whatsapp|length }} {{ 'aluno ainda não autorizou' if sem_whatsapp|length == 1 else 'alunos ainda não autorizaram' }} avisos pelo WhatsApp</strong>Por isso {{ 'ficou' if sem_whatsapp|length == 1 else 'ficaram' }} fora da fila de hoje: {% for a in sem_whatsapp %}<a href="{{ url_for('alunos.editar', id=a.id) }}">{{ a.nome }}</a>{{ ', ' if not loop.last }}{% endfor %}. Pergunte se aceita{{ 'm' if sem_whatsapp|length > 1 }} e marque no cadastro.</span></div>{% endif %}
+<div class="note note--blue">{{ icon('info', 20) }}<span><strong>{{ 'Lembretes automáticos ligados' if lembretes_auto else 'Você toca, o WhatsApp abre pronto' }}</strong>{% if lembretes_auto %}Quando o WhatsApp oficial da {{ 'sua conta' if academia.modelo == 'personal' else 'academia' }} estiver conectado, esta fila sai sozinha às 9h. Até lá, envie daqui com um toque.{% else %}Cada mensagem já vem escrita com o nome, a data e o valor. Toque em enviar e confirme no WhatsApp.{% endif %}</span></div>
+
+<nav class="pills" data-filtro-grupo data-alvo="lista-msgs" aria-label="Filtrar mensagens">
+  <button type="button" class="pill" data-filtro="todos" aria-pressed="true">Todas&nbsp;{{ itens|length }}</button>
+  {% for k, r, ic, tom, n in tipos %}<button type="button" class="pill" data-filtro="{{ k }}" aria-pressed="false">{{ r }}&nbsp;{{ n }}</button>{% endfor %}
+</nav>
+
+<section class="card card--pad" aria-label="Mensagens de hoje" style="padding-top:6px;padding-bottom:6px">
+  <ul class="msg-lista" id="lista-msgs">
+    {% for m in itens %}
+    <li class="msg-item{{ ' is-enviada' if m.enviada }}" data-status="{{ m.tipo }}" data-nome="{{ m.aluno.nome }}">
+      <div class="msg-item__topo">
+        {{ avatar(m.aluno.nome, 'lg', _tom[m.tipo]) }}
+        <div class="grow"><b class="linha1"><a class="msg-item__nome" href="{{ url_for('alunos.detalhe', id=m.aluno.id) }}">{{ m.aluno.nome }}</a></b><span class="faint fs-12 linha1">{{ m.contexto }}</span></div>
+        <span class="chip chip--{{ _tom[m.tipo] }} nowrap">{{ _rot[m.tipo] }}</span>
+      </div>
+      <p class="msg-balao">{{ m.texto }}</p>
+      <div class="msg-item__acoes">
+        <span class="msg-item__feito" data-msg-feito{% if not m.enviada %} hidden{% endif %}>{{ icon('check', 16) }}Enviada hoje</span>
+        <a class="btn btn-green btn-sm" href="{{ m.wa }}" target="_blank" rel="noopener noreferrer" data-msg-enviar="{{ m.id }}">{{ icon('chat', 18) }}<span data-msg-rotulo>{{ 'Enviar de novo' if m.enviada else 'Enviar no WhatsApp' }}</span></a>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted ta-c" data-vazio{% if itens %} hidden{% endif %} style="margin:18px 0">Nada pra mandar por aqui hoje.</p>
+</section>
+{% endblock %}

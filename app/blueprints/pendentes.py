@@ -26,18 +26,17 @@ def tela_em_construcao(titulo):
 
 # (blueprint, função, endereço, métodos, nome da tela)
 PENDENTES = [
-    ('config',     'index',          '/configuracoes',                         ['GET'],  'Configurações'),
-    ('relatorios', 'index',          '/relatorios',                            ['GET'],  'Relatórios'),
-    ('relatorios', 'admin',          '/relatorios/painel',                     ['GET'],  'Administrativo'),
-    ('mensagens',  'index',          '/mensagens',                             ['GET'],  'Mensagens'),
-    ('frequencia', 'index',          '/frequencia',                            ['GET'],  'Frequência'),
-    ('avaliacoes', 'agenda',         '/avaliacoes',                            ['GET'],  'Avaliações físicas'),
-    ('avaliacoes', 'agendar',        '/avaliacoes/agendar',                    ['GET'],  'Agendar avaliação'),
-    ('avaliacoes', 'registrar',      '/alunos/<int:id>/avaliacoes/nova',       ['GET'],  'Registrar avaliação'),
-    ('agenda',     'index',          '/agenda',                                ['GET'],  'Agenda'),
+    # [back-12-config] 'config.index' saiu daqui: agora é rota de verdade em blueprints/config/routes.py.
+    # [back-11-relatorios] 'relatorios.index' e 'relatorios.admin' saíram daqui: agora são rotas de verdade em
+    # blueprints/relatorios/routes.py.
+    # [back-16-mensagens] 'mensagens.index' saiu daqui: agora é rota de verdade em blueprints/mensagens/routes.py.
+    # [back-10-frequencia] 'frequencia.index' saiu daqui: agora é rota de verdade em blueprints/frequencia/routes.py.
+    # [back-15-avaliacoes] 'avaliacoes.agenda', 'avaliacoes.agendar' e 'avaliacoes.registrar' saíram daqui: agora são
+    # rotas de verdade em blueprints/avaliacoes/routes.py.
+    # [back-17-personal] 'agenda.index' saiu daqui: agora é rota de verdade em blueprints/agenda/routes.py.
     # ações que o painel envia por formulário (POST): avisam e voltam para o painel
-    ('cobrancas',  'diaria',         '/cobrancas/diaria',                      ['POST'], 'Diária avulsa'),
-    ('cobrancas',  'lembrete_lote',  '/cobrancas/lembrete',                    ['POST'], 'Cobrança pelo WhatsApp'),
+    # [back-09-cobranca] 'cobrancas.diaria' e 'cobrancas.lembrete_lote' saíram daqui: agora são rotas de
+    # verdade em blueprints/cobrancas/routes.py.
 ]
 
 
@@ -71,9 +70,9 @@ def _visao(nome_bp, nome_da_tela, metodos):
 
 # Seções que já têm tela ANTIGA com outro nome: o endpoint do front leva para ela.
 # (blueprint, função, endereço, endpoint antigo de destino)
-PONTES = [
-    ('treinos', 'biblioteca', '/treinos', 'fichas.listarFichas'),
-]
+# [back-14-treinos] a última ponte daqui ('treinos.biblioteca' -> tela antiga de fichas) virou tela de verdade,
+# em blueprints/treinos/routes.py. A lista fica vazia, pronta para uma próxima.
+PONTES = []
 
 
 def _ponte(destino):
@@ -81,20 +80,6 @@ def _ponte(destino):
     def ir(**_):
         return redirect(url_for(destino))
     return ir
-
-
-def _ficha_do_aluno(id):
-    """
-    [back-07-alunos] Botão "Visualizar ficha" do perfil do aluno (treinos.ficha_aluno, /alunos/<id>/ficha).
-    A tela nova de ficha ainda não existe; leva à ficha ativa mais recente do aluno na tela antiga
-    ou, se ele não tiver nenhuma, à lista de fichas. A consulta já é só dentro da conta.
-    """
-    from app.helpers.conta import fichas_da_conta
-    from app.models import Ficha
-    ficha = fichas_da_conta().filter(Ficha.aluno_id == id).order_by(Ficha.data_criacao.desc()).first()
-    if ficha:
-        return redirect(url_for('fichas.fichaDetalhes', ficha_id=ficha.id))
-    return redirect(url_for('fichas.listarFichas'))
 
 
 def blueprints_pendentes():
@@ -106,5 +91,4 @@ def blueprints_pendentes():
     for nome_bp, funcao, endereco, destino in PONTES:
         bp = blueprints.setdefault(nome_bp, Blueprint(nome_bp, __name__ + '_' + nome_bp))
         bp.add_url_rule(endereco, funcao, _ponte(destino), methods=['GET'])
-    blueprints['treinos'].add_url_rule('/alunos/<int:id>/ficha', 'ficha_aluno', login_required(_ficha_do_aluno), methods=['GET'])
     return list(blueprints.values())

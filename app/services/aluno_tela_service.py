@@ -19,8 +19,9 @@ from sqlalchemy import func
 
 from app.extensions.database import db
 from app.helpers.conta import conta_id, da_conta, fichas_da_conta
-from app.models import Aluno, Ficha, Pagamento, Plano
-from app.services.situacao_service import linha_do_aluno, vencimentos_da_conta
+from app.models import PAPEL_PROPRIETARIO, Aluno, Ficha, Plano
+from app.services import avaliacao_service, cobranca_service, frequencia_service, treino_service
+from app.services.situacao_service import cobrancas_em_aberto_da_conta, linha_do_aluno, vencimentos_da_conta
 
 POR_PAGINA = 8
 MAX_OBSERVACOES = 1000   # o banco aceitaria qualquer tamanho; o limite evita texto gigante na tela
@@ -63,8 +64,9 @@ def _dmy(d):
 def _alunos_com_situacao(hoje):
     """Todos os alunos da conta, do mais novo para o mais antigo, já no formato das telas."""
     vencimento = vencimentos_da_conta()
+    em_aberto = cobrancas_em_aberto_da_conta()   # [back-09-cobranca] quem tem cobrança em aberto também é pendente
     alunos = da_conta(Aluno).order_by(Aluno.data_cadastro.desc(), Aluno.id.desc()).all()
-    return [linha_do_aluno(a, vencimento.get(a.id), hoje) for a in alunos]
+    return [linha_do_aluno(a, vencimento.get(a.id), hoje, em_aberto.get(a.id)) for a in alunos]
 
 
 def _casa_com_a_busca(linha, q):
@@ -178,10 +180,11 @@ def exportar_csv(argumentos):
 def contexto_do_perfil(aluno, hoje=None):
     """Variáveis de alunos/detalhe.html para um aluno que já se sabe ser da conta."""
     hoje = hoje or date.today()
-    pagamentos = (da_conta(Pagamento).filter_by(aluno_id=aluno.id)
-                  .order_by(Pagamento.data_pagamento.desc(), Pagamento.id.desc()).all())
-    vencimento = max((p.data_vencimento for p in pagamentos), default=None)
-    perfil = linha_do_aluno(aluno, vencimento, hoje)
+    # [back-09-cobranca] antes: lia a tabela de pagamentos direto. O vencimento agora vem das cobranças
+    # pagas, e a lista de pagamentos (com quem confirmou) vem do cobranca_service.
+    pagamentos = cobranca_service.pagamentos_do(aluno)
+    vencimento = cobranca_service.vencimento_do(aluno)
+    perfil = linha_do_aluno(aluno, vencimento, hoje, cobranca_service.em_aberto_do(aluno))
     inicio = aluno.data_inicio or (aluno.data_cadastro.date() if aluno.data_cadastro else None)
     perfil.update({
         'inicio': _dmy(inicio) or '—',
@@ -190,22 +193,31 @@ def contexto_do_perfil(aluno, hoje=None):
         'forma': aluno.forma_pagamento or '',
         'forma_txt': FORMAS.get(aluno.forma_pagamento, 'Não informada'),
         'observacoes': aluno.observacoes or '',
-        # bloquear e liberar acesso na recepção faz parte do módulo de frequência, que ainda não existe
-        'acesso_liberado': True,
+        'acesso_liberado': bool(aluno.acesso_liberado),     # [back-10-frequencia] antes: sempre True
     })
+    # [back-19-lgpd] só o dono exporta os dados do aluno (e apaga, pelo "Excluir aluno")
+    perfil['pode_lgpd'] = current_user.papel == PAPEL_PROPRIETARIO
+    # [back-22-ajustes-de-produto] o perfil avisa quando o aluno ainda não autorizou avisos pelo WhatsApp (ele fica fora da fila de Mensagens)
+    perfil['whatsapp_autorizado'] = aluno.aceita_whatsapp is True
+    if 'pacote' in perfil:
+        # [back-17-personal] conta de personal: no lugar da data de vencimento, o saldo do pacote
+        perfil['vence_completo'] = perfil['vence_txt'].capitalize()
 
-    ficha = (fichas_da_conta().filter(Ficha.aluno_id == aluno.id, Ficha.ativo.is_(True))
-             .order_by(Ficha.data_criacao.desc()).first())
+    # [back-14-treinos] antes: procurava a ficha aqui e mostrava os treinos pelo dia da semana. Agora usa a mesma
+    # "ficha em uso" da tela de fichas, com os treinos por letra e quem mexeu por último.
+    ficha = treino_service.ficha_do(aluno)
+    ficha_tela = treino_service.ficha_para_a_tela(ficha) if ficha else None
     return {
         'aluno': perfil,
-        'pagamentos': [{'data': _dmy(p.data_pagamento), 'forma': FORMAS.get(p.forma_pagamento, p.forma_pagamento or '—'),
-                        'valor': float(p.valor), 'origem': 'manual', 'quem': '', 'status': 'pago'} for p in pagamentos],
-        'total_ano': sum(float(p.valor) for p in pagamentos if p.data_pagamento.year == hoje.year),
-        'freq': None,          # precisa do módulo de frequência
-        'avaliacao': None,     # precisa do módulo de avaliações
-        'ficha': {'treinos': [DIAS.get(t.dia_semana, t.dia_semana or 'Treino') for t in ficha.treinos] or [ficha.nome],
-                  'atualizada': _dmy(ficha.data_criacao.date() if ficha.data_criacao else None) or '—',
-                  'por': current_user.conta.nome} if ficha else None,
+        'pagamentos': pagamentos,
+        'total_ano': cobranca_service.total_do_ano(pagamentos, hoje),
+        # [back-10-frequencia] antes: sempre None. Continua None para quem nunca teve entrada ("sem dado").
+        'freq': frequencia_service.frequencia_do(aluno, hoje) if current_user.conta.checkin_ativo else None,
+        # [back-15-avaliacoes] antes: sempre None. Continua None para quem nunca foi avaliado (o cartão não aparece).
+        'avaliacao': avaliacao_service.resumo_para_o_perfil(aluno, hoje),
+        'ficha': {'treinos': [f'Treino {letra}' for letra in treino_service.treinos_da(ficha)] or [ficha.nome],
+                  'atualizada': ficha_tela['atualizada'].split(' por ')[0],
+                  'por': ficha_tela['atualizada'].split(' por ')[1] if ' por ' in ficha_tela['atualizada'] else current_user.conta.nome} if ficha else None,
     }
 
 
@@ -229,6 +241,7 @@ def aluno_para_o_formulario(aluno):
         'data_inicio_txt': _dmy(aluno.data_inicio), 'plano_id': aluno.plano_id,
         'forma_pagamento': aluno.forma_pagamento or '', 'dia_vencimento': aluno.dia_vencimento or '',
         'observacoes': aluno.observacoes or '',
+        'aceita_whatsapp': aluno.aceita_whatsapp,       # [back-19-lgpd] None = ainda não perguntado. [back-22-ajustes-de-produto] antes a caixa vinha marcada; agora, desmarcada
     }
 
 
@@ -236,6 +249,7 @@ def do_formulario(formulario, aluno_id=None, nome_original=None):
     """Devolve à tela o que a pessoa digitou, para ela não ter de preencher tudo de novo depois de um erro."""
     dados = {k: (formulario.get(k) or '') for k in ('nome', 'cpf', 'telefone', 'email', 'forma_pagamento',
                                                      'dia_vencimento', 'observacoes')}
+    dados['aceita_whatsapp'] = formulario.get('aceita_whatsapp') == '1' if formulario.get('whatsapp_perguntado') else None   # [back-19-lgpd]
     dados['data_nascimento_txt'] = formulario.get('data_nascimento') or ''
     dados['data_inicio_txt'] = formulario.get('data_inicio') or ''
     plano = formulario.get('plano_id') or ''
@@ -326,6 +340,10 @@ def validar(formulario, aluno=None, hoje=None):
             erros['data_inicio'] = 'Data inválida. Use dia/mês/ano.'
 
     v['observacoes'] = (formulario.get('observacoes') or '').strip() or None
+    # [back-19-lgpd] "Aceita receber avisos pelo WhatsApp". Caixa de marcar não manda nada quando está desmarcada; o campo
+    # escondido `whatsapp_perguntado` diz que a caixa estava na tela. Sem ele (formulário antigo), o valor gravado não muda.
+    if formulario.get('whatsapp_perguntado'):
+        v['aceita_whatsapp'] = formulario.get('aceita_whatsapp') == '1'
     if v['observacoes'] and len(v['observacoes']) > MAX_OBSERVACOES:
         erros['observacoes'] = f'As observações podem ter no máximo {MAX_OBSERVACOES} letras.'
     return v, erros

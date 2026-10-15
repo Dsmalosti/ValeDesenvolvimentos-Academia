@@ -1,0 +1,55 @@
+{#
+  GET /configuracoes/recebimento (config.recebimento)
+  Contexto: pix{ligado,conta_desde,chave,ultimo_aviso}, origem{total,itens[{nome,pct,cor,qtd}]}; POST config.pix_alternar (ligado=1|0)
+  Regra: origem 'webhook' = o banco confirmou; qualquer outra forma é confirmada na mão pela recepção e o relatório mostra isso separado.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import stackbar %}
+{% set nav_ativo = 'config' %}
+{% set pagina_titulo = 'Configurações' %}
+{% set pagina_sub = 'Recebimento — como a academia recebe o dinheiro dos alunos' %}
+{% set m_titulo = 'Recebimento' %}
+{% set m_voltar = url_for('config.index') %}
+
+{% macro item(ic, tom, titulo, sub, chip, chip_tom) %}
+<div class="rcb-item"><span class="tile tone-{{ tom }}">{{ icon(ic, 20) }}</span><div class="grow"><b class="linha1">{{ titulo }}</b><span class="s">{{ sub }}</span></div><span class="chip chip--{{ chip_tom }} nowrap">{{ chip }}</span></div>
+{% endmacro %}
+
+{% block content %}
+<div class="rcb-grid stack gap-4">
+  <div class="stack gap-4">
+    <section class="card card--pad" aria-labelledby="h-pix">
+      <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><h2 class="ctitle" id="h-pix" style="font-size:16px">PIX automático pelo sistema</h2><div class="csub" style="margin-bottom:6px">Cada cobrança nasce com identificador próprio e se confirma sozinha</div></div>
+        <form method="post" action="{{ url_for('config.pix_alternar') }}" style="margin:0"><input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+          <input type="hidden" name="ligado" value="{{ '0' if pix.ligado else '1' }}">
+          <button class="btn {{ 'btn-ghost' if pix.ligado else 'btn-primary' }} btn-sm nowrap" type="submit">{{ 'Desligar' if pix.ligado else 'Ligar PIX' }}</button></form>
+      </div>
+      {% if pix.ligado %}
+      {{ item('bolt', 'teal', 'Conta de recebimento', 'Conectada em ' ~ pix.conta_desde ~ ' · o dinheiro cai direto na conta da academia', 'Conectada', 'green') }}
+      {{ item('qr', 'blue', 'Chave PIX usada nas cobranças', pix.chave ~ ' · verificada pelo provedor', 'Verificada', 'green') }}
+      {{ item('link', 'slate', 'Aviso de pagamento (webhook)', 'O provedor chama /webhooks/pix e a mensalidade muda sozinha · último aviso ' ~ pix.ultimo_aviso, 'Escutando', 'green') }}
+      {% else %}
+      {{ item('bolt', 'slate', 'Conta de recebimento', 'Ainda não conectada. Ligue o PIX para cada cobrança nascer com QR Code próprio.', 'Desligado', 'slate') }}
+      {% endif %}
+    </section>
+    <section class="card card--pad" aria-labelledby="h-mao">
+      <h2 class="ctitle" id="h-mao" style="font-size:16px">Recebimento na mão</h2><div class="csub" style="margin-bottom:6px">Formas em que a confirmação depende de alguém da recepção</div>
+      {{ item('card', 'blue', 'Maquininha', 'A academia passa na máquina que já tem e confirma aqui. O sistema não fala com a maquininha.', 'Manual', 'yellow') }}
+      {{ item('cash', 'yellow', 'Dinheiro', 'Entrada de caixa registrada pela recepção', 'Manual', 'yellow') }}
+    </section>
+  </div>
+  <div class="stack gap-4">
+    <section class="card card--pad rcb-nota" aria-labelledby="h-nota">
+      <div class="row-flex gap-3"><span class="tile tone-yellow">{{ icon('alert', 20) }}</span><h2 class="ctitle" id="h-nota" style="font-size:15px">Enquanto o PIX não está ligado</h2></div>
+      <p class="muted" style="margin:14px 0 0;line-height:1.7;font-size:13.5px">A tela de cobrança continua funcionando: a academia recebe em dinheiro ou maquininha e registra aqui. Só que <b style="color:var(--text)">toda confirmação fica marcada como manual</b> no histórico — e o relatório mostra isso separado, pra você saber qual número veio do banco e qual veio de alguém clicando.</p>
+    </section>
+    <section class="card card--pad" aria-labelledby="h-orig">
+      <h2 class="ctitle" id="h-orig" style="font-size:16px">De onde veio cada confirmação</h2>{# [back-12-config] antes: "Setembro", fixo #}<div class="csub" style="margin-bottom:14px">{{ origem.mes }} · {{ origem.total }} pagamentos recebidos</div>
+      {{ stackbar(origem.itens, 'Origem das confirmações de pagamento', false) }}
+      <ul class="leg-list">{% for i in origem.itens %}<li><i style="background:var(--{{ i.cor }})"></i>{{ i.nome }}<b>{{ i.qtd }}</b></li>{% endfor %}</ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

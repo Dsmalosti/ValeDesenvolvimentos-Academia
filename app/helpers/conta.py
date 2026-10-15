@@ -39,8 +39,15 @@ def da_conta(modelo):
 
     Serve para os modelos que têm a coluna `conta_id` (Aluno, Plano, Pagamento, User).
     Uso:  da_conta(Aluno).filter_by(id=aluno_id).first_or_404()
+
+    [back-19-lgpd] Para ALUNO, deixa de fora quem teve os dados apagados a pedido (LGPD). Antes não existia esse caso.
+    Como toda tela busca aluno por aqui, o aluno apagado some de listas, buscas, painel e relatórios de uma vez, e o
+    endereço do perfil dele passa a responder 404. Os pagamentos dele continuam no financeiro, como "Aluno removido".
     """
-    return modelo.query.filter_by(conta_id=conta_id())
+    consulta = modelo.query.filter_by(conta_id=conta_id())
+    if modelo is Aluno:
+        consulta = consulta.filter(Aluno.anonimizado_em.is_(None))
+    return consulta
 
 
 def fichas_da_conta():

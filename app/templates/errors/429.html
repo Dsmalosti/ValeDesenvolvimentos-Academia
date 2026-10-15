@@ -1,0 +1,3 @@
+{# [back-18-seguranca] Página nova (não veio do Drive): feita no molde de errors/403.html. Aparece quando alguém passa do limite de tentativas. #}
+{% set codigo = '429' %}{% set titulo = 'Muitas tentativas' %}{% set texto = 'Por segurança, este endereço fica bloqueado por alguns minutos depois de muitas tentativas seguidas. Espere um pouco e tente de novo.' %}{% set icone = 'lock' %}{% set tom = 'yellow' %}
+{% extends 'errors/_erro.html' %}

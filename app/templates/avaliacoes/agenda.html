@@ -1,0 +1,42 @@
+{#
+  GET /avaliacoes (avaliacoes.agenda)
+  Contexto: stats{hoje,confirmar,vencidas,mes}, grupos[{titulo,itens[{id,aluno,hora,tipo,chip(tom,rótulo),dia_txt}],com_dia}], sem_avaliar{qtd,meses}
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar %}
+{% set nav_ativo = 'avaliacoes' %}
+{% set pagina_titulo = 'Avaliações físicas' %}
+{# [back-15-avaliacoes] antes: o mês era fixo ('Setembro'). `stats.mes_nome` vem do servidor. #}
+{% set pagina_sub = (stats.mes_nome|default('Setembro')) ~ ' · ' ~ stats.mes ~ ' agendadas' %}
+{% set m_sub = pagina_sub %}
+{% set corpo_classe = 'page--narrow' %}
+{% block page_acoes %}<a class="btn btn-primary" href="{{ url_for('avaliacoes.agendar') }}">{{ icon('plus', 18) }}Agendar avaliação</a>{% endblock %}
+{% block content %}
+<div class="mini-grid av-stats">
+  <div class="card stat"><div class="stat__val tone-txt-blue">{{ stats.hoje }}</div><div class="stat__lbl">Hoje</div></div>
+  <div class="card stat"><div class="stat__val tone-txt-yellow">{{ stats.confirmar }}</div><div class="stat__lbl">A confirmar</div></div>
+  <div class="card stat"><div class="stat__val tone-txt-orange">{{ stats.vencidas }}</div><div class="stat__lbl">Vencidas</div></div>
+</div>
+{% for g in grupos %}
+<section class="card card--pad" aria-labelledby="g-{{ loop.index }}">
+  <h2 class="ctitle" id="g-{{ loop.index }}">{{ g.titulo }}</h2><div class="csub">{{ g.itens|length }} agendada{{ '' if g.itens|length == 1 else 's' }}</div>
+  <ul class="av-lista">
+    {% for i in g.itens %}
+    <li><span class="av-hora">{% if g.com_dia %}{{ i.dia_txt }}<br>{% endif %}{{ i.hora }}</span>
+      <a class="grow av-quem" href="{{ url_for('avaliacoes.aluno', id=i.aluno.id) }}">{{ avatar(i.aluno.nome, 'lg') }}<span><b>{{ i.aluno.nome }}</b><span class="av-sub"><span class="faint fs-12">{{ i.tipo }}</span><span class="chip chip--{{ i.chip[0] }} nowrap m-only">{{ i.chip[1] }}</span></span></span></a>
+      {# celular: o status desce pra linha do tipo (acima) e o nome ganha a largura toda; desktop: status na coluna própria #}
+      <span class="chip chip--{{ i.chip[0] }} nowrap d-only">{{ i.chip[1] }}</span>
+      {# [back-15-avaliacoes] `pode_avaliar` (bool): a recepção agenda, mas não registra a avaliação (dado de saúde). Sem a variável, o botão aparece como antes. #}
+      {% if g.titulo.startswith('Hoje') and pode_avaliar|default(true) %}<a class="btn btn-primary btn-sm nowrap av-ini" href="{{ url_for('avaliacoes.registrar', id=i.aluno.id, ag=i.id) }}" >Iniciar avaliação</a>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+{% if not grupos %}<div class="card card--pad"><p class="muted" style="margin:0">Nenhuma avaliação agendada nesta semana.</p></div>{% endif %}
+<a class="card card--pad mrow-card" href="{{ url_for('alunos.lista') }}">
+  <span class="tile tone-orange">{{ icon('user-check', 22) }}</span>
+  <span class="grow"><b class="linha1">{{ sem_avaliar.qtd }} alunos sem avaliar há {{ sem_avaliar.meses }} meses</b><span class="faint fs-13">Chamar pra reavaliação</span></span><span class="faint">{{ icon('chevron-right', 18) }}</span>
+</a>
+<a class="btn btn-primary btn-lg btn-block" href="{{ url_for('avaliacoes.agendar') }}">{{ icon('plus', 18) }}Agendar avaliação</a>
+{% endblock %}

@@ -1,0 +1,34 @@
+{# GET /exercicios/<id> (exercicios.detalhe)  Contexto: e {nome, grupo_muscular, equipamento, video_url, nivel, duracao, como_executar, musculos:[(nome,pct)]} #}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'exercicios' %}
+{% set pagina_titulo = e.nome %}
+{% set m_titulo = 'Exercício' %}
+{% set m_sub = e.nome %}
+{% set m_voltar = url_for('exercicios.lista') %}
+{% set corpo_classe = 'page--narrow' %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('exercicios.lista') }}">Exercícios</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ e.nome }}</span></nav>{% endblock %}
+{% block page_acoes %}<a class="btn btn-ghost" href="{{ url_for('exercicios.editar', id=e.id) }}">{{ icon('edit', 18) }}Editar exercício</a>{% endblock %}
+{% block content %}
+<section class="card card--flush">
+  {% if e.video_url %}
+  <a class="ex-video" href="{{ e.video_url }}" target="_blank" rel="noopener noreferrer" aria-label="Assistir o vídeo de {{ e.nome }} (abre em outra aba)"><span class="ex-play ex-play--lg">{{ icon('play', 28) }}</span><span class="ex-dur">{{ e.duracao }}</span></a>
+  {% else %}
+  <div class="ex-video ex-video--sem"><span>{{ icon('image', 28) }}<b>Sem vídeo ainda</b></span></div>
+  {% endif %}
+  <div style="padding:16px 18px 18px">
+    <h2 class="ctitle" style="font-size:19px;margin-bottom:10px">{{ e.nome }}</h2>
+    <div class="row-flex gap-2" style="flex-wrap:wrap"><span class="chip chip--blue">{{ e.grupo_muscular }}</span><span class="chip chip--slate">{{ e.equipamento }}</span><span class="chip chip--slate">{{ e.nivel }}</span></div>
+  </div>
+</section>
+<section class="card card--pad" aria-labelledby="h-como"><h2 class="ctitle" id="h-como" style="margin-bottom:8px">Como executar</h2><p class="muted" style="margin:0;font-size:14px;line-height:1.6">{{ e.como_executar }}</p></section>
+<section class="card card--pad" aria-labelledby="h-mus"><h2 class="ctitle" id="h-mus" style="margin-bottom:12px">Músculos trabalhados</h2>
+  <ul class="stack gap-3" style="list-style:none;margin:0;padding:0">
+    {% for nome, pct in e.musculos %}<li class="mus"><span>{{ nome }}</span><div class="bar bar--lg"><div style="width:{{ pct }}%;background:var(--{{ 'blue' if loop.first else 'blue-300' }})"></div></div><span class="visually-hidden">{{ pct }}%</span></li>{% endfor %}
+  </ul>
+</section>
+<div class="stack gap-3">
+  <a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.biblioteca', adicionar=e.id) }}">{{ icon('plus', 18) }}Adicionar a uma ficha</a>
+  <a class="btn btn-ghost btn-block m-only" href="{{ url_for('exercicios.editar', id=e.id) }}">{{ icon('edit', 18) }}Editar exercício</a>
+</div>
+{% endblock %}

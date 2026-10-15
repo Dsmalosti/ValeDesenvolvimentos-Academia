@@ -1,0 +1,3 @@
+{# [back-18-seguranca] Página nova (não veio do Drive): feita no molde de errors/403.html. Aparece quando o que foi enviado passa de 5 MB. #}
+{% set codigo = '413' %}{% set titulo = 'Arquivo grande demais' %}{% set texto = 'O que você tentou enviar passa de 5 MB. Diminua o arquivo (uma foto menor, por exemplo) e tente de novo.' %}{% set icone = 'alert' %}{% set tom = 'yellow' %}
+{% extends 'errors/_erro.html' %}

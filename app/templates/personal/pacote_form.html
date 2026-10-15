@@ -1,0 +1,74 @@
+{#
+  GET/POST /planos/novo e /planos/<id>/editar (planos.novo | planos.editar) — variante PERSONAL: criar/editar PACOTE.
+  Figma: personal/Celular/14-celular-criar-plano e 15-celular-editar-plano.
+  Campos (name == coluna): nome, valor (preço do pacote inteiro), quantidade_sessoes, avaliacoes_incluidas, descricao, ativo.
+  O backend calcula valor_sessao = valor / quantidade_sessoes (aparece na tela da sessão).
+  Contexto: plano (dict, vazio no novo), erros, modo ('novo'|'editar')
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, seletor, brl %}
+{% set p = plano or {} %}
+{% set erros = erros or {} %}
+{% set editando = (modo == 'editar') %}
+{% set nav_ativo = 'planos' %}
+{% set pagina_titulo = 'Editar pacote' if editando else 'Criar pacote' %}
+{% set pagina_sub = p.nome if editando else 'A quantidade de sessões define o saldo do aluno' %}
+{% set m_voltar = url_for('planos.lista') %}
+{% set m_sub = p.nome if editando else '' %}
+{% set corpo_classe = 'page--form' %}
+{% set sem_tabbar = true %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('planos.lista') }}">Pacotes</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ pagina_titulo }}</span></nav>{% endblock %}
+
+{% block content %}
+<form method="post" action="{{ url_for('planos.editar', id=p.id) if editando else url_for('planos.novo') }}" data-validate novalidate class="stack gap-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <div class="card card--pad stack gap-4">
+    <h2 class="ctitle">Dados do pacote</h2>
+    {{ campo('nome', 'Nome do pacote', p.nome, 'text', 'Ex: Pacote 8 sessões', obrigatorio=True, erro=erros.nome, autocomplete='off') }}
+    <div class="field-group">
+      <label class="label" for="f-valor">Valor</label>
+      <div class="input-affix"><span class="affix">R$</span><input class="input{{ ' is-invalid' if erros.valor }}" id="f-valor" name="valor" data-mask="dinheiro" inputmode="numeric" value="{{ ('%.2f'|format(p.valor)).replace('.', ',') if p.valor else '' }}" placeholder="0,00" required data-msg-required="Informe o valor do pacote."></div>
+      {% if erros.valor %}<div class="field-error" data-server>{{ erros.valor }}</div>{% endif %}
+    </div>
+    <div class="field-group">
+      <label class="label" for="f-quantidade_sessoes">Quantidade de sessões</label>
+      <div class="field-icon">{{ icon('calendar', 18) }}<input class="input{{ ' is-invalid' if erros.quantidade_sessoes }}" id="f-quantidade_sessoes" name="quantidade_sessoes" type="number" min="1" max="100" inputmode="numeric" value="{{ p.quantidade_sessoes or 8 }}" required data-msg-required="Informe quantas sessões o pacote tem."></div>
+      {% if erros.quantidade_sessoes %}<div class="field-error" data-server>{{ erros.quantidade_sessoes }}</div>{% endif %}
+    </div>
+    {{ seletor('avaliacoes_incluidas', 'Avaliação física inclusa', [('0','Nenhuma · cobrada à parte'),('1','1 avaliação no pacote'),('2','2 avaliações no pacote')], p.avaliacoes_incluidas or '0', vazio=None) }}
+  </div>
+
+  <div class="note note--blue">{{ icon('info', 20) }}<span><strong>A quantidade de sessões é o que manda</strong>É esse número que dá o saldo do aluno. Cada sessão marcada abate um, e quando chega a zero o sistema avisa pra renovar.</span></div>
+
+  <div class="card card--pad stack gap-2">
+    <h2 class="ctitle">Descrição pro aluno</h2>
+    <div class="field-group"><label class="label visually-hidden" for="f-descricao">Descrição</label>
+      <textarea class="input" id="f-descricao" name="descricao" rows="3" placeholder="O que está incluso nesse pacote">{{ p.descricao or '' }}</textarea></div>
+  </div>
+
+  <div class="card card--pad switch-row">
+    <div><b id="lb-ativo">Pacote ativo</b><div class="csub" style="margin:0">Aparece na hora de matricular</div></div>
+    <label class="switch"><input type="checkbox" name="ativo" value="1" aria-labelledby="lb-ativo"{% if p.ativo is not defined or p.ativo %} checked{% endif %}><span class="switch__track"></span></label>
+  </div>
+
+  {% if editando %}
+  <section class="card card--pad" aria-labelledby="h-quem">
+    <h2 class="ctitle" id="h-quem" style="margin-bottom:6px">Quem está nesse pacote</h2>
+    <dl class="kvs">
+      <div class="kv"><dt>{{ 'Sessões no mês' if p.avulso else 'Alunos ativos' }}</dt><dd>{{ p.alunos }}</dd></div>
+      <div class="kv"><dt>Faturamento no mês</dt><dd>{{ brl(p.faturamento, 0) }}</dd></div>
+      <div class="kv"><dt>Participação</dt><dd>{{ p.pct }}%</dd></div>
+    </dl>
+  </section>
+  <div class="note note--yellow">{{ icon('alert', 20) }}<span><strong>Mudar o valor não mexe em quem já comprou</strong>Os {{ p.alunos }} alunos atuais seguem no valor antigo até renovar. O novo valor vale pra matrícula e renovação daqui pra frente.</span></div>
+  {% endif %}
+
+  <div class="stack gap-3">
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>{{ icon('check', 18) }}{{ 'Salvar pacote' if editando else 'Criar pacote' }}</button>
+    {% if editando %}
+    <button type="submit" formaction="{{ url_for('planos.alternar', id=p.id) }}" formnovalidate class="btn btn-danger-ghost btn-block">{{ 'Desativar pacote' if p.ativo else 'Reativar pacote' }}</button>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

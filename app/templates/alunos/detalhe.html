@@ -30,7 +30,9 @@
     <div class="perfil-meta"><span>CPF {{ aluno.cpf }}</span><span>{{ aluno.telefone }}</span><span>{{ aluno.email }}</span><span>{{ 'Aluna' if fem else 'Aluno' }} desde {{ aluno.desde }}</span></div>
   </div>
   <div class="row-flex gap-3">
-    <button type="button" class="btn btn-green" data-toast="WhatsApp aberto para {{ aluno.nome.split()[0] }}.">{{ icon('chat', 18) }}WhatsApp</button>
+    {# [back-16-mensagens] antes: botão de demonstração (só mostrava "WhatsApp aberto para..."). Agora abre a conversa do aluno; sem telefone, avisa. #}
+    {% if aluno.telefone %}<a class="btn btn-green" href="https://wa.me/55{{ aluno.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp</a>
+    {% else %}<button type="button" class="btn btn-green" data-toast="{{ aluno.nome.split()[0] }} não tem telefone cadastrado.">{{ icon('chat', 18) }}WhatsApp</button>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('alunos.renovar', id=aluno.id) }}">{{ icon('refresh', 18) }}Renovar</a>
     <a class="btn btn-ghost" href="{{ url_for('alunos.editar', id=aluno.id) }}">{{ icon('edit', 18) }}Editar</a>
     <a class="btn btn-primary" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('clipboard', 18) }}Iniciar avaliação física</a>
@@ -46,13 +48,18 @@
   <div class="row-flex gap-2" style="justify-content:center">{{ chip_status(aluno.status) }}<span class="chip chip--blue">{{ aluno.plano }}</span></div>
   <div class="faint fs-13" style="margin-top:2px">{{ aluno.telefone }} · {{ 'aluna' if fem else 'aluno' }} desde {{ aluno.desde }}</div>
   <div class="opcoes" style="--cols:2;width:100%;margin-top:6px">
-    <button type="button" class="btn btn-green" data-toast="WhatsApp aberto para {{ aluno.nome.split()[0] }}.">{{ icon('chat', 18) }}WhatsApp</button>
+    {# [back-16-mensagens] antes: botão de demonstração (só mostrava "WhatsApp aberto para..."). Agora abre a conversa do aluno; sem telefone, avisa. #}
+    {% if aluno.telefone %}<a class="btn btn-green" href="https://wa.me/55{{ aluno.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp</a>
+    {% else %}<button type="button" class="btn btn-green" data-toast="{{ aluno.nome.split()[0] }} não tem telefone cadastrado.">{{ icon('chat', 18) }}WhatsApp</button>{% endif %}
     <a class="btn btn-ghost" href="{{ url_for('alunos.renovar', id=aluno.id) }}">{{ icon('refresh', 18) }}Renovar</a>
   </div>
   <a class="btn btn-primary btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">{{ icon('clipboard', 18) }}Visualizar ficha</a>
   <a class="btn btn-ghost btn-block" href="{{ url_for('avaliacoes.registrar', id=aluno.id) }}">{{ icon('scale', 18) }}Iniciar avaliação física</a>
 </section>
 
+{# [back-22-ajustes-de-produto] Aviso NOVO, que o front do Drive não tem: o aluno ainda não autorizou avisos pelo WhatsApp e por isso não entra
+   na fila de Mensagens. `aluno.whatsapp_autorizado` (bool); sem a variável, nada aparece. #}
+{% if aluno.whatsapp_autorizado is defined and not aluno.whatsapp_autorizado %}<div class="note note--yellow" style="margin-bottom:12px">{{ icon('info', 20) }}<span><strong>Avisos pelo WhatsApp ainda não autorizados</strong>Enquanto não autorizar, {{ aluno.nome.split()[0] }} não entra na fila de Mensagens. Pergunte e marque em <a href="{{ url_for('alunos.editar', id=aluno.id) }}">Editar</a>.</span></div>{% endif %}
 <div class="detalhe-grid">
   <div class="detalhe-col">
     <section class="card card--pad card--plano" aria-labelledby="h-plano">
@@ -92,7 +99,15 @@
   </div>
 
   <div class="detalhe-col">
-    {% if academia.checkin_ativo %}
+    {# [back-10-frequencia] antes: {% if academia.checkin_ativo %}. Aluno que nunca teve entrada registrada chega com
+       freq vazio: é "sem dado", e mostrar "0% de assiduidade" seria afirmar uma coisa que não foi medida. #}
+    {% if academia.checkin_ativo and not freq %}
+    <section class="card card--pad card--freq" aria-labelledby="h-freq-vazio">
+      <h2 class="ctitle" id="h-freq-vazio">Frequência</h2>
+      <p class="muted fs-13" style="margin:6px 0 0">Sem dado: nenhuma entrada registrada ainda.</p>
+    </section>
+    {% endif %}
+    {% if academia.checkin_ativo and freq %}
     <section class="card card--pad card--freq" aria-labelledby="h-freq">
       <h2 class="ctitle" id="h-freq">Frequência</h2>
       <div class="row-flex gap-2" style="align-items:baseline;margin-top:6px"><span class="num" style="font-size:30px;font-weight:700">{{ freq.pct }}%</span><span class="muted fs-13">de assiduidade nos últimos 30 dias</span></div>
@@ -128,6 +143,9 @@
     <button type="button" class="btn btn-danger-ghost" data-open="dlg-inativar">{{ icon('lock', 18) }}Desativar aluno</button>
     <button type="button" class="btn btn-danger" data-open="dlg-excluir">{{ icon('close', 18) }}Excluir aluno</button>
   </div>
+  {# [back-19-lgpd] Botão NOVO, que o front do Drive não tem: baixar tudo o que o sistema guarda sobre o aluno (direito de acesso, LGPD).
+     Só o dono vê (`aluno.pode_lgpd`). #}
+  {% if aluno.pode_lgpd %}<a class="btn btn-ghost btn-block" style="margin-top:10px" href="{{ url_for('alunos.dados', id=aluno.id) }}" download>{{ icon('download', 18) }}Baixar os dados deste aluno (LGPD)</a>{% endif %}
 </section>
 {% endblock %}
 
@@ -144,6 +162,6 @@
 </dialog>
 {% endmacro %}
 {{ confirmar('dlg-inativar', 'Desativar ' ~ aluno.nome.split()[0] ~ '?', 'O histórico é mantido e o acesso na recepção é bloqueado. Dá para reativar depois.', url_for('alunos.inativar', id=aluno.id), 'Desativar aluno') }}
-{{ confirmar('dlg-excluir', 'Excluir cadastro?', 'Isso apaga o cadastro e o histórico de ' ~ aluno.nome ~ ' e não dá para desfazer. Se só quer parar de cobrar, prefira desativar.', url_for('alunos.excluir', id=aluno.id), 'Excluir para sempre') }}
+{{ confirmar('dlg-excluir', 'Excluir cadastro?', 'Isso apaga os dados pessoais, as avaliações, as fichas e a frequência de ' ~ aluno.nome ~ ' e não dá para desfazer. Os pagamentos ficam no financeiro, sem o nome. Se só quer parar de cobrar, prefira desativar.', url_for('alunos.excluir', id=aluno.id), 'Excluir para sempre') }}
 {{ confirmar('dlg-acesso', ('Bloquear' if aluno.acesso_liberado else 'Liberar') ~ ' acesso?', 'Muda na hora a permissão de ' ~ aluno.nome ~ ' na recepção.', url_for('alunos.acesso', id=aluno.id), 'Bloquear acesso' if aluno.acesso_liberado else 'Liberar acesso', 'btn-danger' if aluno.acesso_liberado else 'btn-primary') }}
 {% endblock %}

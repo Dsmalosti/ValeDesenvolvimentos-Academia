@@ -1,0 +1,45 @@
+{#
+  GET/POST /nova-senha/<token> (auth.nova_senha) — quem pediu "esqueci a senha" cria a senha nova por este link.
+  [back-13-equipe] ESTE TEMPLATE NÃO VEIO DO DRIVE: o front tem a tela de pedir o link (auth/esqueci_senha.html),
+  mas não a de criar a senha nova. Foi montado com as mesmas peças de auth/convite.html (mesma base, mesmo campo de
+  senha com barra de força). Adauto: revise o visual e leve para o front.
+  Contexto: valido (bool: o link ainda vale), token, erro (mensagem do servidor | None).  Campo: senha.
+#}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% block titulo %}Criar senha nova{% endblock %}
+{% block hero %}
+<span class="auth__logo">{{ icon('lock', 28) }}</span>
+<h1>Senha nova</h1>
+<p>{{ 'Escolha uma senha para voltar a entrar' if valido else 'Link de troca de senha' }}</p>
+{% endblock %}
+{% block content %}
+{% if not valido %}
+<span class="tile tile--lg tone-red" style="margin-bottom:14px">{{ icon('alert', 24) }}</span>
+<h2>Este link não vale mais</h2>
+<p class="lead">O link de troca de senha dura 1 hora e só pode ser usado uma vez. Peça um novo.</p>
+<a class="btn btn-primary btn-block" href="{{ url_for('auth.esqueci_senha') }}">Pedir outro link</a>
+<a class="btn btn-ghost btn-block" style="margin-top:10px" href="{{ url_for('auth.login') }}">Ir para o login</a>
+{% else %}
+<h2>Criar senha nova</h2>
+<p class="lead">Depois de salvar, você entra com o seu e-mail e a senha nova.</p>
+<form method="post" action="{{ url_for('auth.nova_senha', token=token) }}" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <div class="stack gap-4">
+    <div class="field-group">
+      <label class="label" for="f-senha">Senha nova <span class="faint" aria-hidden="true">*</span></label>
+      <div class="field-icon">
+        <input class="input{{ ' is-invalid' if erro }}" id="f-senha" name="senha" type="password" autocomplete="new-password" placeholder="Pelo menos 8 caracteres" minlength="8"
+               style="padding-left:14px;padding-right:52px" required data-msg-required="Crie uma senha." data-forca aria-describedby="forca-txt">
+        <button type="button" class="iconbtn iconbtn--soft field-action" data-toggle-senha="f-senha" aria-label="Mostrar senha" aria-pressed="false" style="border:0;background:none">{{ icon('eye', 20) }}</button>
+      </div>
+      <div class="forca" aria-hidden="true"><i data-forca-barra></i></div>
+      <div class="field-hint" id="forca-txt" data-forca-txt>Pelo menos 8 caracteres. Uma frase curta é mais forte que uma senha difícil.</div>
+      {% if erro %}<div class="field-error" data-server>{{ erro }}</div>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>Salvar senha nova</button>
+  </div>
+</form>
+{% endif %}
+<div class="auth__foot">Vale Tec · 2026</div>
+{% endblock %}

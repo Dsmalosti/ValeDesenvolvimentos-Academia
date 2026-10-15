@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.models import Aluno, Plano
+from app.models import Aluno, Cobranca, Plano
 from tests.conftest import (campo, conta_de, contar, criar_aluno, criar_ficha, criar_pagamento, criar_plano,
                             criar_usuario, logar, _salvar)
 
@@ -97,9 +97,14 @@ def test_tela_de_cadastro_so_oferece_plano_ativo_da_conta(app, academia):
 
 def test_cadastrar_aluno(app, academia):
     resposta = como(app, academia["recepcao"]).post("/alunos/novo", data=formulario(academia))
-    novo_id = int(resposta.headers["Location"].rsplit("/", 1)[1])
-
-    assert resposta.status_code == 302 and resposta.headers["Location"] == f"/alunos/{novo_id}"
+    with app.app_context():
+        novo_id = Aluno.query.filter_by(nome="Carlos Prado").one().id
+        cobranca = Cobranca.query.filter_by(aluno_id=novo_id).one()
+        # depois de cadastrar, a recepção vai direto receber a primeira mensalidade (a cobrança da matrícula)
+        assert resposta.status_code == 302 and resposta.headers["Location"] == f"/cobrancas/{cobranca.id}/receber?forma=pix"
+        assert (cobranca.tipo, cobranca.status, float(cobranca.valor)) == ("matricula", "pendente", 100.0)
+        assert (cobranca.data_inicio, cobranca.data_vencimento) == (HOJE, HOJE + timedelta(days=30))
+        assert cobranca.plano_id == academia["mensal"] and cobranca.conta_id == academia["conta"]
     esperado = {"nome": "Carlos Prado", "cpf": "123.456.789-09", "email": "carlos@exemplo.com", "telefone": "(12) 98211-4432",
                 "data_nascimento": date(1990, 12, 25), "data_inicio": HOJE, "dia_vencimento": 10, "forma_pagamento": "pix",
                 "observacoes": "Prefere treinar cedo.", "plano_id": academia["mensal"], "ativo": True,
@@ -162,9 +167,10 @@ def test_nome_com_html_nao_vira_codigo_na_tela(app, academia):
     """Texto digitado pelo usuário sempre aparece como texto, nunca como HTML (proteção contra XSS)."""
     dono = como(app, academia["dono"])
     resposta = dono.post("/alunos/novo", data=formulario(academia, nome="<script>alert(1)</script> Silva", observacoes="<b>negrito</b>"))
-    perfil = dono.get(resposta.headers["Location"]).get_data(as_text=True)
+    receber = dono.get(resposta.headers["Location"]).get_data(as_text=True)           # a tela de receber também mostra o nome
+    perfil = dono.get(f"/alunos/{contar(Aluno)}").get_data(as_text=True)               # o aluno novo é o de maior id
     lista = dono.get("/alunos").get_data(as_text=True)
-    for html in (perfil, lista):
+    for html in (perfil, lista, receber):
         assert "<script>alert(1)</script>" not in html and "&lt;script&gt;" in html
     assert "<b>negrito</b>" not in perfil
 
@@ -172,11 +178,11 @@ def test_nome_com_html_nao_vira_codigo_na_tela(app, academia):
 # ------------------------------------------------------------------ perfil
 def test_perfil_do_aluno(app, academia):
     dono = como(app, academia["dono"])
-    novo = dono.post("/alunos/novo", data=formulario(academia)).headers["Location"]
-    novo_id = int(novo.rsplit("/", 1)[1])
-    criar_pagamento(academia["dono"], novo_id, 149.9, HOJE, HOJE + timedelta(days=30))
+    receber = dono.post("/alunos/novo", data=formulario(academia)).headers["Location"]
+    dono.post(receber.split("?")[0].replace("/receber", "/confirmar"), data={"forma": "pix", "valor_recebido": "149,90"})
+    novo_id = contar(Aluno)                                                             # o aluno novo é o de maior id
 
-    html = dono.get(novo).get_data(as_text=True)
+    html = dono.get(f"/alunos/{novo_id}").get_data(as_text=True)
 
     for trecho in ("Carlos Prado", "123.456.789-09", "Mensal", "PIX", "Prefere treinar cedo.", "R$ 149,90", "Em dia",
                    (HOJE + timedelta(days=30)).strftime("%d/%m/%Y")):
@@ -196,9 +202,7 @@ def test_perfil_de_outra_academia_da_404(app, academia):
                         ("POST", "/alunos/{}/inativar"), ("POST", "/alunos/{}/excluir"), ("POST", "/alunos/{}/acesso"),
                         ("GET", "/alunos/{}/ficha")]:
         resposta = como(app, outro).open(url.format(academia["ana"]), method=metodo, data=formulario(academia))
-        assert resposta.status_code in (404, 302), f"{metodo} {url}"
-        if resposta.status_code == 302:                       # só a ponte da ficha redireciona; e para a lista, sem achar nada
-            assert resposta.headers["Location"] == "/fichas/listar/"
+        assert resposta.status_code == 404
     assert campo(Aluno, academia["ana"], "nome") == "Ana Souza" and campo(Aluno, academia["ana"], "ativo") is True
 
 
@@ -210,11 +214,9 @@ def test_instrutor_ve_o_aluno_mas_nao_os_pagamentos(app, academia):
     assert "R$ 432,00" in do_dono
 
 
-def test_botao_da_ficha_leva_a_ficha_do_aluno(app, academia):
-    dono = como(app, academia["dono"])
-    assert dono.get(f"/alunos/{academia['ana']}/ficha").headers["Location"] == "/fichas/listar/"
-    ficha = criar_ficha(academia["ana"])
-    assert dono.get(f"/alunos/{academia['ana']}/ficha").headers["Location"] == f"/fichas/detalhes/{ficha}"
+def test_botao_da_ficha_sem_ficha_leva_a_escolher_um_modelo(app, academia):
+    # (a tela da ficha em si é testada em tests/test_treinos.py, da back-14)
+    assert como(app, academia["dono"]).get(f"/alunos/{academia['ana']}/ficha").headers["Location"] == "/treinos"
 
 
 # ------------------------------------------------------------------ edição, inativar, excluir
@@ -238,13 +240,15 @@ def test_inativar_nao_apaga(app, academia):
     assert contar(Aluno, id=academia["ana"]) == 1 and campo(Aluno, academia["ana"], "ativo") is False
 
 
-def test_excluir_e_so_do_dono_e_recusa_quem_tem_historico(app, academia):
+def test_excluir_e_so_do_dono_e_apaga_os_dados_de_quem_tem_historico(app, academia):
     assert como(app, academia["recepcao"]).post(f"/alunos/{academia['ana']}/excluir").status_code == 403
     criar_pagamento(academia["dono"], academia["bia"], 100, HOJE, HOJE)
     dono = como(app, academia["dono"])
 
+    # [back-19-lgpd] antes: aluno com histórico não podia ser excluído. Agora os dados pessoais são apagados e o cadastro, anonimizado.
     com_historico = dono.post(f"/alunos/{academia['bia']}/excluir", follow_redirects=True).get_data(as_text=True)
-    assert contar(Aluno, id=academia["bia"]) == 1 and "tem fichas ou pagamentos registrados" in com_historico
+    assert contar(Aluno, id=academia["bia"]) == 1 and "Bia Lima" not in com_historico     # a linha fica (o pagamento aponta para ela), sem o nome
+    assert [campo(Aluno, academia["bia"], c) for c in ("nome", "cpf", "email", "telefone", "ativo")] == ["Aluno removido", None, None, None, False]
 
     assert dono.post(f"/alunos/{academia['ana']}/excluir").headers["Location"] == "/alunos"
     assert contar(Aluno, id=academia["ana"]) == 0

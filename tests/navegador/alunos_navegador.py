@@ -34,7 +34,8 @@ from werkzeug.serving import make_server  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Conta, Pagamento, Plano, User  # noqa: E402
+from app.models import Aluno, Conta, Plano, User  # noqa: E402
+from tests.navegador._base import pagamento_recebido  # noqa: E402
 
 EMAIL, SENHA = "marina@valetec.com", "Senha-de-teste-123"
 CPF_DA_CAMILA = "529.982.247-25"                        # CPF de exemplo com os dígitos finais certos
@@ -71,8 +72,7 @@ def montar_app():
             db.session.flush()
             if i in (0, 1):   # Camila em dia, Larissa em atraso
                 pago = hoje - timedelta(days=5 if i == 0 else 45)
-                db.session.add(Pagamento(aluno_id=aluno.id, instrutor_id=dona.id, conta_id=conta.id, valor=149.90, forma_pagamento="pix",
-                                         data_pagamento=pago, data_vencimento=pago + timedelta(days=30)))
+                pagamento_recebido(db, aluno, dona, 149.90, pago, pago + timedelta(days=30))
         db.session.commit()
     return app
 
@@ -104,9 +104,7 @@ with sync_playwright() as p:
 
         # --- entra e fecha o popup de avisos do painel ---
         pg.goto(BASE + "/")
-        pg.wait_for_selector("#dlg-perfil[open]", timeout=5000)
-        acionar('#dlg-perfil [data-valor="recepcao"]')
-        pg.wait_for_timeout(400)
+        pg.wait_for_selector("#f-identificador", timeout=5000)      # [back-18-seguranca] antes: esperava e fechava o popup de perfil, que saiu do login
         pg.fill("#f-identificador", EMAIL)
         pg.fill("#f-senha", SENHA)
         acionar("button[type=submit]")
@@ -171,11 +169,15 @@ with sync_playwright() as p:
               "Já existe um aluno com este CPF." in corpo and pg.input_value("#conteudo #f-nome") == nome_novo)
         pg.fill("#conteudo #f-cpf", cpf_novo)
         acionar("#conteudo button[type=submit]")
+        pg.wait_for_url("**/cobrancas/*/receber*", timeout=8000)
+        checa(f"[{nome}] depois de salvar abre a tela de receber a primeira mensalidade", nome_novo in pg.inner_text("body") and "como o aluno vai pagar?" in pg.inner_text("#conteudo").lower())
+        pg.locator("a:has-text('Cobrar depois')").scroll_into_view_if_needed()
+        acionar("a:has-text('Cobrar depois')")
         pg.wait_for_url(lambda u: u.rstrip("/").rsplit("/", 1)[-1].isdigit(), timeout=8000)
 
         # --- perfil ---
         perfil = pg.inner_text("#conteudo")
-        checa(f"[{nome}] depois de salvar abre o perfil do aluno novo", nome_novo in perfil and "Mensal" in perfil and "PIX" in perfil)
+        checa(f"[{nome}] 'Cobrar depois' leva ao perfil do aluno novo", nome_novo in perfil and "Mensal" in perfil and "PIX" in perfil)
         checa(f"[{nome}] perfil sem 'None'", "None" not in perfil, [l for l in perfil.splitlines() if "None" in l][:3])
         pg.wait_for_timeout(700)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-3-perfil.png"), full_page=True)

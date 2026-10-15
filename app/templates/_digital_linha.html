@@ -1,0 +1,23 @@
+{# Configurações > "Seu acesso" — preferências DESTE aparelho (não da conta):
+   · Aparência: Automático (segue o celular/PC) · Claro · Escuro — static/js/tema.js guarda em localStorage 'vt-tema'.
+   · Entrar com digital: linha escondida por padrão; static/js/digital.js mostra só se o aparelho tiver leitor.
+   Incluído no menu do celular e na coluna do desktop: acesso_sfx diferencia os ids quando aparece 2x na mesma página. #}
+{% from '_macros/icons.html' import icon %}
+{% set _s = acesso_sfx|default('') %}
+<section class="card card--pad" aria-labelledby="h-acesso{{ _s }}">
+  <h2 class="ctitle" id="h-acesso{{ _s }}">Seu acesso</h2>
+  <div class="set-row set-row--tema">
+    <span class="tile tone-slate">{{ icon('tema', 20) }}</span>
+    <span class="grow"><b class="set-row__t" id="lb-tema{{ _s }}">Aparência</b><span class="set-row__s">Neste aparelho</span></span>
+    <div class="seg seg--tema" role="radiogroup" aria-labelledby="lb-tema{{ _s }}" data-tema-escolha>
+      <button type="button" class="seg__btn" role="radio" aria-checked="true" data-tema-opcao="auto">Auto</button>
+      <button type="button" class="seg__btn" role="radio" aria-checked="false" data-tema-opcao="claro">Claro</button>
+      <button type="button" class="seg__btn" role="radio" aria-checked="false" data-tema-opcao="escuro">Escuro</button>
+    </div>
+  </div>
+  <div class="set-row digital-row" data-digital-linha hidden>
+    <span class="tile tone-blue">{{ icon('digital', 20) }}</span>
+    <span class="grow"><b class="set-row__t">Entrar com digital</b><span class="set-row__s" data-digital-estado>Entre sem digitar senha neste aparelho</span></span>
+    <button type="button" class="btn btn-ghost btn-sm" data-digital-ativar hidden>Ativar</button>
+  </div>
+</section>

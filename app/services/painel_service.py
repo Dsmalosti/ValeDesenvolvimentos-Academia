@@ -18,13 +18,18 @@ O que ainda NÃO dá para calcular, e por isso vem vazio:
     cadastrados até o fim daquele mês. Quem saiu no meio do caminho não aparece.
 """
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
+
+from flask_login import current_user
+from sqlalchemy.orm import joinedload
 
 from app.helpers.conta import da_conta
 from app.models import Aluno, Pagamento, Plano
+from app.services import frequencia_service  # [back-10-frequencia]
 # [back-07-alunos] a regra de vencimento e de status saiu daqui para o situacao_service,
 # para o painel e as telas de alunos usarem a mesma.
-from app.services.situacao_service import data_curta as _dm, linha_do_aluno as _linha_aluno
+from app.services.situacao_service import (cobrancas_em_aberto_da_conta, data_curta as _dm,
+                                           linha_do_aluno as _linha_aluno, vencimentos_da_conta)
 
 DIAS = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
 MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
@@ -32,6 +37,11 @@ MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'a
 # cores do gráfico "De onde vem o faturamento", do plano que mais rende para o que menos rende
 CORES_PLANOS = ['blue-dark', 'blue', 'blue-500', 'blue-300', 'blue-100']
 MESES_NO_GRAFICO = 9
+
+
+def _pagamentos_da_conta():
+    """[back-09-cobranca] Os pagamentos da conta, cada um já com a sua cobrança (é dela que sai o plano da época)."""
+    return da_conta(Pagamento).options(joinedload(Pagamento.cobranca)).all()
 
 
 def _mes_anterior(ano, mes):
@@ -56,16 +66,15 @@ def montar_painel(hoje=None):
     ano_ant, mes_ant = _mes_anterior(ano, mes)
 
     alunos = da_conta(Aluno).order_by(Aluno.data_cadastro.desc()).all()
-    pagamentos = da_conta(Pagamento).all()
+    pagamentos = _pagamentos_da_conta()
     planos = da_conta(Plano).all()
 
-    # maior vencimento de cada aluno
-    vencimento = {}
-    for p in pagamentos:
-        if p.aluno_id not in vencimento or p.data_vencimento > vencimento[p.aluno_id]:
-            vencimento[p.aluno_id] = p.data_vencimento
+    # [back-09-cobranca] antes: o vencimento era calculado aqui, a partir dos pagamentos. Agora vem das
+    # cobranças pagas, e quem tem cobrança em aberto também conta como pendente (situacao_service).
+    vencimento = vencimentos_da_conta()
+    em_aberto = cobrancas_em_aberto_da_conta()
 
-    linhas = {a.id: _linha_aluno(a, vencimento.get(a.id), hoje) for a in alunos}
+    linhas = {a.id: _linha_aluno(a, vencimento.get(a.id), hoje, em_aberto.get(a.id)) for a in alunos}
     cadastro = {a.id: (a.data_cadastro.date() if a.data_cadastro else None) for a in alunos}
     ativos = [a for a in alunos if a.ativo]
     inativos = [a for a in alunos if not a.ativo]
@@ -77,13 +86,30 @@ def montar_painel(hoje=None):
     novas = [a for a in alunos if _mesmo_mes(cadastro[a.id], ano, mes)]
     novas_mes_anterior = sum(1 for a in alunos if _mesmo_mes(cadastro[a.id], ano_ant, mes_ant))
 
-    faturamento = sum(float(p.valor) for p in pagamentos if _mesmo_mes(p.data_pagamento, ano, mes))
-    faturamento_anterior = sum(float(p.valor) for p in pagamentos if _mesmo_mes(p.data_pagamento, ano_ant, mes_ant))
+    faturamento = sum(float(p.valor_pago) for p in pagamentos if _mesmo_mes(p.data_pagamento, ano, mes))
+    faturamento_anterior = sum(float(p.valor_pago) for p in pagamentos if _mesmo_mes(p.data_pagamento, ano_ant, mes_ant))
 
     aniversariantes = [a for a in ativos if a.data_nascimento
                        and (a.data_nascimento.day, a.data_nascimento.month) == (hoje.day, hoje.month)]
 
-    serie = _serie_ativos(ativos, cadastro, hoje)
+    serie = _serie_ativos(alunos, cadastro, hoje)   # [back-11-relatorios] antes: só os ativos de hoje
+
+    # [back-10-frequencia] Ausentes: alunos ativos cuja ÚLTIMA entrada foi há mais de 15 dias. Só existe com o check-in
+    # ligado. `sem_vir` é None quando a conta ainda não tem nenhuma entrada registrada: aí o card mostra "—"
+    # (sem dado), e não 0. Quem nunca teve entrada não aparece como ausente pelo mesmo motivo.
+    sem_vir = frequencia_service.dias_sem_vir(hoje) if current_user.conta.checkin_ativo else None
+    ausentes = sorted(({'aluno': linhas[a.id], 'dias': sem_vir[a.id]} for a in ativos
+                       if sem_vir and sem_vir.get(a.id, 0) > frequencia_service.DIAS_AUSENTE), key=lambda x: -x['dias'])
+    # em risco = quem está com pagamento atrasado + quem sumiu
+    # [back-16-mensagens] cada aviso passa a levar o `telefone` do aluno: o botão do WhatsApp do popup virou link de verdade
+    risco = [{'nome': x['nome'], 'tipo': 'pagamento', 'tom': 'red', 'telefone': x['telefone'],
+              'motivo': f"Pagamento atrasado há {x['dias_atraso']} dia{'s' if x['dias_atraso'] != 1 else ''}"} for x in pendentes]
+    risco += [{'nome': x['aluno']['nome'], 'tipo': 'frequencia', 'tom': 'yellow', 'telefone': x['aluno']['telefone'],
+               'motivo': f"{x['dias']} dias sem vir à academia"} for x in ausentes]
+
+    conta = current_user.conta
+    meta_faturamento = float(conta.meta_faturamento) if conta.meta_faturamento else None
+    serie['meta'] = conta.meta_alunos_ativos      # [back-12-config] None = sem meta: o gráfico não desenha a linha
 
     k = {
         'ativos': len(ativos),
@@ -91,38 +117,45 @@ def montar_painel(hoje=None):
         'inativos': len(inativos),
         'faturamento': faturamento,
         'fat_delta': _pct(faturamento, faturamento_anterior),      # None = sem mês anterior para comparar
-        'fat_meta': None, 'fat_meta_pct': None,                    # metas vêm de Configurações (ainda não existe)
+        # [back-12-config] antes: sempre None. Agora vem da meta de faturamento da conta (Configurações > Metas).
+        'fat_meta': meta_faturamento,
+        'fat_meta_pct': round(faturamento / meta_faturamento * 100) if meta_faturamento else None,
         'vencimentos': len(vencem),
         'vencimentos_valor': sum(x['valor'] for x in vencem),
         'inadimplencia': sum(x['valor'] for x in pendentes),
         'inad_qtd': len(pendentes),
         'ticket': (faturamento / len(ativos)) if ativos else 0.0,
-        'ausentes': None,                                          # precisa do módulo de frequência
+        # [back-10-frequencia] antes: sempre None. Agora: o número; "—" com check-in ligado e nenhuma entrada
+        # registrada ainda; None com o check-in desligado (o card nem aparece).
+        'ausentes': len(ausentes) if sem_vir is not None else ('—' if current_user.conta.checkin_ativo else None),
         'novas': len(novas),
         'novas_delta': len(novas) - novas_mes_anterior,
         'aniversarios': len(aniversariantes),
-        'em_risco': len(pendentes),
+        'em_risco': len(risco),                                    # [back-10-frequencia] antes: len(pendentes)
         'notificacoes': 0,                                         # módulo ainda não criado
         # crescimento no ano: ativos de hoje contra os que já estavam cadastrados na virada do ano
         'ano_delta': _pct(len(ativos), sum(1 for a in ativos if cadastro[a.id] is None or cadastro[a.id].year < ano)),
     }
 
+    # [back-15-avaliacoes] antes: 'avaliacao_hoje' era sempre None (o módulo não existia). Agora: a próxima avaliação
+    # marcada para hoje (para o aviso) e a lista de todas as de hoje (para o card do painel).
+    from app.services import avaliacao_service
+    avaliacoes_hoje = avaliacao_service.de_hoje_para_o_painel(hoje)
     alertas = {
-        'avaliacao_hoje': None,                                    # precisa do módulo de avaliações
-        'risco': [{'nome': x['nome'], 'tipo': 'pagamento', 'tom': 'red',
-                   'motivo': f"Pagamento atrasado há {x['dias_atraso']} dia{'s' if x['dias_atraso'] != 1 else ''}"}
-                  for x in pendentes],
-        'aniversarios': [{'nome': a.nome or 'Aluno sem nome',
+        'avaliacao_hoje': avaliacoes_hoje[0] if avaliacoes_hoje else None,
+        'avaliacoes_hoje': avaliacoes_hoje,
+        'risco': risco,
+        'aniversarios': [{'nome': a.nome or 'Aluno sem nome', 'telefone': a.telefone or '',
                           'motivo': f"Completa {hoje.year - a.data_nascimento.year} anos hoje"}
                          for a in aniversariantes],
-        'renovacao': [{'nome': x['nome'], 'tom': 'red' if x['dias_atraso'] > 10 else 'blue',
+        'renovacao': [{'nome': x['nome'], 'tom': 'red' if x['dias_atraso'] > 10 else 'blue', 'telefone': x['telefone'],
                        'motivo': f"Plano {x['plano'].lower()} venceu há {x['dias_atraso']} dias"}
                       for x in pendentes if x['dias_atraso'] > 5],
     }
 
     listas = {
         'vencem': vencem,
-        'ausentes': [],
+        'ausentes': ausentes,                                      # [back-10-frequencia] antes: sempre vazia
         'novas': [{'aluno': linhas[a.id], 'data': _dm(cadastro[a.id])} for a in novas],
     }
 
@@ -138,8 +171,17 @@ def montar_painel(hoje=None):
     }
 
 
-def _serie_ativos(ativos, cadastro, hoje):
-    """Gráfico "Alunos ativos por mês": os últimos meses, do mais antigo para o atual."""
+def _fim_do_mes(ano, mes):
+    return date(ano + (mes == 12), mes % 12 + 1, 1) - timedelta(days=1)
+
+
+def _serie_ativos(alunos, cadastro, hoje):
+    """
+    Gráfico "Alunos ativos por mês": os últimos meses, do mais antigo para o atual.
+    [back-11-relatorios] antes: contava só os alunos ativos HOJE, e quem tinha saído sumia de todos os meses.
+    Agora conta também quem foi desativado depois do fim daquele mês (a data fica em
+    alunos.data_inativacao). Quem já estava inativo antes desta branch não tem data e continua fora.
+    """
     meses = []
     ano, mes = hoje.year, hoje.month
     for _ in range(MESES_NO_GRAFICO):
@@ -150,8 +192,10 @@ def _serie_ativos(ativos, cadastro, hoje):
     valores = []
     for a, m in meses:
         # cadastrados até o fim do mês (a, m); aluno sem data de cadastro conta em todos
-        valores.append(sum(1 for al in ativos
-                           if cadastro[al.id] is None or (cadastro[al.id].year, cadastro[al.id].month) <= (a, m)))
+        fim = _fim_do_mes(a, m)
+        valores.append(sum(1 for al in alunos
+                           if (al.ativo or (al.data_inativacao is not None and al.data_inativacao.date() > fim))
+                           and (cadastro[al.id] is None or (cadastro[al.id].year, cadastro[al.id].month) <= (a, m))))
 
     primeiro, ultimo = meses[0], meses[-1]
     periodo = f"{MESES[primeiro[1] - 1].capitalize()} a {MESES[ultimo[1] - 1]} de {ultimo[0]}"
@@ -160,7 +204,7 @@ def _serie_ativos(ativos, cadastro, hoje):
     return {
         'labels': [MESES[m - 1][:3].capitalize() for _, m in meses],
         'valores': valores,
-        'meta': None,                                              # vem de Configurações > Metas (ainda não existe)
+        'meta': None,                                              # preenchida em montar_painel(), com a meta da conta
         'periodo': periodo,
     }
 
@@ -173,8 +217,8 @@ def planos_com_faturamento(hoje=None):
     """
     hoje = hoje or date.today()
     ativos = [a for a in da_conta(Aluno).all() if a.ativo]
-    pagamentos = da_conta(Pagamento).all()
-    faturamento = sum(float(p.valor) for p in pagamentos if _mesmo_mes(p.data_pagamento, hoje.year, hoje.month))
+    pagamentos = _pagamentos_da_conta()
+    faturamento = sum(float(p.valor_pago) for p in pagamentos if _mesmo_mes(p.data_pagamento, hoje.year, hoje.month))
     linhas = _faturamento_por_plano(da_conta(Plano).all(), ativos, pagamentos, faturamento, hoje.year, hoje.month, todos=True)
     return {linha['plano_id']: linha for linha in linhas}, (faturamento / len(ativos)) if ativos else 0.0
 
@@ -182,15 +226,19 @@ def planos_com_faturamento(hoje=None):
 # [back-08-planos] ganhou o parâmetro `todos` (antes: sempre escondia plano pausado sem aluno).
 def _faturamento_por_plano(planos, ativos, pagamentos, faturamento, ano, mes, todos=False):
     """Gráfico "De onde vem o faturamento": quanto cada plano recebeu no mês."""
-    plano_do_aluno = {a.id: a.plano_id for a in ativos}
     alunos_no_plano = defaultdict(int)
     for a in ativos:
         alunos_no_plano[a.plano_id] += 1
 
     recebido = defaultdict(float)
+    avulsos = 0
     for p in pagamentos:
         if _mesmo_mes(p.data_pagamento, ano, mes):
-            recebido[plano_do_aluno.get(p.aluno_id)] += float(p.valor)
+            # [back-09-cobranca] antes: contava para o plano em que o aluno está HOJE (plano_do_aluno).
+            # Agora conta para o plano da cobrança, que é o da época. Diária avulsa não tem plano (None).
+            recebido[p.cobranca.plano_id] += float(p.valor_pago)
+            if p.cobranca.plano_id is None:
+                avulsos += 1
 
     linhas = [{
         'plano_id': pl.id,
@@ -200,6 +248,10 @@ def _faturamento_por_plano(planos, ativos, pagamentos, faturamento, ano, mes, to
         'valor': recebido[pl.id],
         'pct': round(recebido[pl.id] / faturamento * 100) if faturamento else 0,
     } for pl in planos if todos or pl.ativo or alunos_no_plano[pl.id]]
+    if recebido[None]:
+        # [back-09-cobranca] diárias avulsas: entrada de caixa de visitante, sem plano
+        linhas.append({'plano_id': None, 'nome': 'Avulsos', 'alunos': avulsos, 'dias': None, 'valor': recebido[None],
+                       'pct': round(recebido[None] / faturamento * 100) if faturamento else 0, 'avulso': True})
     linhas.sort(key=lambda x: (-x['valor'], -x['alunos'], x['nome']))
     for i, linha in enumerate(linhas):
         linha['cor'] = CORES_PLANOS[min(i, len(CORES_PLANOS) - 1)]

@@ -1,0 +1,50 @@
+{#
+  GET/POST /convite/<token> (auth.convite) — quem foi CONVIDADO pela academia (recepção ou instrutor) cria o próprio acesso.
+  O dono convidou em Configurações > Equipe > Convidar; o backend mandou este link por e-mail (vale 7 dias, uso único).
+  Contexto: convite {academia, email, papel, papel_rotulo, quem_convidou} | None (link vencido/usado), erros{campo: msg}
+  Campos: nome, senha.  O e-mail vem do convite e não muda aqui (é o login).
+#}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo %}
+{% set erros = erros or {} %}
+{% block titulo %}Aceitar convite{% endblock %}
+{% block hero %}
+<span class="auth__logo">{{ icon('user-plus', 28) }}</span>
+<h1>Você foi convidado</h1>
+<p>{{ 'para a equipe da ' ~ convite.academia if convite else 'Link de convite' }}</p>
+{% endblock %}
+{% block content %}
+{% if not convite %}
+<span class="tile tile--lg tone-red" style="margin-bottom:14px">{{ icon('alert', 24) }}</span>
+<h2>Este convite não vale mais</h2>
+<p class="lead">O link venceu (dura 7 dias) ou já foi usado. Peça pra quem te convidou mandar um novo.</p>
+<a class="btn btn-ghost btn-block" href="{{ url_for('auth.login') }}">Ir para o login</a>
+{% else %}
+<h2>Criar seu acesso</h2>
+<p class="lead">{{ convite.quem_convidou }} te convidou para a <b>{{ convite.academia }}</b> como <b>{{ convite.papel_rotulo }}</b>.</p>
+<form method="post" action="{{ url_for('auth.convite', token=token) }}" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <div class="stack gap-4">
+    <div class="field-group">
+      <span class="label">E-mail de acesso</span>
+      <div class="convite-email">{{ icon('lock', 16) }}<span class="linha1">{{ convite.email }}</span></div>
+    </div>
+    {{ campo('nome', 'Seu nome', '', 'text', 'Como a equipe te chama', obrigatorio=True, autocomplete='name', erro=erros.nome) }}
+    <div class="field-group">
+      <label class="label" for="f-senha">Crie uma senha <span class="faint" aria-hidden="true">*</span></label>
+      <div class="field-icon">
+        <input class="input{{ ' is-invalid' if erros.senha }}" id="f-senha" name="senha" type="password" autocomplete="new-password" placeholder="Pelo menos 8 caracteres" minlength="8"
+               style="padding-left:14px;padding-right:52px" required data-msg-required="Crie uma senha." data-forca aria-describedby="forca-txt">
+        <button type="button" class="iconbtn iconbtn--soft field-action" data-toggle-senha="f-senha" aria-label="Mostrar senha" aria-pressed="false" style="border:0;background:none">{{ icon('eye', 20) }}</button>
+      </div>
+      <div class="forca" aria-hidden="true"><i data-forca-barra></i></div>
+      <div class="field-hint" id="forca-txt" data-forca-txt>Pelo menos 8 caracteres.</div>
+      {% if erros.senha %}<div class="field-error" data-server>{{ erros.senha }}</div>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>Entrar na equipe</button>
+  </div>
+</form>
+{% endif %}
+<div class="auth__foot">Vale Tec · 2026</div>
+{% endblock %}

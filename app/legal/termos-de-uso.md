@@ -1,14 +1,14 @@
 # Termos de Uso — Vale Tec
 
-> **RASCUNHO v0.1 (10/10/2026) — ainda não vale.** Escrito pelo Claude a pedido do Adauto, para ele revisar e completar. Os trechos `[PREENCHER: ...]` dependem de informação que só o Adauto tem. Veja a lista do que conferir em `docs/legal/LEIA-ME.md`.
+> **Versão preliminar 0.4, de 14/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica.
 
-**Última atualização:** `[PREENCHER: data de publicação]`
+**Última atualização:** 14/10/2026
 
 ## 1. Quem somos e o que é este documento
 
-O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers. Ele é oferecido por `[PREENCHER: nome completo ou razão social]`, inscrito no CNPJ `[PREENCHER]`, com sede em `[PREENCHER: cidade/UF]` ("Vale Tec", "nós").
+O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers. Ele é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, inscrito no CNPJ 60.499.733/0001-44, com sede em Tremembé/SP ("Vale Tec", "nós").
 
-Estes Termos são o contrato entre o Vale Tec e quem cria uma conta para usar o sistema ("você", "cliente"): a academia, o estúdio ou o profissional. Ao criar a conta, você declara que leu e aceita estes Termos e a nossa [Política de Privacidade](Politica-de-Privacidade.md).
+Estes Termos são o contrato entre o Vale Tec e quem cria uma conta para usar o sistema ("você", "cliente"): a academia, o estúdio ou o profissional. Ao criar a conta, você declara que leu e aceita estes Termos e a nossa [Política de Privacidade](politica-de-privacidade).
 
 Se você cria a conta em nome de uma empresa, declara que tem poder para representá-la.
 
@@ -29,24 +29,25 @@ O sistema é uma ferramenta de organização. Ele **não**:
 - As informações do cadastro devem ser verdadeiras e ficar atualizadas.
 - A conta tem um **responsável** (o dono), que pode convidar outras pessoas da equipe, como recepção e instrutores. Você responde pelo que essas pessoas fizerem dentro da sua conta.
 - Cada pessoa usa o próprio acesso. Não compartilhe senha.
-- Se desconfiar de acesso indevido, troque a senha e nos avise em `[PREENCHER: e-mail de contato]`.
+- Se desconfiar de acesso indevido, troque a senha e nos avise em vale.informatica02@gmail.com.
 
-## 4. Período de teste e preço
+## 4. Teste grátis, preço e pagamento
 
-- **Período de teste:** o Vale Tec está em fase de lançamento e, neste momento, é oferecido **de graça** aos primeiros clientes, para testes. A previsão é que essa fase dure cerca de 2 meses.
-- **Cobrança futura:** depois do teste, o sistema passará a ser pago. O preço e a forma de cobrança ainda não estão definidos.
-- **Aviso antes de cobrar:** nenhuma cobrança começa sem aviso. Vamos informar o preço com pelo menos **30 dias** de antecedência, por e-mail e dentro do sistema. Você decide se continua. Se não quiser, basta cancelar a conta antes da data informada, sem custo.
-- Não pedimos dados de cartão durante o teste.
+- **Teste grátis:** toda conta nova usa o Vale Tec **de graça por 2 meses**, contados do dia em que foi criada. Não pedimos cartão para isso.
+- **Depois do teste:** o Vale Tec passa a ser pago, por mês. O preço vigente aparece na tela **Assinatura** do sistema, e o sistema avisa quando faltam 7 dias para o fim do teste.
+- **Como pagar:** por PIX. A tela Assinatura mostra o código "PIX copia e cola" com o valor. A confirmação do pagamento é feita pela nossa equipe; a conta é liberada assim que o pagamento for confirmado.
+- **Sem pagamento:** depois do vencimento, a conta continua funcionando por **7 dias**, com aviso. Passado esse prazo, a conta é **bloqueada** e só abre a tela de pagamento. Os dados ficam guardados por **30 dias** depois do bloqueio; pagando nesse prazo, tudo volta como estava. Depois disso, a conta e os dados podem ser apagados.
+- **Mudança de preço:** avisamos com pelo menos **30 dias** de antecedência, por e-mail e dentro do sistema. Se não concordar, você pode cancelar antes de a mudança valer.
 
-## 5. Por ser uma fase de teste
+## 5. Fase de lançamento
 
-Durante o período de teste o sistema ainda está sendo ajustado. Isso significa que:
+O Vale Tec acabou de ser lançado e ainda está sendo ajustado. Isso significa que:
 
 - podem ocorrer falhas, lentidão e períodos fora do ar;
 - telas e funções podem mudar, entrar ou sair;
 - recomendamos que você mantenha, por conta própria, uma cópia dos dados mais importantes (o sistema permite exportar listas).
 
-Pedimos que você nos conte os problemas que encontrar: é para isso que o teste existe.
+Pedimos que você nos conte os problemas que encontrar.
 
 ## 6. O que você pode e o que não pode fazer
 
@@ -82,20 +83,22 @@ Por isso:
 
 - usar os dados dos seus alunos só para prestar o serviço a você. Não vendemos, não usamos para propaganda e não repassamos a terceiros, a não ser aos fornecedores necessários para o sistema funcionar (como a hospedagem), que seguem as mesmas obrigações;
 - manter os dados de cada conta separados dos das outras contas;
+- limitar o acesso da nossa equipe: só os **administradores do Vale Tec** (hoje, os sócios) veem os dados das contas, e só para dar suporte, conferir pagamentos, investigar problemas e manter o sistema funcionando. Para ajudar, um administrador pode entrar na sua conta como se fosse o dono. Cada um desses acessos fica registrado;
 - adotar medidas de segurança compatíveis com o tipo de dado (detalhes na Política de Privacidade);
 - avisar você, sem demora injustificada e em até **48 horas** depois de confirmarmos, se houver um incidente de segurança que afete os dados da sua conta, com o que soubermos até o momento;
 - devolver ou apagar os dados quando a conta for encerrada, como descrito na cláusula 9.
 
 ## 8. Suporte e disponibilidade
 
-- **Suporte:** atendemos por `[PREENCHER: canal — e-mail, WhatsApp]`. Nesta fase o atendimento acontece **nos fins de semana e, em dias úteis, depois das 20h**. Respondemos assim que possível dentro desses horários.
+- **Suporte:** atendemos pelo e-mail vale.informatica02@gmail.com e respondemos assim que possível.
 - **Disponibilidade:** nos esforçamos para manter o sistema no ar, mas não garantimos funcionamento ininterrupto, principalmente durante o período de teste. Manutenções programadas serão avisadas com antecedência sempre que possível.
 - **Cópias de segurança:** fazemos cópia de segurança diária dos dados, guardada por 30 dias, para recuperar o sistema em caso de falha. Essa cópia serve para restaurar o serviço como um todo; ela não substitui a exportação que você pode fazer dos seus próprios dados.
 
 ## 9. Cancelamento e o que acontece com os dados
 
-- **Você pode cancelar a qualquer momento**, pelo sistema ou pelo nosso canal de contato, sem multa.
+- **Você pode cancelar a qualquer momento**, pelo nosso canal de contato (cláusula 14), sem multa.
 - **Nós podemos encerrar** uma conta que descumpra estes Termos, ou encerrar o serviço como um todo. Se encerrarmos o serviço, avisamos com pelo menos 30 dias de antecedência.
+- **Conta bloqueada por falta de pagamento:** os dados ficam guardados por 30 dias depois do bloqueio (cláusula 4); depois disso, podem ser apagados.
 - **Depois do cancelamento:** você tem 30 dias para pedir a exportação dos seus dados. Passado esse prazo, os dados da conta são apagados dos sistemas em uso. As cópias de segurança que ainda os contenham são eliminadas no ciclo normal, em até 30 dias depois disso.
 - Podemos guardar por mais tempo apenas o que a lei exigir (por exemplo, registros de acesso ao sistema, que a lei manda guardar por 6 meses).
 
@@ -118,9 +121,9 @@ Podemos atualizar estes Termos. Mudanças importantes serão avisadas por e-mail
 
 ## 13. Lei e foro
 
-Estes Termos seguem as leis do Brasil. Fica eleito o foro de `[PREENCHER: cidade/UF]` para resolver qualquer questão, sem prejuízo do direito do consumidor de acionar o foro do próprio domicílio quando a lei assim garantir.
+Estes Termos seguem as leis do Brasil. Fica eleito o foro de Tremembé/SP para resolver qualquer questão, sem prejuízo do direito do consumidor de acionar o foro do próprio domicílio quando a lei assim garantir.
 
 ## 14. Contato
 
-- Dúvidas sobre o sistema ou sobre estes Termos: `[PREENCHER: e-mail]`
-- Assuntos de privacidade e proteção de dados: `[PREENCHER: e-mail, pode ser o mesmo]`
+- Dúvidas sobre o sistema ou sobre estes Termos: vale.informatica02@gmail.com
+- Assuntos de privacidade e proteção de dados: vale.informatica02@gmail.com

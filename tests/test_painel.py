@@ -75,7 +75,8 @@ def test_listas_batem_com_os_numeros(app, academia):
     assert [x["nome"] for x in painel["listas"]["vencem"]] == ["Duda Paz"]
     assert [x["aluno"]["nome"] for x in painel["listas"]["novas"]] == ["Ana Souza"]
     assert painel["alertas"]["risco"][0]["motivo"] == "Pagamento atrasado há 14 dias"
-    assert painel["alertas"]["aniversarios"][0] == {"nome": "Ana Souza", "motivo": "Completa 36 anos hoje"}
+    # [back-16-mensagens] o aviso passou a levar o telefone do aluno (o botão do WhatsApp virou link)
+    assert painel["alertas"]["aniversarios"][0] == {"nome": "Ana Souza", "telefone": "11999990000", "motivo": "Completa 36 anos hoje"}
     assert [x["nome"] for x in painel["alertas"]["renovacao"]] == ["Bia Lima"]
     assert painel["alunos"][0]["nome"] == "Ana Souza" and painel["alunos"][0]["status"] == "ativo"
     assert {x["nome"]: x["status"] for x in painel["alunos"]}["Bia Lima"] == "pendente"
@@ -141,11 +142,10 @@ def test_login_leva_para_o_painel_novo(cliente):
 
 
 @pytest.mark.parametrize("origem, destino", [
-    ("/alunos/7/renovar", "/pagamentos/registrar/7"),      # as pontes de lista, cadastro, busca e perfil viraram telas de verdade na back-07
-    ("/alunos/7/pagamentos", "/pagamentos/listar/7"),
+    # as pontes de alunos viraram telas de verdade na back-07 (lista, cadastro, busca, perfil) e na back-09 (renovar, extrato)
     # as pontes de planos (/planos e /planos/novo) viraram telas de verdade na back-08
-    ("/exercicios", "/exercicios/listar/"),
-    ("/treinos", "/fichas/listar/"),
+    # exercícios e fichas de treino viraram telas de verdade na back-14: não sobrou nenhuma ponte em pendentes.py
+    ("/pagamentos/situacao/", "/alunos?status=pendente"),      # as telas antigas de pagamento levam às novas (back-09)
 ])
 def test_pontes_levam_para_as_telas_antigas(cliente, origem, destino):
     logar(cliente, criar_usuario("dono@teste.local"))

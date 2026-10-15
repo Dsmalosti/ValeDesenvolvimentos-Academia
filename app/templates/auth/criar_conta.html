@@ -1,0 +1,61 @@
+{#
+  GET/POST /criar-conta (auth.criar_conta) — o DONO cria a conta (academia ou personal). Equipe NÃO se cadastra aqui:
+  recepção e instrutor entram por convite (Configurações > Equipe > Convidar -> /convite/<token>).
+  Campos (name == coluna): tipo (academia|personal), nome, email, senha.  Contexto: erros{campo: msg}, f (valores pra repovoar)
+  Por que só 4 campos: cada campo a mais derruba cadastro. Nome da academia, CNPJ/CREF, WhatsApp e logo ficam pra
+  Configurações, depois que a pessoa já viu o painel (cadastro progressivo).
+  Depois do POST: o backend cria a conta + o usuário proprietário, faz login e manda pro painel. Confirmação de e-mail
+  vai por link, SEM travar o primeiro uso (só é exigida antes de ligar o PIX ou convidar equipe).
+#}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo %}
+{% set f = f or {} %}
+{% set erros = erros or {} %}
+{% block titulo %}Criar conta{% endblock %}
+{% block hero %}
+<a class="m-btn" href="{{ url_for('auth.login') }}" aria-label="Voltar para o login" style="margin-bottom:8px">{{ icon('chevron-left', 22) }}</a>
+<h1>Comece em 1 minuto</h1>
+<p>Sem planilha, sem instalar nada</p>
+{% endblock %}
+{% block content %}
+<h2>Criar sua conta</h2>
+<p class="lead">Você é o dono: depois convida a recepção e os instrutores.</p>
+
+{% if erros %}<div class="note note--red" role="alert" style="margin-bottom:16px">{{ icon('alert', 20) }}<span><strong>Confira os campos marcados</strong>Falta pouco.</span></div>{% endif %}
+
+<form method="post" action="{{ url_for('auth.criar_conta') }}" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <input type="hidden" id="h-tipo" name="tipo" value="{{ f.tipo or 'academia' }}">
+  <div class="stack gap-4">
+    <div class="field-group">
+      <span class="label" id="lb-tipo">Você é</span>
+      <div class="opcoes" data-opcoes data-alvo="h-tipo" style="--cols:1" role="group" aria-labelledby="lb-tipo">
+        <button type="button" class="opcao opcao--linha" data-valor="academia" aria-pressed="{{ 'false' if f.tipo == 'personal' else 'true' }}">
+          <span class="tile tone-blue">{{ icon('building', 22) }}</span><span class="grow">Academia ou estúdio<small>Recepção, planos mensais, check-in</small></span>
+        </button>
+        <button type="button" class="opcao opcao--linha" data-valor="personal" aria-pressed="{{ 'true' if f.tipo == 'personal' else 'false' }}">
+          <span class="tile tone-blue">{{ icon('calendar', 22) }}</span><span class="grow">Personal trainer<small>Agenda, pacotes de sessões</small></span>
+        </button>
+      </div>
+    </div>
+    {{ campo('nome', 'Seu nome', f.nome, 'text', 'Como você quer ser chamado', obrigatorio=True, autocomplete='name', erro=erros.nome) }}
+    {{ campo('email', 'E-mail', f.email, 'email', 'seu@email.com', obrigatorio=True, autocomplete='email', inputmode='email', erro=erros.email) }}
+    <div class="field-group">
+      <label class="label" for="f-senha">Senha <span class="faint" aria-hidden="true">*</span></label>
+      <div class="field-icon">
+        <input class="input{{ ' is-invalid' if erros.senha }}" id="f-senha" name="senha" type="password" autocomplete="new-password" placeholder="Pelo menos 8 caracteres" minlength="8"
+               style="padding-left:14px;padding-right:52px" required data-msg-required="Crie uma senha." data-forca aria-describedby="forca-txt">
+        <button type="button" class="iconbtn iconbtn--soft field-action" data-toggle-senha="f-senha" aria-label="Mostrar senha" aria-pressed="false" style="border:0;background:none">{{ icon('eye', 20) }}</button>
+      </div>
+      <div class="forca" aria-hidden="true"><i data-forca-barra></i></div>
+      <div class="field-hint" id="forca-txt" data-forca-txt>Pelo menos 8 caracteres. Uma frase curta é mais forte que uma senha difícil.</div>
+      {% if erros.senha %}<div class="field-error" data-server>{{ erros.senha }}</div>{% endif %}
+    </div>
+    <button type="submit" class="btn btn-primary btn-lg btn-block" data-carregando>Criar minha conta</button>
+    <p class="faint fs-12 ta-c" style="margin:0">{# [back-19-lgpd] antes: os dois links apontavam para #termos e #privacidade, que não levavam a lugar nenhum #}Ao criar a conta você aceita os <a href="{{ url_for('legal.termos') }}" target="_blank" rel="noopener">termos de uso</a> e a <a href="{{ url_for('legal.privacidade') }}" target="_blank" rel="noopener">política de privacidade</a>. Os dados dos seus alunos são seus: o Vale Tec não usa nem vende (LGPD).</p>
+  </div>
+</form>
+<p class="ta-c" style="margin-top:20px;font-size:14px">Já tem conta? <a class="fw-7" href="{{ url_for('auth.login') }}">Entrar</a></p>
+<div class="auth__foot">Vale Tec · 2026</div>
+{% endblock %}

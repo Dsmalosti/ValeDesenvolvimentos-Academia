@@ -5,6 +5,10 @@ from app.blueprints.alunos.form import AlunoForm
 from app.services.aluno_service import AlunoService
 from app.models import Aluno, PAPEL_INSTRUTOR
 from app.services import aluno_tela_service as telas  # [back-07-alunos] regras das telas novas
+from app.services import cobranca_service as cobrancas  # [back-09-cobranca] cobrança, renovação e extrato
+from app.services import frequencia_service as frequencia  # [back-10-frequencia] bloquear acesso e busca do popup
+from app.services import pacote_service  # [back-17-personal] renovar pacote na conta de personal
+from app.services import lgpd_service  # [back-19-lgpd] exportar e apagar os dados de um aluno
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
@@ -148,10 +152,11 @@ def novo():
             return render_template('alunos/novo.html', aluno=telas.do_formulario(request.form), erros=erros,
                                    planos=telas.planos_do_formulario(), modo='novo')
         aluno = telas.criar(valores)
-        # No desenho do front, daqui a recepção vai direto receber a primeira mensalidade. Esse passo
-        # entra com a branch de cobrança; por enquanto o cadastro termina no perfil do aluno.
-        flash('Aluno cadastrado.', 'success')
-        return redirect(url_for('alunos.detalhe', id=aluno.id))
+        # [back-09-cobranca] antes: o cadastro terminava no perfil do aluno. Agora segue o desenho do front:
+        # nasce a cobrança da matrícula e a recepção vai direto receber (ou toca em "Cobrar depois").
+        cobranca = cobrancas.gerar(aluno, aluno.plano)
+        flash('Aluno cadastrado. Falta receber a primeira mensalidade.', 'success')
+        return redirect(url_for('cobrancas.receber', id=cobranca.id, forma=aluno.forma_pagamento))
     return render_template('alunos/novo.html', aluno=telas.aluno_em_branco(), erros={},
                            planos=telas.planos_do_formulario(), modo='novo')
 
@@ -210,22 +215,46 @@ def inativar(id):
 @papel_requerido(*DONO)   # apagar os dados de um aluno de vez é só com o dono (LGPD)
 def excluir(id):
     aluno = _aluno_da_conta(id)
+    # [back-19-lgpd] antes: aluno com pagamento, entrada, avaliação ou sessão NÃO podia ser excluído ("desative em vez de
+    # excluir"), e a academia não tinha como atender um pedido de exclusão de dados (direito do aluno pela LGPD).
+    # Agora: quem não tem histórico é excluído como sempre; quem tem, tem os dados pessoais e de saúde APAGADOS e o
+    # cadastro anonimizado. Os pagamentos ficam no financeiro, sem identificação (services/lgpd_service.py).
+    primeiro_nome = (aluno.nome or 'aluno').split()[0]
+    if lgpd_service.tem_historico(aluno):
+        lgpd_service.apagar(aluno)
+        flash(f'Dados de {primeiro_nome} apagados. Os pagamentos continuam no financeiro, sem identificação.', 'success')
+        return redirect(url_for('alunos.lista'))
     try:
         AlunoService.excluir_aluno(aluno.id)
     except BusinessError:
-        # o banco recusa apagar aluno que tem ficha ou pagamento ligado a ele
-        flash('Não foi possível excluir: este aluno tem fichas ou pagamentos registrados. Desative em vez de excluir.', 'error')
+        flash('Não foi possível excluir este cadastro agora. Tente de novo.', 'error')
         return redirect(url_for('alunos.detalhe', id=id))
     flash('Cadastro excluído.', 'success')
     return redirect(url_for('alunos.lista'))
 
 
+@alunos_blueprint.route('/<int:id>/dados')
+@papel_requerido(*DONO)   # [back-19-lgpd] rota nova: o arquivo traz CPF, contato e dados de saúde; só o dono baixa
+def dados(id):
+    """Um arquivo com tudo o que o sistema guarda sobre o aluno (direito de acesso e de portabilidade, LGPD)."""
+    import json
+    aluno = _aluno_da_conta(id)
+    resposta = make_response(json.dumps(lgpd_service.exportar(aluno), ensure_ascii=False, indent=2))
+    resposta.headers['Content-Type'] = 'application/json; charset=utf-8'
+    resposta.headers['Content-Disposition'] = f'attachment; filename=dados-do-aluno-{aluno.id}.json'
+    resposta.headers['Cache-Control'] = 'no-store'      # o navegador não guarda cópia do arquivo
+    return resposta
+
+
 @alunos_blueprint.route('/<int:id>/acesso', methods=['POST'])
 @papel_requerido(*DONO_E_RECEPCAO)
 def acesso(id):
-    # Bloquear e liberar o acesso na recepção faz parte do módulo de frequência, que ainda não existe.
-    _aluno_da_conta(id)
-    flash('Bloquear e liberar acesso ainda não está disponível.', 'info')
+    # [back-10-frequencia] antes: só avisava que a função ainda não existia. Agora troca alunos.acesso_liberado,
+    # que o check-in confere antes de registrar a entrada.
+    aluno = frequencia.alternar_acesso(_aluno_da_conta(id))
+    flash(f"Acesso de {aluno.nome} {'liberado' if aluno.acesso_liberado else 'bloqueado'} na recepção.", 'success')
+    # volta para o perfil, e não para o endereço que o navegador informa: redirecionar para onde o
+    # navegador manda abriria brecha para levar o usuário a outro site
     return redirect(url_for('alunos.detalhe', id=id))
 
 
@@ -236,21 +265,62 @@ def acesso(id):
 # foi ligada, o endpoint existe só para levar à tela antiga equivalente. Nenhuma ponte mexe em
 # dado, e cada uma vira a tela de verdade na branch do seu assunto.
 # [back-07-alunos] lista, novo, detalhe e buscar deixaram de ser pontes (são as rotas acima).
-# As três abaixo continuam, até as branches de cobrança e de frequência.
+# [back-09-cobranca] pagamentos e renovar viraram telas de verdade; [back-10-frequencia] a busca de acesso também.
 # ---------------------------------------------------------------------------
 @alunos_blueprint.route('/<int:id>/pagamentos')
+@papel_requerido(*DONO_E_RECEPCAO)   # extrato é dinheiro: instrutor não vê
 def pagamentos(id):
-    # extrato do aluno: por enquanto é a tela antiga de pagamentos (que já confere a conta e o papel)
-    return redirect(url_for('pagamentos.listarPagamentosAluno', aluno_id=id))
+    # [back-09-cobranca] antes: ponte para a tela antiga /pagamentos/listar/<id>
+    aluno = _aluno_da_conta(id)
+    lista = cobrancas.pagamentos_do(aluno)
+    if request.args.get('formato') == 'csv':
+        resposta = make_response(cobrancas.extrato_csv(lista))
+        resposta.headers['Content-Type'] = 'text/csv; charset=utf-8'
+        resposta.headers['Content-Disposition'] = f'attachment; filename=extrato-{aluno.id}.csv'
+        return resposta
+    return render_template('alunos/pagamentos.html', aluno=telas.contexto_do_perfil(aluno)['aluno'],
+                           pagamentos=lista, total_ano=cobrancas.total_do_ano(lista))
 
 
-@alunos_blueprint.route('/<int:id>/renovar')
+@alunos_blueprint.route('/<int:id>/renovar', methods=['GET', 'POST'])
+@papel_requerido(*DONO_E_RECEPCAO)
 def renovar(id):
-    # renovar matrícula, na tela antiga, é registrar um pagamento (que já confere a conta e o papel)
-    return redirect(url_for('pagamentos.registrarPagamento', aluno_id=id))
+    # [back-09-cobranca] antes: ponte para a tela antiga /pagamentos/registrar/<id>
+    aluno = _aluno_da_conta(id)
+    if request.method == 'POST':
+        try:
+            cobranca = cobrancas.renovar(aluno, request.form.get('plano_id'))
+        except cobrancas.CobrancaInvalida as erro:
+            flash(str(erro), 'error')
+            return redirect(url_for('alunos.renovar', id=id))
+        if request.form.get('acao') == 'sem_cobrar':
+            if pacote_service.e_personal():
+                # [back-17-personal] renovar pacote: o aviso fala do saldo, e não de matrícula
+                flash(f"Pacote renovado: {pacote_service.saldo_txt(pacote_service.pacote_do(aluno)['saldo'])}. A cobrança fica em aberto.", 'success')
+            else:
+                flash('Matrícula renovada. A cobrança fica em aberto.', 'success')
+            return redirect(url_for('alunos.detalhe', id=id))
+        return redirect(url_for('cobrancas.receber', id=cobranca.id, forma=aluno.forma_pagamento))
+    if pacote_service.e_personal():
+        # [back-17-personal] conta de personal: renovar é comprar um pacote novo; a tela mostra o novo saldo (o que sobrou soma)
+        pacotes = pacote_service.pacotes_para_renovar(aluno)
+        if not pacotes:
+            flash('Cadastre um pacote ativo antes de renovar.', 'warning')
+            return redirect(url_for('planos.lista'))
+        return render_template('personal/renovar.html', aluno=telas.contexto_do_perfil(aluno)['aluno'], pacotes=pacotes, plano_atual_id=aluno.plano_id)
+    planos = cobrancas.planos_para_renovar(aluno)
+    if not planos:
+        flash('Cadastre um plano ativo antes de renovar.', 'warning')
+        return redirect(url_for('planos.lista'))
+    return render_template('alunos/renovar.html', aluno=telas.contexto_do_perfil(aluno)['aluno'],
+                           planos=planos, plano_atual_id=aluno.plano_id)
 
 
 @alunos_blueprint.route('/acesso/busca')
+@papel_requerido(*DONO_E_RECEPCAO)
 def acesso_busca():
     # busca do popup "Bloquear ou liberar acesso": devolve só um pedaço de HTML para o popup
-    return '<p class="faint" style="margin:0">A busca para bloquear acesso ainda não está disponível.</p>'
+    # [back-10-frequencia] antes: devolvia um aviso fixo de "ainda não disponível"
+    q = (request.args.get('q') or '').strip()
+    resultados = frequencia.buscar(q) if len(q) >= 2 else []
+    return render_template('alunos/_linhas_acesso.html', resultados=resultados, q=q)

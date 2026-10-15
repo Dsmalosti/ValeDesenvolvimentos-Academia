@@ -1,0 +1,111 @@
+{#
+  GET /relatorios (relatorios.index)  ?periodo=semana|mes|ano  ?forma=&situacao=  (o filtro é um GET simples)
+  Contexto: periodo, periodos{chave:rótulo}, grafico{labels,valores,meta,meta_rotulo,destaque,titulo,sub,selo}, kpis{...}, formas[{nome,pct,cor,valor}],
+            total_recebido, lancamentos[{aluno,data,plano,forma,valor,situacao,origem}], filtro{forma,situacao}, ultimo_fechamento
+  Exportar: relatorios.exportar?formato=pdf|xlsx|csv. Origem do lançamento: 'webhook' (banco confirmou) | 'manual' | None.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, chip_status, brl, stackbar, origem, seletor, dialog_head %}
+{% set nav_ativo = 'relatorios' %}
+{% set pagina_titulo = 'Relatórios financeiros' %}
+{% set pagina_sub = 'Setembro de 2026 · fechamento parcial' %}
+{% set m_voltar = url_for('painel.index') %}
+{% set m_titulo = 'Relatórios' %}
+{% set m_sub = 'Setembro de 2026 · parcial' %}
+{% set sem_tabbar = false %}
+
+{% block page_acoes %}
+<nav class="seg" aria-label="Período">
+  {% for chave, rot in periodos.items() %}<a class="seg__btn" href="{{ url_for('relatorios.index', periodo=chave) }}"{% if chave == periodo %} aria-current="true"{% endif %}>{{ rot }}</a>{% endfor %}
+</nav>
+{% endblock %}
+
+{% block content %}
+<nav class="seg m-only" aria-label="Período" style="align-self:flex-start">
+  {% for chave, rot in periodos.items() %}<a class="seg__btn" href="{{ url_for('relatorios.index', periodo=chave) }}"{% if chave == periodo %} aria-current="true"{% endif %}>{{ rot }}</a>{% endfor %}
+</nav>
+
+<div class="kpi-grid">
+  <div class="card rkpi"><div class="rkpi__lbl">Recebido {{ 'na semana' if periodo == 'semana' else 'no ano' if periodo == 'ano' else 'no mês' }}</div><div class="rkpi__val">{{ brl(kpis.recebido, 0) }}</div><div class="rkpi__sub tone-txt-teal">{{ kpis.previsto_pct }}% do previsto</div></div>
+  <div class="card rkpi"><div class="rkpi__lbl">Em aberto</div><div class="rkpi__val">{{ brl(kpis.aberto, 0) }}</div><div class="rkpi__sub tone-txt-red">{{ kpis.aberto_alunos }} alunos</div></div>
+  <div class="card rkpi"><div class="rkpi__lbl">A vencer até 30/09</div><div class="rkpi__val">{{ brl(kpis.avencer, 0) }}</div><div class="rkpi__sub tone-txt-blue">{{ kpis.avencer_qtd }} mensalidades</div></div>
+  <div class="card rkpi"><div class="rkpi__lbl">Ticket médio</div><div class="rkpi__val">{{ brl(kpis.ticket) }}</div><div class="rkpi__sub tone-txt-yellow">{{ kpis.ticket_delta }}</div></div>
+</div>
+
+<div class="rel-grid">
+  <section class="card card--pad rel-full" aria-labelledby="h-rec">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 class="ctitle" id="h-rec">{{ grafico.titulo }}</h2><div class="csub">{{ grafico.sub }}</div></div>
+      <span class="chip chip--green d-only">{{ grafico.selo }}</span>
+    </div>
+    <div class="chart" style="margin-top:14px" data-chart="barras"
+      data-json='{{ {"labels": grafico.labels, "valores": grafico.valores, "meta": grafico.meta, "metaRotulo": grafico.meta_rotulo or "média", "metaCor": "neutra", "destaque": grafico.destaque, "destaqueCor": "amarelo", "titulo": grafico.titulo, "unidade": "reais", "todosRotulos": true, "altura": 250}|tojson|forceescape }}'></div>
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-forma">
+    <h2 class="ctitle" id="h-forma">Como o dinheiro entrou</h2>
+    <div class="csub" style="margin-bottom:14px">{{ pagina_sub.split(' · ')[0].split(' de ')[0] }} · {{ brl(total_recebido, 0) }} recebidos</div>
+    {% set itens = [] %}{% for f in formas %}{% set _ = itens.append({'nome': f.nome, 'pct': f.pct, 'cor': f.cor, 'texto': brl(f.valor, 0)}) %}{% endfor %}
+    {{ stackbar(itens, 'Recebido por forma de pagamento') }}
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-fechar">
+    <h2 class="ctitle" id="h-fechar">Fechar o mês</h2>
+    <p class="csub" style="margin-bottom:14px">Gera o arquivo já separado por forma de pagamento, do jeito que o contador pede.</p>
+    <div class="export-btns">
+      <a class="btn btn-primary btn-block" href="{{ url_for('relatorios.exportar', formato='pdf') }}">{{ icon('download', 16) }}Baixar PDF do mês</a>
+      <a class="btn btn-ghost btn-block" href="{{ url_for('relatorios.exportar', formato='xlsx') }}">{{ icon('download', 16) }}Planilha (Excel)</a>
+      <a class="btn btn-ghost btn-block" href="{{ url_for('relatorios.exportar', formato='csv') }}" download>{{ icon('download', 16) }}CSV para o contador</a>
+    </div>
+    <p class="faint fs-12" style="margin:14px 0 0">Último fechamento: {{ ultimo_fechamento }}.</p>
+  </section>
+
+  {# ---- lançamentos: tabela (desktop) e lista (mobile) ---- #}
+  <section class="card card--flush rel-full" aria-labelledby="h-lanc">
+    <div class="row-flex" style="justify-content:space-between;padding:20px 24px 16px;gap:12px">
+      <h2 class="ctitle" id="h-lanc" style="font-size:16px">Lançamentos de setembro</h2>
+      <div class="row-flex gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" data-open="dlg-filtro">{{ icon('filter', 16) }}Filtrar{% if filtro.forma or filtro.situacao %} <span class="chip chip--blue" style="margin-left:4px">{{ (1 if filtro.forma else 0) + (1 if filtro.situacao else 0) }}</span>{% endif %}</button>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('relatorios.exportar', formato='csv', forma=filtro.forma, situacao=filtro.situacao) }}" download aria-label="Exportar lançamentos em CSV">{{ icon('download', 16) }}<span class="d-only">Exportar</span></a>
+      </div>
+    </div>
+    {% if lancamentos %}
+    <div class="table-scroll d-only">
+      <table class="dtable">
+        <thead><tr><th scope="col">Aluno</th><th scope="col">Data</th><th scope="col">Plano</th><th scope="col">Forma</th><th scope="col">Valor</th><th scope="col">Situação</th></tr></thead>
+        <tbody>
+          {% for l in lancamentos %}
+          <tr><td><div class="cell-person">{{ avatar(l.aluno.nome) }}<b>{{ l.aluno.nome }}</b></div></td><td>{{ l.data }}</td><td>{{ l.plano }}</td>
+            <td>{{ origem(l.origem) }}{{ l.forma }}</td><td class="strong">{{ brl(l.valor) }}</td><td>{{ chip_status(l.situacao) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <ul class="rel-lanc m-only" style="padding:0 18px 8px">
+      {% for l in lancamentos %}
+      <li>{{ avatar(l.aluno.nome, 'sm') }}<div class="grow"><b class="truncate" style="display:block">{{ l.aluno.nome }}</b><span class="faint fs-12">{{ l.data }} · {{ origem(l.origem) }}{{ l.forma }}</span></div>
+        <div class="ta-r"><b class="num">{{ brl(l.valor) }}</b><div style="margin-top:3px">{{ chip_status(l.situacao) }}</div></div></li>
+      {% endfor %}
+    </ul>
+    <div class="tfoot-bar"><span class="faint"><span class="nowrap-frase">{{ origem('webhook') }}o banco confirmou (PIX automático)</span> &nbsp;·&nbsp; <span class="nowrap-frase">{{ origem('manual') }}lançado pela recepção</span></span></div>
+    {% else %}
+    <p class="muted" style="padding:0 24px 24px;margin:0">Nenhum lançamento com esse filtro. <a href="{{ url_for('relatorios.index', periodo=periodo) }}">Limpar filtro</a></p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-filtro" aria-label="Filtrar lançamentos">
+  {{ dialog_head('Filtrar lançamentos', 'Escolha a forma e a situação', 'filter', 'blue') }}
+  <form method="get" action="{{ url_for('relatorios.index') }}">
+    <input type="hidden" name="periodo" value="{{ periodo }}">
+    <div class="vt-dialog__body">
+      {{ seletor('forma', 'Forma de pagamento', [('PIX','PIX'),('Cartão','Cartão'),('Dinheiro','Dinheiro')], filtro.forma, vazio='Todas') }}
+      {{ seletor('situacao', 'Situação', [('pago','Pago'),('aberto','Em aberto'),('atrasado','Em atraso')], filtro.situacao, vazio='Todas') }}
+    </div>
+    <div class="vt-dialog__foot"><a class="btn btn-ghost" href="{{ url_for('relatorios.index', periodo=periodo) }}">Limpar</a><button class="btn btn-primary" type="submit">Aplicar filtro</button></div>
+  </form>
+</dialog>
+{% endblock %}

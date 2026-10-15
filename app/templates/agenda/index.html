@@ -1,0 +1,80 @@
+{#
+  GET /agenda (agenda.index) — só variante PERSONAL.  Figma: personal/Celular/61-celular-agenda-personal
+  Substitui a Frequência da academia: em vez de check-in, sessões marcadas que abatem do saldo do pacote.
+  Contexto:
+    stats     {hoje, confirmar, valor_dia}
+    grupos    [{titulo ('Hoje, 15/09'), sub ('4 sessões · 4h de trabalho'), itens[{id, hora, tipo, dur_txt, local_obj{curto}, chip(tom, rótulo), aluno{nome}}]}]
+    acabando  [aluno] com 1 sessão sobrando (aviso + popup "Pacotes acabando")
+    hoje_txt  'Terça, 15/09'
+  Celular: coluna única (Figma). Desktop: duas colunas no espírito das telas da academia — sessões à esquerda,
+  resumo do dia + pacotes acabando à direita (blocos m-only / d-only; o HTML dos itens é o mesmo).
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import brl %}
+{% set nav_ativo = 'agenda' %}
+{% set pagina_titulo = 'Agenda' %}
+{% set pagina_sub = hoje_txt ~ ' · ' ~ stats.hoje ~ (' sessão' if stats.hoje == 1 else ' sessões') %}
+{% set m_sub = pagina_sub %}
+{% block page_acoes %}<a class="btn btn-primary" href="{{ url_for('agenda.nova') }}">{{ icon('plus', 18) }}Marcar sessão</a>{% endblock %}
+
+{% block content %}
+<div class="mini-grid av-stats ag-stats m-only">
+  <div class="card stat"><div class="stat__val tone-txt-blue">{{ stats.hoje }}</div><div class="stat__lbl">Sessões hoje</div></div>
+  <div class="card stat"><div class="stat__val tone-txt-yellow">{{ stats.confirmar }}</div><div class="stat__lbl">A confirmar</div></div>
+  <div class="card stat"><div class="stat__val tone-txt-green">{{ brl(stats.valor_dia, 0) }}</div><div class="stat__lbl">Do dia</div></div>
+</div>
+
+<div class="ag-layout">
+<div class="ag-main">
+{% for g in grupos %}
+<section class="card card--pad" aria-labelledby="g-{{ loop.index }}">
+  <h2 class="ctitle" id="g-{{ loop.index }}">{{ g.titulo }}</h2><div class="csub">{{ g.sub }}</div>
+  <ul class="ag-lista">
+    {% for s in g.itens %}
+    <li><a class="ag-item" href="{{ url_for('agenda.detalhe', id=s.id) }}" aria-label="Sessão de {{ s.aluno.nome }} às {{ s.hora }}, {{ s.chip[1] }}">
+      <span class="ag-hora">{{ s.hora }}</span>
+      <span class="ag-quem"><b class="truncate">{{ s.aluno.nome }}</b><small class="truncate">{{ s.tipo }} · {{ s.dur_txt }} · {{ s.local_obj.curto }}</small></span>
+      <span class="chip chip--{{ s.chip[0] }} nowrap">{{ s.chip[1] }}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<div class="card card--pad"><p class="muted" style="margin:0">Nenhuma sessão marcada a partir de hoje.</p></div>
+{% endfor %}
+</div>
+
+{# desktop: resumo do dia na lateral (fica parado enquanto a lista rola) #}
+<aside class="ag-side d-only" aria-label="Resumo do dia">
+<div class="mini-grid av-stats ag-stats">
+  <div class="card stat"><div class="stat__val tone-txt-blue">{{ stats.hoje }}</div><div class="stat__lbl">Sessões hoje</div></div>
+  <div class="card stat"><div class="stat__val tone-txt-yellow">{{ stats.confirmar }}</div><div class="stat__lbl">A confirmar</div></div>
+  <div class="card stat"><div class="stat__val tone-txt-green">{{ brl(stats.valor_dia, 0) }}</div><div class="stat__lbl">Do dia</div></div>
+</div>
+{% if acabando %}
+<button type="button" class="card alert-card" data-open="dlg-pacotes-acabando">
+  <span class="tile tone-yellow">{{ icon('alert', 22) }}</span>
+  <span class="grow"><b>{{ acabando|length }} {{ 'pacote acabando' if acabando|length == 1 else 'pacotes acabando' }}</b>
+    <span class="alert-card__sub">{% for a in acabando %}{{ a.nome.split()[0] }}{{ ' e ' if loop.revindex == 2 else (', ' if not loop.last) }}{% endfor %} {{ 'tem' if acabando|length == 1 else 'têm' }} 1 sessão restante</span></span>
+  {{ icon('chevron-right', 18) }}
+</button>
+{% endif %}
+</aside>
+</div>
+
+{% if acabando %}
+<button type="button" class="card alert-card m-only" data-open="dlg-pacotes-acabando">
+  <span class="tile tone-yellow">{{ icon('alert', 22) }}</span>
+  <span class="grow"><b>{{ acabando|length }} {{ 'pacote acabando' if acabando|length == 1 else 'pacotes acabando' }}</b>
+    <span class="alert-card__sub">{% for a in acabando %}{{ a.nome.split()[0] }}{{ ' e ' if loop.revindex == 2 else (', ' if not loop.last) }}{% endfor %} {{ 'tem' if acabando|length == 1 else 'têm' }} 1 sessão restante</span></span>
+  {{ icon('chevron-right', 18) }}
+</button>
+{% endif %}
+
+<a class="btn btn-primary btn-lg btn-block m-only" href="{{ url_for('agenda.nova') }}">{{ icon('plus', 18) }}Marcar sessão</a>
+{% endblock %}
+
+{% block dialogs %}
+{% include 'personal/_pacotes_acabando.html' %}
+{% endblock %}

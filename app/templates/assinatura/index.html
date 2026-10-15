@@ -1,0 +1,53 @@
+{#
+  GET /assinatura (assinatura.index) — a assinatura da conta no Vale Tec: situação, preço e como pagar.
+  [back-24-assinatura] ESTE TEMPLATE NÃO VEIO DO DRIVE. Montado com as peças do front (card, chip, note, dtable).
+  Adauto: revise o visual e leve para o front.
+  Contexto: s{estado, rotulo, tom, vence, dias_para_vencer, bloqueia_em, preco, em_teste, fim_do_teste, pago_ate},
+            pix, contato, e_dono, nome_do_dono, modelo_txt, historico[Mensalidade], dmy(), reais().
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'config' %}
+{% set pagina_titulo = 'Assinatura' %}
+{% set pagina_sub = 'Seu plano no Vale Tec' %}
+{% set m_voltar = true %}
+{% block content %}
+<div class="stack gap-4" style="max-width:760px">
+  <section class="card card--pad" aria-labelledby="h-plano">
+    <div class="row-flex" style="justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div><h2 class="ctitle" id="h-plano">Vale Tec · {{ modelo_txt }}</h2><div class="csub" style="margin:0">{{ reais(s.preco) }} por mês</div></div>
+      <span class="chip chip--{{ s.tom }}">{{ s.rotulo }}</span>
+    </div>
+    <div class="stack gap-2" style="margin-top:14px;font-size:14.5px">
+      {% if s.estado == 'teste' %}
+      <div>Teste grátis até <b>{{ dmy(s.fim_do_teste) }}</b>{% if s.dias_para_vencer > 0 %} (faltam {{ s.dias_para_vencer }} {{ 'dia' if s.dias_para_vencer == 1 else 'dias' }}){% else %} (termina hoje){% endif %}.</div>
+      <div class="muted">Depois do teste, o pagamento é mensal, por PIX. Você pode pagar antes: o mês pago começa quando o teste termina.</div>
+      {% elif s.estado == 'em_dia' %}
+      <div>Pago até <b>{{ dmy(s.vence) }}</b>.</div>
+      {% else %}
+      <div>Venceu em <b>{{ dmy(s.vence) }}</b>. Sem o pagamento, a conta será bloqueada em <b>{{ dmy(s.bloqueia_em) }}</b>.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="card card--pad" aria-label="Pagar">
+    {% include 'assinatura/_pagar.html' %}
+  </section>
+
+  {% if e_dono and historico %}
+  <section class="card card--flush" aria-labelledby="h-hist">
+    <h2 class="ctitle" id="h-hist" style="padding:18px 22px 10px">Pagamentos confirmados</h2>
+    <div class="table-scroll">
+      <table class="dtable">
+        <thead><tr><th scope="col">Pago em</th><th scope="col">Período</th><th scope="col">Valor</th></tr></thead>
+        <tbody>
+          {% for m in historico %}
+          <tr><td>{{ dmy(m.pago_em) }}</td><td>{{ dmy(m.periodo_inicio) }} a {{ dmy(m.periodo_fim) }}</td><td class="strong">{{ reais(m.valor) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

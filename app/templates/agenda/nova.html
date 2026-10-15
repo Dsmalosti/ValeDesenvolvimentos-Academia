@@ -1,0 +1,79 @@
+{#
+  GET/POST /agenda/nova (agenda.nova) — só variante PERSONAL.  Figma: personal/Celular/63-celular-marcar-sessao
+  ?aluno=<id>  ?q=  ?remarcar=<sessao_id>
+  Sem aluno: escolher com quem (busca). Com aluno: formulário.
+  POST: aluno_id, data (dd/mm/aaaa), horario, duracao (minutos), local (estudio|casa|parque|online), repete (unica|semanal),
+        acao (marcar|renovar — "renovar" marca e já leva para renovar o pacote), remarcar (id da sessão, se for remarcação)
+  Contexto: aluno|None, achados[], q, erros{}, f{data,horario,duracao,local,repete}, horarios[], duracoes[(min, texto)],
+            locais[{chave, nome, sub}], remarcar|None, avulso (bool)
+  Os locais vêm de Configurações > Locais de atendimento (só os ligados aparecem aqui).
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, campo, seletor %}
+{% set nav_ativo = 'agenda' %}
+{% set pagina_titulo = 'Remarcar sessão' if remarcar else 'Marcar sessão' %}
+{% set m_voltar = url_for('agenda.index') %}
+{% set corpo_classe = 'page--narrow' %}
+{% set sem_tabbar = aluno is not none %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('agenda.index') }}">Agenda</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ pagina_titulo }}</span></nav>{% endblock %}
+
+{% block content %}
+{% if not aluno %}
+<form class="field-icon" role="search" method="get" action="{{ url_for('agenda.nova') }}">
+  {{ icon('search', 18) }}<input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar aluno por nome ou CPF" aria-label="Buscar aluno" enterkeyhint="search" data-autofocus>
+</form>
+<section class="card card--pad" aria-labelledby="h-q"><h2 class="ctitle" id="h-q">Com quem?</h2>
+  <ul class="mlist" style="margin-top:6px">
+    {% for a in achados %}<li><a class="mrow" href="{{ url_for('agenda.nova', aluno=a.id) }}">{{ avatar(a.nome, 'lg') }}<span class="mrow__main"><span class="mrow__title" style="display:block">{{ a.nome }}</span><span class="mrow__sub" style="display:block">{{ a.plano }} · {{ a.vence_txt }}</span></span><span class="faint">{{ icon('chevron-right', 18) }}</span></a></li>
+    {% else %}<li class="muted" style="padding:12px 0">Ninguém com “{{ q }}”.</li>{% endfor %}
+  </ul></section>
+{% else %}
+{% set saldo = aluno.pacote.saldo %}
+{% set nome1 = aluno.nome.split()[0] %}
+{% set ultima = (not avulso) and saldo <= 1 and not remarcar %}
+<form method="post" action="{{ url_for('agenda.nova') }}" class="stack gap-3" data-validate novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}"><input type="hidden" name="aluno_id" value="{{ aluno.id }}">
+  {% if remarcar %}<input type="hidden" name="remarcar" value="{{ remarcar }}">{% endif %}
+
+  <section class="card card--pad" aria-labelledby="h-quem"><h2 class="ctitle" id="h-quem" style="margin-bottom:12px">Com quem</h2>
+    <div class="row-flex gap-3 av-quem-box">{{ avatar(aluno.nome, 'lg', 'blue') }}<div class="grow" style="min-width:0"><b class="truncate" style="display:block">{{ aluno.nome }}</b><div class="faint fs-12">{{ 'Sessão avulsa' if avulso else 'Pacote de ' ~ aluno.pacote.total ~ ' · ' ~ aluno.vence_txt }}</div></div>
+      {% if not remarcar %}<a class="iconbtn iconbtn--soft" href="{{ url_for('agenda.nova') }}" aria-label="Trocar de aluno">{{ icon('close', 18) }}</a>{% endif %}</div>
+  </section>
+
+  <section class="card card--pad" aria-label="Data e horário">
+    {{ campo('data', 'Data', f.data, mask='data', inputmode='numeric', obrigatorio=True, erro=erros.get('data'), icone='calendar', extra='data-futuro-ok') }}
+    <div class="field-group"><span class="label" id="lb-hor">Horário</span>
+      <div class="opcoes" data-opcoes data-alvo="h-horario" style="--cols:3" role="group" aria-labelledby="lb-hor">
+        {% for h in horarios %}<button type="button" class="opcao" data-valor="{{ h }}" aria-pressed="{{ 'true' if f.horario == h else 'false' }}">{{ h }}</button>{% endfor %}
+      </div><input type="hidden" id="h-horario" name="horario" value="{{ f.horario }}">
+      {% if erros.get('horario') %}<div class="field-error" data-server>{{ erros.horario }}</div>{% endif %}</div>
+    {{ seletor('duracao', 'Duração', duracoes, f.duracao, vazio=None) }}
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-onde"><h2 class="ctitle" id="h-onde" style="margin-bottom:12px">Onde</h2>
+    <div class="opcoes" data-opcoes data-alvo="h-local" style="--cols:2" role="group" aria-labelledby="h-onde">
+      {% for l in locais %}<button type="button" class="opcao" data-valor="{{ l.chave }}" aria-pressed="{{ 'true' if f.local == l.chave else 'false' }}">{{ l.nome }}<span class="opcao-sub">{{ l.sub }}</span></button>{% endfor %}
+    </div><input type="hidden" id="h-local" name="local" value="{{ f.local }}">
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-rep"><h2 class="ctitle" id="h-rep" style="margin-bottom:12px">Repetição</h2>
+    <div class="opcoes" data-opcoes data-alvo="h-repete" style="--cols:2" role="group" aria-labelledby="h-rep">
+      <button type="button" class="opcao" data-valor="unica" aria-pressed="{{ 'true' if f.repete != 'semanal' else 'false' }}">Só esta<span class="opcao-sub">uma vez</span></button>
+      <button type="button" class="opcao" data-valor="semanal" aria-pressed="{{ 'true' if f.repete == 'semanal' else 'false' }}">Toda semana<span class="opcao-sub">no mesmo horário</span></button>
+    </div><input type="hidden" id="h-repete" name="repete" value="{{ 'semanal' if f.repete == 'semanal' else 'unica' }}">
+  </section>
+
+  {% if ultima and saldo == 1 %}
+  <div class="note note--yellow"><span class="tile tone-yellow" style="width:36px;height:36px">{{ icon('alert', 18) }}</span><span><strong>Essa é a última sessão do pacote</strong>Depois dela {{ nome1 }} fica sem saldo. Dá pra <b>renovar o pacote</b> agora e já receber.</span></div>
+  {% elif ultima %}
+  <div class="note note--yellow"><span class="tile tone-yellow" style="width:36px;height:36px">{{ icon('alert', 18) }}</span><span><strong>{{ nome1 }} está sem saldo</strong>Essa sessão fica fora do pacote. Dá pra <b>renovar o pacote</b> agora e já receber.</span></div>
+  {% endif %}
+
+  <button class="btn btn-primary btn-lg btn-block" type="submit" name="acao" value="marcar" data-carregando>{{ 'Remarcar e avisar o aluno' if remarcar else 'Marcar e avisar o aluno' }}</button>
+  {% if ultima %}
+  <button class="btn btn-accent btn-lg btn-block" type="submit" name="acao" value="renovar">{{ icon('refresh', 18) }}Marcar e renovar o pacote</button>
+  {% endif %}
+</form>
+{% endif %}
+{% endblock %}

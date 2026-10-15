@@ -1,0 +1,26 @@
+{#
+  [back-24-assinatura] ESTE TEMPLATE NÃO VEIO DO DRIVE. O bloco "Pagar por PIX", usado em assinatura/index.html e em
+  assinatura/bloqueada.html. Montado só com peças que já existem no front (card, tile, note, btn, data-copiar).
+  Contexto: s (situação), pix (texto do copia e cola | None), contato{email, whatsapp}, reais(), e_dono, nome_do_dono.
+#}
+{% from '_macros/icons.html' import icon %}
+{% if e_dono %}
+<div class="stack gap-3">
+  <div class="row-flex gap-3"><span class="tile tone-green">{{ icon('pix', 22) }}</span>
+    <div><b style="font-size:16px">Pagar por PIX</b><div class="csub" style="margin:0">{{ reais(s.preco) }} por mês</div></div></div>
+  {% if pix %}
+  <label class="label" for="pix-codigo">PIX copia e cola</label>
+  <textarea class="input" id="pix-codigo" rows="4" readonly style="font-family:ui-monospace,monospace;font-size:12.5px;word-break:break-all;resize:none">{{ pix }}</textarea>
+  <button type="button" class="btn btn-primary btn-lg btn-block" data-copiar="{{ pix }}" data-copiar-msg="Código PIX copiado. Cole no aplicativo do seu banco.">{{ icon('copy', 18) }}Copiar código PIX</button>
+  <div class="note note--blue">{{ icon('info', 20) }}<span><strong>Como funciona</strong>No aplicativo do banco, escolha "PIX copia e cola" e cole o código. Depois de pagar, mande o comprovante para {{ contato.email }}{% if contato.whatsapp %} ou pelo WhatsApp{% endif %}. A conta é liberada assim que o pagamento for confirmado.</span></div>
+  {% else %}
+  <div class="note note--yellow">{{ icon('info', 20) }}<span><strong>O código PIX ainda não está disponível aqui</strong>Fale com o suporte pelo e-mail {{ contato.email }} para receber os dados de pagamento.</span></div>
+  {% endif %}
+</div>
+{% else %}
+<div class="note note--yellow">{{ icon('info', 20) }}<span><strong>Quem paga é o responsável pela conta</strong>Avise {{ nome_do_dono }}. O pagamento é feito por PIX, entrando com o login de dono.</span></div>
+{% endif %}
+<div class="row-flex gap-2" style="flex-wrap:wrap;margin-top:12px">
+  {% if contato.email %}<a class="btn btn-ghost" href="mailto:{{ contato.email }}">{{ icon('send', 18) }}{{ contato.email }}</a>{% endif %}
+  {% if contato.whatsapp %}<a class="btn btn-green" href="https://wa.me/{{ contato.whatsapp }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}WhatsApp do suporte</a>{% endif %}
+</div>

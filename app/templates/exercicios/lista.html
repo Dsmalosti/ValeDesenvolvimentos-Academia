@@ -1,0 +1,58 @@
+{#
+  GET /exercicios (exercicios.lista)   ?q=&grupo=&limite=<n>   busca, filtro e "carregar mais" são server-side
+  Contexto: exercicios (já cortados no limite), total_filtrado, total, com_video, grupos, filtro {q,grupo}, limite, proximo_limite
+  Campos do banco usados: nome, grupo_muscular, equipamento, video_url
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import vazio %}
+{% set nav_ativo = 'exercicios' %}
+{% set pagina_titulo = 'Exercícios' %}
+{% set pagina_sub = total ~ ' exercícios cadastrados · ' ~ grupos|length ~ ' grupos musculares · com vídeo demonstrativo' %}
+{% set m_voltar = url_for('painel.index') %}
+{% set m_sub = 'Catálogo da academia' %}
+
+{% block page_acoes %}<a class="btn btn-ghost" href="{{ url_for('treinos.biblioteca') }}">{{ icon('clipboard', 18) }}Fichas de treino</a><a class="btn btn-primary" href="{{ url_for('exercicios.novo') }}">{{ icon('plus', 18) }}Novo exercício</a>{% endblock %}
+
+{% block content %}
+<form class="card card--pad ex-filtros" role="search" method="get" action="{{ url_for('exercicios.lista') }}">
+  <div class="field-icon grow">{{ icon('search', 18) }}<input class="input" type="search" name="q" value="{{ filtro.q }}" placeholder="Buscar exercício pelo nome" aria-label="Buscar exercício pelo nome" enterkeyhint="search"></div>
+  {% if filtro.grupo %}<input type="hidden" name="grupo" value="{{ filtro.grupo }}">{% endif %}
+  <nav class="pills" aria-label="Grupo muscular">
+    <a class="pill" href="{{ url_for('exercicios.lista', q=filtro.q or None) }}"{% if not filtro.grupo %} aria-current="true"{% endif %}>Todos</a>
+    {% for g in grupos %}<a class="pill" href="{{ url_for('exercicios.lista', grupo=g, q=filtro.q or None) }}"{% if filtro.grupo == g %} aria-current="true"{% endif %}>{{ g }}</a>{% endfor %}
+  </nav>
+</form>
+
+{% if exercicios %}
+{# desktop: grade de vídeos #}
+<section class="ex-grid d-only" aria-label="Exercícios">
+  {% for e in exercicios %}
+  <a class="card ex-card" href="{{ url_for('exercicios.detalhe', id=e.id) }}">
+    <span class="ex-thumb{{ ' ex-thumb--sem' if not e.com_video }}"><span class="ex-play">{{ icon('play', 18) }}</span>{% if e.com_video %}<span class="ex-dur">{{ e.duracao }}</span>{% else %}<span class="ex-dur">sem vídeo</span>{% endif %}</span>
+    <span class="ex-info"><b>{{ e.nome }}</b><span class="row-flex" style="justify-content:space-between"><span class="chip chip--blue">{{ e.grupo_muscular }}</span><span class="faint fs-12">{{ e.equipamento }}</span></span></span>
+  </a>
+  {% endfor %}
+</section>
+{# mobile: lista #}
+<section class="card card--pad m-only" aria-label="Exercícios">
+  <div class="row-flex" style="justify-content:space-between;margin-bottom:4px"><b>{{ total_filtrado }} exercícios</b><span class="faint fs-12">{{ com_video }} com vídeo</span></div>
+  <ul class="mlist">
+    {% for e in exercicios %}
+    <li><a class="mrow" href="{{ url_for('exercicios.detalhe', id=e.id) }}">
+      <span class="tile tile--sm ex-tile">{{ icon('play', 16) }}</span>
+      <span class="mrow__main"><span class="mrow__title" style="display:block;font-size:14.5px">{{ e.nome }}</span><span class="mrow__sub" style="display:block">{{ e.grupo_muscular }} · {{ e.equipamento|lower }}</span></span>
+      {% if not e.com_video %}<span class="chip chip--slate" style="font-weight:600">sem vídeo</span>{% endif %}
+    </a></li>
+    {% endfor %}
+  </ul>
+</section>
+<div class="card card--pad ex-mais">
+  <span class="foot-note" style="font-size:13px">Mostrando {{ exercicios|length }} de {{ total_filtrado }} exercícios</span>
+  {% if proximo_limite %}<a class="btn btn-ghost" href="{{ url_for('exercicios.lista', q=filtro.q or None, grupo=filtro.grupo or None, limite=proximo_limite) }}">Carregar mais</a>{% endif %}
+</div>
+{% else %}
+<section class="card">{{ vazio('Nenhum exercício encontrado', 'Tente outro nome ou limpe o filtro de grupo.', 'search', 'Limpar filtros', url_for('exercicios.lista')) }}</section>
+{% endif %}
+<a class="btn btn-primary btn-lg btn-block m-only" href="{{ url_for('exercicios.novo') }}">{{ icon('plus', 18) }}Adicionar exercício</a>
+{% endblock %}

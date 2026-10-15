@@ -17,7 +17,7 @@ import os
 import sys
 import tempfile
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 sys.dont_write_bytecode = True  # o repositório versiona .pyc; não gerar novos ao testar
 
@@ -31,7 +31,8 @@ import pytest  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Aluno, Conta, Exercicio, Ficha, Pagamento, Plano, Treino, User  # noqa: E402
+from app.models import (Aluno, AvaliacaoAgendada, AvaliacaoFisica, Cobranca, Conta, Custo, Exercicio, Ficha, Frequencia, Pagamento, Plano,  # noqa: E402
+                        Sessao, Treino, User)
 
 SENHA_TESTE = "Senha-de-teste-123"
 _APP = None  # app do teste em andamento; as funções criar_* abrem o contexto a partir dele
@@ -91,8 +92,11 @@ def conta_de(usuario_id):
 
 def logar(cliente, usuario_id):
     """Marca o cliente de teste como logado, sem passar pela tela de login."""
+    # [back-18-seguranca] a sessão guarda "id|marca da senha" (User.get_id); com o id puro o sistema não reconhece mais
+    with _APP.app_context():
+        identificacao = db.session.get(User, usuario_id).get_id()
     with cliente.session_transaction() as sessao:
-        sessao["_user_id"] = str(usuario_id)
+        sessao["_user_id"] = identificacao
         sessao["_fresh"] = True
 
 
@@ -101,17 +105,65 @@ def criar_plano(dono_id, nome="Mensal"):
                          conta_id=conta_de(dono_id)))
 
 
-def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=None, nascimento=date(1990, 1, 1)):
-    aluno = Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo,
+def criar_aluno(dono_id, plano_id, nome, email, cpf, ativo=True, cadastrado_em=None, nascimento=date(1990, 1, 1), whatsapp=True):
+    # [back-22-ajustes-de-produto] `whatsapp`: o aluno autorizou avisos pelo WhatsApp? Antes não havia o parâmetro e o campo ficava vazio, o que
+    # bastava para entrar na fila de Mensagens. Agora só entra quem autorizou, então os alunos de teste nascem autorizados.
+    aluno = Aluno(nome=nome, email=email, cpf=cpf, telefone="11999990000", ativo=ativo, aceita_whatsapp=whatsapp,
                   data_nascimento=nascimento, plano_id=plano_id, instrutor_id=dono_id, conta_id=conta_de(dono_id))
     if cadastrado_em:  # um `date`; sem isso o banco usa o momento atual
         aluno.data_cadastro = datetime(cadastrado_em.year, cadastrado_em.month, cadastrado_em.day)
     return _salvar(aluno)
 
 
-def criar_pagamento(dono_id, aluno_id, valor, pago_em, vence_em):
-    return _salvar(Pagamento(aluno_id=aluno_id, instrutor_id=dono_id, conta_id=conta_de(dono_id), valor=valor, forma_pagamento="pix",
-                             data_pagamento=pago_em, data_vencimento=vence_em))
+def criar_pagamento(dono_id, aluno_id, valor, pago_em, vence_em, forma="pix"):
+    """
+    Um pagamento já recebido: cria a cobrança (paga, do plano atual do aluno, cobrindo de `pago_em`
+    até `vence_em`) e o pagamento que a quitou, confirmado por `dono_id`. Devolve o id do pagamento.
+    """
+    with _APP.app_context():
+        aluno = db.session.get(Aluno, aluno_id)
+        cobranca = Cobranca(conta_id=aluno.conta_id, aluno_id=aluno_id, plano_id=aluno.plano_id, tipo="renovacao", valor=valor,
+                            data_inicio=pago_em, data_vencimento=vence_em, status="paga", instrutor_id=dono_id)
+        db.session.add(cobranca)
+        db.session.flush()
+        pagamento = Pagamento(conta_id=aluno.conta_id, cobranca_id=cobranca.id, forma=forma, valor_pago=valor,
+                              data_pagamento=datetime(pago_em.year, pago_em.month, pago_em.day, 12, 0),
+                              origem_confirmacao="manual", confirmado_por_instrutor_id=dono_id)
+        db.session.add(pagamento)
+        db.session.commit()
+        return pagamento.id
+
+
+def criar_cobranca_em_aberto(dono_id, aluno_id, valor, inicio, fim, tipo="matricula"):
+    """Uma cobrança ainda não paga (o "cobrar depois"). Devolve o id da cobrança."""
+    with _APP.app_context():
+        aluno = db.session.get(Aluno, aluno_id)
+        return _salvar(Cobranca(conta_id=aluno.conta_id, aluno_id=aluno_id, plano_id=aluno.plano_id, tipo=tipo, valor=valor,
+                                data_inicio=inicio, data_vencimento=fim, status="pendente", instrutor_id=dono_id))
+
+
+def criar_entrada(dono_id, aluno_id, quando, origem="recepcao"):
+    """Uma entrada (check-in) do aluno em `quando` (um datetime). Devolve o id."""
+    return _salvar(Frequencia(conta_id=conta_de(dono_id), aluno_id=aluno_id, data_hora_entrada=quando, origem=origem, instrutor_id=dono_id))
+
+
+def criar_custo(dono_id, descricao, valor):
+    """Um custo fixo mensal da academia de `dono_id`. Devolve o id."""
+    return _salvar(Custo(conta_id=conta_de(dono_id), descricao=descricao, valor=valor))
+
+
+def ligar_checkin(conta_id, ligado=True):
+    """Liga ou desliga o serviço de check-in de uma conta (nos testes as contas nascem com ele desligado)."""
+    with _APP.app_context():
+        db.session.get(Conta, conta_id).checkin_ativo = ligado
+        db.session.commit()
+
+
+def semear_catalogo():
+    """Grava o catálogo padrão de exercícios (os modelos de ficha dependem dele). Devolve quantos criou."""
+    from app.services.treino_service import semear_catalogo_padrao
+    with _APP.app_context():
+        return semear_catalogo_padrao()
 
 
 def criar_exercicio(nome="Supino", dono_id=None):
@@ -126,6 +178,55 @@ def criar_ficha(aluno_id, nome="Ficha A"):
 
 def criar_treino(ficha_id, dia="segunda"):
     return _salvar(Treino(ficha_id=ficha_id, dia_semana=dia))
+
+
+def criar_agendamento(dono_id, aluno_id, dia, hora="09:00", avaliador_id=None, status="confirmada", tipo="primeira"):
+    """Um horário de avaliação física marcado para `dia` (um date). Devolve o id."""
+    return _salvar(AvaliacaoAgendada(conta_id=conta_de(dono_id), aluno_id=aluno_id, data=dia, hora=hora, tipo=tipo, status=status,
+                                     avaliador_id=avaliador_id or dono_id, cobranca="inclusa", criado_por_id=dono_id))
+
+
+def criar_avaliacao(dono_id, aluno_id, dia, peso=70, altura=170, **medidas):
+    """Uma avaliação física FEITA em `dia` (um date), com IMC e RCQ calculados como o sistema calcula. Devolve o id."""
+    from app.services.avaliacao_service import calcular_imc, calcular_rcq
+    return _salvar(AvaliacaoFisica(conta_id=conta_de(dono_id), aluno_id=aluno_id, data=dia, avaliador_id=dono_id, peso_kg=peso, altura_cm=altura,
+                                   imc=calcular_imc(peso, altura), rcq=calcular_rcq(medidas.get("cintura_cm"), medidas.get("quadril_cm")), **medidas))
+
+
+def criar_personal(email="paulo@teste.local", nome="Paulo"):
+    """Um personal trainer: a conta (modelo 'personal') e o usuário dono dela. Devolve o id do usuário."""
+    return criar_usuario(email, nome=nome, conta=criar_conta(nome=f"{nome} Rocha", modelo="personal"))
+
+
+def criar_pacote(dono_id, nome="Pacote 8", sessoes=8, valor=960, ativo=True):
+    """Um pacote de sessões (na conta de personal, o "plano"). Devolve o id."""
+    return _salvar(Plano(nome=nome, valor=valor, duracao_dias=90, quantidade_sessoes=sessoes, descricao="", ativo=ativo,
+                         instrutor_id=dono_id, conta_id=conta_de(dono_id)))
+
+
+def criar_compra(dono_id, aluno_id, pacote_id, paga=True, quando=None):
+    """A compra de um pacote pelo aluno: a cobrança (com as sessões) e, se `paga`, o pagamento. `quando` é um datetime. Devolve o id da cobrança."""
+    with _APP.app_context():
+        pacote = db.session.get(Plano, pacote_id)
+        quando = quando or datetime.utcnow()
+        cobranca = Cobranca(conta_id=conta_de(dono_id), aluno_id=aluno_id, plano_id=pacote_id, tipo="matricula", valor=pacote.valor,
+                            data_inicio=quando.date(), data_vencimento=quando.date() + timedelta(days=90), status="paga" if paga else "pendente",
+                            instrutor_id=dono_id, quantidade_sessoes=pacote.quantidade_sessoes, data_geracao=quando)
+        db.session.add(cobranca)
+        db.session.flush()
+        if paga:
+            db.session.add(Pagamento(conta_id=cobranca.conta_id, cobranca_id=cobranca.id, forma="pix", valor_pago=pacote.valor, data_pagamento=quando,
+                                     origem_confirmacao="manual", confirmado_por_instrutor_id=dono_id))
+        db.session.commit()
+        return cobranca.id
+
+
+def criar_sessao(dono_id, aluno_id, dia, hora="09:00", status="agendada", abateu=None, repete="unica", local="estudio", duracao=60):
+    """Uma sessão na agenda do personal em `dia` (um date). Concluída abate do saldo, a não ser que `abateu=False`. Devolve o id."""
+    concluida = status == "concluida"
+    return _salvar(Sessao(conta_id=conta_de(dono_id), aluno_id=aluno_id, instrutor_id=dono_id, data=dia, hora=hora, duracao=duracao, local=local,
+                          repete=repete, status=status, abateu=concluida if abateu is None else abateu,
+                          concluida_em=datetime.utcnow() if concluida else None))
 
 
 def contar(modelo, **filtros):

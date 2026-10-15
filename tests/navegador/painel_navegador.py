@@ -34,7 +34,8 @@ from werkzeug.serving import make_server  # noqa: E402
 from app import create_app  # noqa: E402
 from app.extensions.database import db  # noqa: E402
 from app.extensions.security import bcrypt  # noqa: E402
-from app.models import Conta, Aluno, Pagamento, Plano, User  # noqa: E402
+from app.models import Conta, Aluno, Plano, User  # noqa: E402
+from tests.navegador._base import pagamento_recebido  # noqa: E402
 
 EMAIL, SENHA = "marina@valetec.com", "Senha-de-teste-123"
 resultados = []
@@ -77,8 +78,7 @@ def montar_app():
             db.session.flush()
             if dias_pag is not None:
                 pago = hoje - timedelta(days=dias_pag)
-                db.session.add(Pagamento(aluno_id=aluno.id, instrutor_id=dona.id, conta_id=conta.id, valor=planos[p].valor, forma_pagamento="pix",
-                                         data_pagamento=pago, data_vencimento=pago + timedelta(days=planos[p].duracao_dias)))
+                pagamento_recebido(db, aluno, dona, planos[p].valor, pago, pago + timedelta(days=planos[p].duracao_dias))
         db.session.commit()
     return app
 
@@ -111,9 +111,7 @@ with sync_playwright() as p:
 
         # --- entra pela tela de login ---
         pg.goto(BASE + "/")
-        pg.wait_for_selector("#dlg-perfil[open]", timeout=5000)
-        acionar('#dlg-perfil [data-valor="recepcao"]')
-        pg.wait_for_timeout(400)
+        pg.wait_for_selector("#f-identificador", timeout=5000)      # [back-18-seguranca] antes: esperava e fechava o popup de perfil, que saiu do login
         pg.fill("#f-identificador", EMAIL)
         pg.fill("#f-senha", SENHA)
         acionar("button[type=submit]")
@@ -160,11 +158,15 @@ with sync_playwright() as p:
             pg.wait_for_timeout(500)
             checa(f"[{nome}] gaveta do menu abre", pg.locator("#gaveta[open]").count() == 1 and pg.locator("#gaveta .dlink").count() >= 5)
             pg.screenshot(path=os.path.join(FOTOS, f"{nome}-3-gaveta.png"))
-            pg.tap("#gaveta .dlink:has-text('Configurações')")
+            pg.tap("#gaveta .dlink:has-text('Mensagens')")      # (era Configurações, que virou tela de verdade na back-12)
         else:
             checa(f"[{nome}] rail lateral visível e sem barra de abas", pg.is_visible(".rail") and not pg.is_visible(".tabbar"))
-            pg.click(".rail .navicon[aria-label='Configurações']")
-        pg.wait_for_url("**/configuracoes", timeout=6000)
+            pg.click(".rail .navicon[aria-label='Mensagens']")
+        pg.wait_for_url("**/mensagens", timeout=6000)
+        # [back-16-mensagens] antes: Mensagens era a seção "em construção" usada neste teste. Virou tela de verdade;
+        # a que sobrou sem backend no menu do painel é a central de notificações (o sino).
+        checa(f"[{nome}] menu 'Mensagens' abre a fila de mensagens", "fila de hoje" in pg.inner_text("body").lower() and pg.locator(".app .main").count() == 1)
+        pg.goto(BASE + "/notificacoes")
         checa(f"[{nome}] seção sem backend mostra 'Em construção' no layout novo",
               "Em construção" in pg.inner_text("#conteudo") and pg.locator(".app .main").count() == 1)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-4-em-construcao.png"))
@@ -187,7 +189,8 @@ with sync_playwright() as p:
         pg.wait_for_url("**/planos", timeout=6000)
         checa(f"[{nome}] menu 'Planos' abre a lista nova de planos", "Mensal" in pg.content() and pg.locator(".app .main").count() == 1)
         pg.goto(BASE + "/exercicios")
-        checa(f"[{nome}] /exercicios leva à tela antiga de exercícios (ponte)", pg.url.endswith("/exercicios/listar/"))
+        # [back-14-treinos] antes era uma ponte para a tela antiga (/exercicios/listar/); agora é o catálogo do front novo
+        checa(f"[{nome}] /exercicios abre o catálogo novo de exercícios", pg.url.endswith("/exercicios") and pg.locator(".app .main").count() == 1)
 
         # --- sair ---
         pg.goto(BASE + "/")

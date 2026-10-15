@@ -1,0 +1,47 @@
+{#
+  [back-19-lgpd] GET /termos (legal.termos) e GET /privacidade (legal.privacidade): páginas PÚBLICAS, sem login.
+  Página nova, que não veio do Drive: usa a base das telas públicas (base_auth.html) e as peças que já existem.
+  Contexto: titulo, nome, corpo (HTML já seguro, montado em services/legal_service.py a partir de app/legal/*.md), versao, outro{nome, endpoint}
+  Adauto: revise o visual e leve para o front.
+#}
+{% extends 'base_auth.html' %}
+{% from '_macros/icons.html' import icon %}
+{% block titulo %}{{ nome }}{% endblock %}
+{% block hero %}
+<a class="m-btn" href="{{ url_for('auth.login') }}" aria-label="Voltar para o login" style="margin-bottom:8px">{{ icon('chevron-left', 22) }}</a>
+<h1>{{ nome }}</h1>
+<p>Vale Tec</p>
+{% endblock %}
+{% block content %}
+{# o texto é longo: a coluna das telas públicas (400px, centralizada na altura) alarga e começa do topo só nesta página #}
+<style>
+  .auth__form{max-width:720px}
+  @media (min-width:900px){.auth__panel{align-items:flex-start;overflow-y:auto}.auth__form{max-width:720px}}
+  .legal h2{font-size:22px;margin:0 0 6px}
+  .legal h3{font-size:17px;font-weight:700;margin:28px 0 8px;font-family:var(--font-body)}
+  .legal h4{font-size:15px;font-weight:700;margin:20px 0 6px;font-family:var(--font-body)}
+  .legal p,.legal li{font-size:14.5px;line-height:1.65;color:var(--text)}
+  .legal p{margin:0 0 12px}
+  .legal ul,.legal ol{margin:0 0 12px;padding-left:22px}
+  .legal li{margin-bottom:6px}
+  .legal a{font-weight:600}
+  .legal mark{background:var(--field);color:var(--text-soft);padding:1px 6px;border-radius:6px;font-style:italic}
+  .legal code{font-family:inherit;background:var(--field);padding:1px 5px;border-radius:5px}
+  .legal-aviso{background:var(--field);border:1px solid var(--border);border-radius:12px;padding:12px 14px;font-size:13.5px!important;color:var(--text-soft)!important}
+  .legal-tabela{overflow-x:auto;margin:0 0 14px}
+  .legal-tabela table{border-collapse:collapse;width:100%;min-width:480px;font-size:13.5px}
+  .legal-tabela th,.legal-tabela td{border:1px solid var(--border);padding:8px 10px;text-align:left;vertical-align:top;line-height:1.5}
+  .legal-tabela th{background:var(--field);font-weight:700}
+</style>
+<article class="legal">
+  <h2>{{ titulo }}</h2>
+  <p class="faint fs-12">Versão {{ versao }}</p>
+  {{ corpo }}
+</article>
+<div class="stack gap-3" style="margin-top:24px">
+  <a class="btn btn-ghost btn-block" href="{{ url_for(outro.endpoint) }}">{{ icon('file', 18) }}Ver {{ outro.nome }}</a>
+  <a class="btn btn-primary btn-block" href="{{ url_for('auth.criar_conta') }}">Criar conta</a>
+  <a class="btn btn-link btn-block" href="{{ url_for('auth.login') }}">Já tenho conta</a>
+</div>
+<div class="auth__foot">Vale Tec · 2026</div>
+{% endblock %}

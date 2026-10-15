@@ -53,7 +53,11 @@ def test_senha_errada_e_email_inexistente_dao_a_mesma_mensagem(cliente_csrf):
 
 
 def test_usuario_inativo_nao_entra(cliente_csrf):
-    assert "Usuário desativado" in entrar(cliente_csrf, email="inativo@teste.local").get_data(as_text=True)
+    # [back-18-seguranca] antes: a tela dizia "Usuário desativado", o que revelava que aquele e-mail tem conta.
+    # Agora a conta desativada recebe a mesma mensagem de senha errada, e continua sem entrar.
+    resposta = entrar(cliente_csrf, email="inativo@teste.local")
+    html = resposta.get_data(as_text=True)
+    assert resposta.status_code == 200 and "Usuário ou senha inválidos" in html and "desativado" not in html
 
 
 def test_email_com_maiuscula_e_espacos_entra(cliente_csrf):

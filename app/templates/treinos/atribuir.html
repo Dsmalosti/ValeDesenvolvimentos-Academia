@@ -1,0 +1,38 @@
+{#
+  GET/POST /treinos/modelo/<id>/atribuir (treinos.atribuir)   POST: aluno_id (vários), acao=ajustar|enviar
+  Contexto: m, alunos[{id,nome,plano,status,cpf}], q, valida, instrutor
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar %}
+{% set nav_ativo = 'exercicios' %}
+{% set tab_ativo = 'treinos' %}
+{% set pagina_titulo = 'Usar com um aluno' %}
+{% set pagina_sub = m.nome %}
+{% set m_sub = m.nome %}
+{% set m_voltar = url_for('treinos.modelo', mid=m.id) %}
+{% set corpo_classe = 'page--narrow' %}
+{% block content %}
+<form class="field-icon" role="search" method="get" action="{{ url_for('treinos.atribuir', mid=m.id) }}">
+  {{ icon('search', 18) }}<input class="input" type="search" name="q" value="{{ q }}" placeholder="Buscar aluno por nome ou CPF" aria-label="Buscar aluno" enterkeyhint="search">
+</form>
+<form method="post" action="{{ url_for('treinos.atribuir', mid=m.id) }}" class="stack gap-3" data-lote>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+  <section class="card card--pad" aria-labelledby="h-p">
+    <h2 class="ctitle" id="h-p">Para quem vai essa ficha?</h2><div class="csub">Dá pra marcar mais de um aluno</div>
+    <ul class="mlist" style="margin-top:6px">
+      {% for a in alunos %}
+      <li><label class="mrow check">{{ avatar(a.nome, 'lg') }}
+        <span class="mrow__main"><span class="mrow__title" style="display:block">{{ a.nome }}</span><span class="mrow__sub" style="display:block">{{ a.plano }} · {{ 'ativo' if a.status == 'ativo' else a.status }}</span></span>
+        <input type="checkbox" name="aluno_id" value="{{ a.id }}" aria-label="Escolher {{ a.nome }}"><span class="check__box">{{ icon('check', 14) }}</span></label></li>
+      {% else %}<li class="muted" style="padding:12px 0">Ninguém com “{{ q }}”.</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card card--pad" aria-labelledby="h-a">
+    <h2 class="ctitle" id="h-a">Antes de enviar</h2>
+    <dl class="hor-list"><div><dt>Modelo</dt><dd>{{ m.nome }}</dd></div><div><dt>Válida até</dt><dd>{{ valida }}</dd></div><div><dt>Instrutor responsável</dt><dd>{{ instrutor }}</dd></div></dl>
+  </section>
+  <button class="btn btn-primary btn-lg btn-block" type="submit" name="acao" value="ajustar">{{ icon('edit', 18) }}Ajustar antes de enviar</button>
+  <button class="btn btn-green btn-lg btn-block" type="submit" name="acao" value="enviar">{{ icon('chat', 18) }}Enviar como está</button>
+</form>
+{% endblock %}

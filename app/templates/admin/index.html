@@ -1,0 +1,62 @@
+{#
+  GET /admin (admin.index) — painel de administração do Vale Tec: todas as contas.
+  [back-25-admin] ESTE TEMPLATE NÃO VEIO DO DRIVE. Montado com as peças do front (kpi, chip, dtable, avatar).
+  Só admin abre (os outros recebem 404). Adauto: revise o visual e leve para o front.
+  Contexto: linhas[{conta, s, dono, alunos_ativos, ultimo_acesso, parado, pagamentos_mes, entradas_mes, saidas_mes,
+            saldo_mes, checkins_mes, dias_de_teste}], contagem{estado: n}, total, receita_mensal, novas_no_mes,
+            filtro, rotulos{estado: rótulo}, reais().
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import kpi, avatar %}
+{% set pagina_titulo = 'Administração' %}
+{% set pagina_sub = total ~ (' conta' if total == 1 else ' contas') ~ ' no Vale Tec' %}
+{% set m_voltar = true %}
+{% block content %}
+<div class="kpi-grid" style="margin-bottom:16px">
+  {{ kpi(contagem.teste, 'Em teste grátis', 'clock', 'blue') }}
+  {{ kpi(contagem.em_dia, 'Pagando em dia', 'check', 'green') }}
+  {{ kpi(contagem.vencida + contagem.bloqueada, 'Vencidas ou bloqueadas', 'alert', 'red') }}
+  {{ kpi(reais(receita_mensal), 'Receita por mês (em dia)', 'dollar', 'yellow') }}
+</div>
+
+<nav class="row-flex gap-2" aria-label="Filtrar contas" style="flex-wrap:wrap;margin-bottom:12px">
+  <a class="chip chip--{{ 'blue' if not filtro else 'slate' }}" href="{{ url_for('admin.index') }}">Todas ({{ total }})</a>
+  {% for chave, rotulo in rotulos.items() %}
+  <a class="chip chip--{{ 'blue' if filtro == chave else 'slate' }}" href="{{ url_for('admin.index', situacao=chave) }}">{{ rotulo }} ({{ contagem[chave] }})</a>
+  {% endfor %}
+  <span class="faint fs-12">{{ novas_no_mes }} {{ 'conta nova' if novas_no_mes == 1 else 'contas novas' }} este mês</span>
+</nav>
+
+<section class="card card--flush" aria-label="Contas">
+  {% if linhas %}
+  <div class="table-scroll">
+    <table class="dtable">
+      <thead><tr>
+        <th scope="col">Conta</th><th scope="col">Situação</th><th scope="col">Alunos ativos</th><th scope="col">Último acesso</th>
+        <th scope="col">Pagamentos no mês</th><th scope="col">Entradas e saídas</th><th scope="col">Check-ins no mês</th>
+      </tr></thead>
+      <tbody>
+        {% for l in linhas %}
+        <tr>
+          <td><a class="cell-person" href="{{ url_for('admin.conta', id=l.conta.id) }}">{{ avatar(l.conta.nome) }}<span><b>{{ l.conta.nome }}</b><br>
+            <span class="faint fs-12">{{ 'Personal' if l.conta.modelo == 'personal' else 'Academia' }} · {{ l.dono.email if l.dono else 'sem dono' }}</span></span></a></td>
+          <td><span class="chip chip--{{ l.s.tom }}">{{ l.s.rotulo }}</span><br><span class="faint fs-12">
+            {% if l.dias_de_teste is not none %}{{ l.dias_de_teste }} {{ 'dia' if l.dias_de_teste == 1 else 'dias' }} de teste
+            {% else %}vence {{ l.s.vence.strftime('%d/%m/%Y') }}{% endif %}</span></td>
+          <td class="strong">{{ l.alunos_ativos }}</td>
+          <td>{% if l.ultimo_acesso %}{{ l.ultimo_acesso.strftime('%d/%m %Hh%M') }}{% else %}nunca{% endif %}{% if l.parado %}<br><span class="chip chip--yellow">parada</span>{% endif %}</td>
+          <td>{{ l.pagamentos_mes }}<br><span class="faint fs-12">{{ reais(l.entradas_mes) }}</span></td>
+          <td><span class="tone-txt-teal">+ {{ reais(l.entradas_mes) }}</span><br><span class="tone-txt-red">− {{ reais(l.saidas_mes) }}</span></td>
+          <td>{{ l.checkins_mes }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted" style="margin:0;padding:22px">Nenhuma conta nesta situação.</p>
+  {% endif %}
+</section>
+<p class="faint fs-12" style="margin-top:10px">Entradas: pagamentos de alunos registrados pela conta no mês. Saídas: custos fixos cadastrados por ela (por mês). "Parada": ninguém da conta usa o sistema há mais de 7 dias.</p>
+{% endblock %}

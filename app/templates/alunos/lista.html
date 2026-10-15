@@ -94,7 +94,7 @@
           <td>{{ chip_status(a.status) }}</td>
           <td class="col-actions"><span class="actions">
             <a class="iconbtn" href="{{ url_for('alunos.detalhe', id=a.id) }}" aria-label="Ver {{ a.nome }}">{{ icon('eye', 18) }}</a>
-            <button type="button" class="iconbtn iconbtn--green" data-toast="WhatsApp aberto para {{ a.nome.split()[0] }}." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>
+            {# [back-16-mensagens] antes: botão de demonstração. Agora abre a conversa do aluno; sem telefone, avisa. #}{% if a.telefone %}<a class="iconbtn iconbtn--green" href="https://wa.me/55{{ a.telefone|replace('(', '')|replace(')', '')|replace(' ', '')|replace('-', '') }}" target="_blank" rel="noopener" aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</a>{% else %}<button type="button" class="iconbtn iconbtn--green" data-toast="{{ a.nome.split()[0] }} não tem telefone cadastrado." aria-label="WhatsApp de {{ a.nome }}">{{ icon('chat', 18) }}</button>{% endif %}
             <a class="iconbtn" href="{{ url_for('alunos.editar', id=a.id) }}" aria-label="Editar {{ a.nome }}">{{ icon('edit', 18) }}</a>
           </span></td>
         </tr>

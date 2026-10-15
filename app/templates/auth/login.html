@@ -21,11 +21,16 @@
 <form method="post" action="{{ url_for('auth.login') }}" data-validate novalidate>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
   <input type="hidden" id="h-perfil" name="perfil" value="{{ perfil or '' }}">
+  {# [back-18-seguranca] `escolher_perfil` (bool): o popup "Como você vai entrar?" e a etiqueta "Entrando como" eram do front de exemplo.
+     No sistema de verdade o papel vem do banco; com `escolher_perfil=False` os dois somem. Sem a variável, tudo aparece como antes. #}
+  {% set escolher_perfil = escolher_perfil|default(true) %}
+  {% if escolher_perfil %}
   <div class="perfil-chip" data-perfil-chip{% if perfil not in perfis %} hidden{% endif %}>
     <span class="tile tile--sm tone-blue">{{ icon('user-check', 18) }}</span>
     <span class="grow">Entrando como <b data-perfil-nome>{{ perfis[perfil] if perfil in perfis else '' }}</b></span>
     <button type="button" class="btn btn-link" data-open="dlg-perfil">Trocar</button>
   </div>
+  {% endif %}
   <div class="stack gap-4">
     <div class="field-group">
       <label class="label" for="f-identificador">E-mail ou usuário</label>
@@ -47,10 +52,14 @@
 </form>
 {# Entrar com digital (passkey): só aparece se o aparelho tiver leitor de digital/rosto (static/js/digital.js tira o hidden).
    Não precisa de e-mail nem de perfil: a chave guardada no aparelho já diz qual é a conta. #}
+{# [back-18-seguranca] antes: o botão aparecia em todo aparelho com leitor de digital, mas o servidor ainda não tem o login por
+   digital (as rotas /login/digital/* não existem) e o toque não fazia nada. Só aparece quando o servidor oferecer (`oferecer_digital`). #}
+{% if oferecer_digital is not defined or oferecer_digital %}
 <div class="login-digital" data-digital-entrar hidden>
   <div class="login-ou" aria-hidden="true"><span>ou</span></div>
   <button type="button" class="btn btn-ghost btn-lg btn-block">{{ icon('digital', 22) }}Entrar com digital</button>
 </div>
+{% endif %}
 <p class="ta-c" style="margin-top:20px;font-size:14px">Ainda não tem conta? <a class="fw-7" href="{{ url_for('auth.criar_conta') }}">Criar conta</a></p>
 {# Aba de contas de teste: só aparece no servidor de desenvolvimento (_dev/app.py injeta contas_teste). No backend real a variável não existe e a aba some. #}
 {% if contas_teste is defined %}
@@ -73,6 +82,7 @@
 {% endblock %}
 
 {% block dialogs %}
+{% if escolher_perfil|default(true) %}{# [back-18-seguranca] ver o comentário de `escolher_perfil`, lá em cima #}
 {# Popup de perfil: obrigatório (sem X, sem fechar no fundo/Esc até escolher). data-perfil-inicial abre sozinho quando ainda não há perfil. #}
 <dialog class="vt-dialog vt-dialog--sm" id="dlg-perfil" aria-labelledby="t-perfil" data-obrigatorio data-no-backdrop-close{% if perfil not in perfis %} data-abrir-auto{% endif %}>
   <div class="vt-dialog__grip" aria-hidden="true"></div>
@@ -93,4 +103,5 @@
     </div>
   </div>
 </dialog>
+{% endif %}
 {% endblock %}

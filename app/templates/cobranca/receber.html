@@ -22,7 +22,9 @@
 {% set corpo_classe = 'page--rec' %}
 {% set m_header_classe = 'm-header--ok' if c.estado == 'confirmado' else '' %}
 {% set formas = [('pix','PIX','Confirma sozinho','tone-green','pix'),('debito','Débito','Você confirma','tone-blue','card'),('credito','Crédito','Você confirma','tone-slate','card'),('dinheiro','Dinheiro','Você confirma','tone-yellow','cash')] %}
-{% set forma_sel = c.forma or ('pix' if pix_ligado else 'debito') %}
+{# [back-09-cobranca] PIX manual: `pix_manual` (bool) = o PIX é conferido e confirmado pela recepção, como dinheiro e cartão. No Drive este template só conhece o PIX automático (pix_ligado). São 7 ajustes, todos marcados com esta etiqueta. #}
+{% set pix_manual = pix_manual|default(false) %}
+{% set forma_sel = c.forma or ('pix' if (pix_ligado or pix_manual) else 'debito') %}{# [back-09-cobranca] antes: ('pix' if pix_ligado else 'debito') #}
 {% set aguardando = (c.estado == 'aguardando_pix') %}
 {% set confirmado = (c.estado == 'confirmado') %}
 {% set rotulo_forma = {'pix':'PIX','debito':'Débito','credito':'Crédito','dinheiro':'Dinheiro'} %}
@@ -75,21 +77,28 @@
           <div><h3 class="ctitle" style="font-size:16px">Como o aluno vai pagar?</h3><div class="csub">A forma escolhida fica gravada no histórico dele</div></div>
           <div class="opcoes formas" data-opcoes data-controla-forma data-alvo="h-forma" role="group" aria-label="Forma de pagamento">
             {% for v, nome, sub, tom, ico in formas %}
-            {% set off = (v == 'pix' and not pix_ligado) or (aguardando and v != 'pix') %}
+            {% set off = (v == 'pix' and not pix_ligado and not pix_manual) or (aguardando and v != 'pix') %}{# [back-09-cobranca] antes: sem o `and not pix_manual` #}
             <button type="button" class="opcao" data-valor="{{ v }}" aria-pressed="{{ 'true' if v == forma_sel else 'false' }}"{% if off %} disabled{% endif %}>
-              <span class="tile tile--sm {{ tom }}">{{ icon(ico, 20) }}</span>{{ nome }}<span class="opcao-sub">{{ 'Não configurado' if v == 'pix' and not pix_ligado else sub }}</span>
+              <span class="tile tile--sm {{ tom }}">{{ icon(ico, 20) }}</span>{{ nome }}<span class="opcao-sub">{# [back-09-cobranca] antes: só as duas pontas ("Não configurado" ou o texto da forma) #}{{ 'Você confirma' if (v == 'pix' and pix_manual and not pix_ligado) else ('Não configurado' if v == 'pix' and not pix_ligado else sub) }}</span>
             </button>
             {% endfor %}
           </div>
           <input type="hidden" id="h-forma" name="forma" value="{{ forma_sel }}">
         </section>
 
-        {% if not pix_ligado %}
+        {% if not pix_ligado and not pix_manual %}{# [back-09-cobranca] antes: {% if not pix_ligado %}. Com PIX manual não há o que "ligar" #}
         <div class="note note--yellow" data-so-forma="debito credito dinheiro">{{ icon('alert', 20) }}<span><strong>PIX ainda não está ligado</strong>Dá pra receber em dinheiro ou na maquininha normalmente, só que essas confirmações entram como manuais. Ligar o PIX leva uns minutos em Configurações.</span></div>
         <a class="btn btn-accent btn-lg btn-block" href="{{ url_for('config.recebimento') }}" data-so-forma="debito credito dinheiro">{{ icon('bolt', 18) }}Ligar o PIX agora</a>
         {% endif %}
 
         {# --- PIX --- #}
+        {# [back-09-cobranca] bloco novo: PIX conferido pela recepção #}
+        {% if pix_manual and not pix_ligado %}
+        <section class="card card--pad stack gap-3" data-so-forma="pix">
+          <div class="row-flex gap-3"><span class="tile tone-green">{{ icon('pix', 22) }}</span><div><b style="font-size:16px">Receber por PIX</b><div class="csub" style="margin:0">Total {{ brl(c.valor) }}</div></div></div>
+        </section>
+        <div class="note note--yellow" data-so-forma="pix">{{ icon('alert', 20) }}<span><strong>Essa confirmação é sua</strong>O sistema ainda não recebe aviso do banco. Confira no aplicativo do banco se o PIX caiu antes de confirmar. Fica registrado como confirmação manual, com o seu nome.</span></div>
+        {% endif %}
         {% if pix_ligado %}
         <div class="note note--blue" data-so-forma="pix">{{ icon('bolt', 20) }}<span><strong>PIX é a única que confirma sozinha</strong>{% if aguardando %}O QR ao lado vale só pra esta cobrança. Quando o dinheiro cai, o sistema marca pago sem ninguém tocar. Nas outras formas a confirmação é manual e fica registrada como tal.{% else %}O sistema gera um QR só desta cobrança. Quando o dinheiro cai na {% if c.termo == 'pacote' %}sua conta{% else %}conta da academia{% endif %}, {% if c.termo == 'pacote' %}o pacote vira "pago"{% else %}a mensalidade vira "paga"{% endif %} sem ninguém precisar clicar.{% endif %}</span></div>
         {% endif %}
@@ -125,6 +134,10 @@
 
         {# --- ações --- #}
         <div class="stack gap-3 rec-actions">
+          {# [back-09-cobranca] botão novo: confirmar PIX manual #}
+          {% if pix_manual and not pix_ligado %}
+          <button type="submit" formaction="{{ url_for('cobrancas.confirmar', id=c.id) }}" class="btn btn-primary btn-lg btn-block" data-so-forma="pix">{{ icon('check', 18) }}Já recebi o PIX</button>
+          {% endif %}
           {% if pix_ligado and not aguardando %}
           <button type="submit" formaction="{{ url_for('cobrancas.pix', id=c.id) }}" class="btn btn-primary btn-lg btn-block" data-so-forma="pix" data-carregando>Gerar cobrança PIX</button>
           {% endif %}
@@ -177,8 +190,14 @@
       {% else %}
       <div class="card card--pad rec-vazio d-only">
         <span class="tile tone-slate">{{ icon('qr', 22) }}</span>
+        {# [back-09-cobranca] com PIX manual não há QR Code: o texto original prometia um #}
+        {% if pix_manual and not pix_ligado %}
+        <b>Confirme depois de receber</b>
+        <p>Escolha a forma ao lado. A confirmação é sua em todas elas, e fica registrada com o seu nome e a hora.</p>
+        {% else %}
         <b>O QR aparece aqui</b>
         <p>Escolha a forma ao lado. No PIX, o código é gerado só para esta cobrança e o sistema confirma sozinho quando o dinheiro cai.</p>
+        {% endif %}
       </div>
       {% endif %}
     </div>

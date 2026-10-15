@@ -1,0 +1,34 @@
+{#
+  GET /treinos/modelo/<id> (treinos.modelo)  ?t=A|B|C
+  Contexto: m{id,nome,usado,min}, letra, letras, treino{nome,itens[{ex{id,nome,grupo_muscular,equipamento},series,repeticoes}]}
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% set nav_ativo = 'exercicios' %}
+{% set tab_ativo = 'treinos' %}
+{% set pagina_titulo = m.nome %}
+{% set pagina_sub = 'Modelo · usado com ' ~ m.usado ~ ' alunos' %}
+{% set m_sub = pagina_sub %}
+{% set m_voltar = url_for('treinos.biblioteca') %}
+{% set corpo_classe = 'page--narrow' %}
+{% block crumbs %}<nav class="crumbs" aria-label="Você está em"><a href="{{ url_for('treinos.biblioteca') }}">Fichas de treino</a>{{ icon('chevron-right', 14) }}<span aria-current="page">{{ m.nome }}</span></nav>{% endblock %}
+{% block content %}
+<nav class="card card--pad tabs-treino" aria-label="Treinos do modelo">
+  {% for l in letras %}<a class="tab-treino" href="{{ url_for('treinos.modelo', mid=m.id, t=l) }}"{% if l == letra %} aria-current="true"{% endif %}>Treino {{ l }}</a>{% endfor %}
+</nav>
+<section class="card card--pad" aria-labelledby="h-t">
+  <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
+    <div><h2 class="ctitle" id="h-t" style="font-size:16px">{{ treino.nome }}</h2><div class="csub">{{ treino.itens|length }} exercícios · ~{{ m.min }} minutos</div></div>
+    <span class="chip chip--blue">Modelo</span>
+  </div>
+  <ul class="ex-lista">
+    {% for i in treino.itens %}
+    <li><a class="ex-mini" href="{{ url_for('exercicios.detalhe', id=i.ex.id) }}" aria-label="Ver {{ i.ex.nome }}">{{ icon('play', 16) }}</a>
+      <span class="grow"><b style="display:block">{{ i.ex.nome }}</b><span class="faint fs-12">{{ i.ex.grupo_muscular }} · {{ i.ex.equipamento|lower }}</span></span>
+      <b class="num nowrap">{{ i.series }} × {{ i.repeticoes }}</b></li>
+    {% endfor %}
+  </ul>
+</section>
+<a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.atribuir', mid=m.id) }}">{{ icon('user-plus', 18) }}Usar com um aluno</a>
+<button type="button" class="btn btn-ghost btn-lg btn-block" data-toast="A edição de modelos usa o mesmo editor da ficha do aluno e entra junto com o backend.">{{ icon('edit', 18) }}Editar o modelo</button>
+{% endblock %}

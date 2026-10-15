@@ -1,0 +1,249 @@
+{#
+  GET /relatorios/painel (relatorios.admin)  ?periodo=semana|mes|3m|6m|9m|ano
+  Uma página só: financeiro + frequência (sem abas). O período é um link (recarrega a página).
+  Contexto: recebido, formas[{nome,pct,cor,texto}], variacao, minimo, sobra, gauge_max, mapa{dias,horas,niveis[][0-4],nomes,pico},
+    retencao{labels,valores,meta}, comparativo[{nome,ant,atu,unidade,casas,p_ant,p_atu}], risco[{aluno,score,motivo}], risco_total,
+    custos[{id,descricao,valor}], custos_total, a_receber, em_atraso
+  POST relatorios.custo_salvar (id, descricao, valor) · relatorios.custo_excluir(id)
+  Regra do design: nenhum número aqui é calculado no template; o backend entrega tudo pronto.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import avatar, brl, stackbar, gauge, campo, dialog_head, chip_status, origem, seletor %}
+{% set nav_ativo = 'administrativo' %}
+{% set pagina_titulo = 'Painel administrativo' %}
+{% set pagina_sub = 'Financeiro e frequência da academia' if academia.checkin_ativo else 'Financeiro da academia' %}
+{% set m_titulo = 'Administrativo' %}
+{% set m_sub = 'Números da academia' %}
+{% set m_voltar = url_for('painel.index') %}
+{% macro n1(v, casas=1) %}{{ ('%.' ~ casas ~ 'f')|format(v)|replace('.', ',') }}{% endmacro %}
+
+{% block page_acoes %}
+<nav class="seg" aria-label="Período">
+  {% for k in ['semana', 'mes', '3m'] %}<a class="seg__btn" href="{{ url_for('relatorios.admin', periodo=k) }}"{% if k == periodo %} aria-current="true"{% endif %}>{{ periodos[k] }}</a>{% endfor %}
+</nav>
+{% endblock %}
+
+{% block m_extra %}
+<div class="pills" style="margin-top:14px" role="group" aria-label="Período">
+  {% for k in ['mes', '3m', '6m', '9m', 'ano'] %}<a class="pill" href="{{ url_for('relatorios.admin', periodo=k) }}"{% if k == periodo %} aria-current="true"{% endif %}>{{ {'mes': 'Este mês', '3m': '3 meses', '6m': '6 meses', '9m': '9 meses', 'ano': '1 ano'}[k] }}</a>{% endfor %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="adm-grid">
+  <section class="card card--pad c7" aria-labelledby="h-forma">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
+      <div><h2 class="ctitle" id="h-forma"><span class="d-only">Faturamento por forma de pagamento</span><span class="m-only">Faturamento por pagamento</span></h2><div class="csub" style="margin-bottom:14px">{# [back-11-relatorios] antes: "recebidos em setembro", com o mês fixo #}{{ brl(recebido, 0) }} recebidos {{ periodo_txt }}</div></div>
+      {# [back-11-relatorios] antes: o selo aparecia sempre; sem período anterior para comparar ele fica de fora #}
+      {% if variacao %}<span class="chip chip--green d-only">{{ variacao }}</span>{% endif %}
+    </div>
+    {# [back-11-relatorios] antes: a barra aparecia sempre; sem nada recebido ela não tem o que mostrar #}
+    {% if recebido %}{{ stackbar(formas, 'Faturamento por forma de pagamento') }}{% else %}<p class="muted fs-13" style="margin:0">Nenhum pagamento recebido {{ periodo_txt }}.</p>{% endif %}
+  </section>
+
+  <section class="card card--pad c5" aria-labelledby="h-eq">
+    <h2 class="ctitle" id="h-eq">Ponto de equilíbrio</h2>
+    <div class="csub">Quanto falta pra pagar a conta do mês</div>
+    <div class="big-num">{{ brl(recebido, 0) }}</div>
+    {# [back-11-relatorios] antes: sempre "acima do mínimo" e sempre com o medidor. Agora diz "abaixo" quando falta, e pede os custos quando não há nenhum #}
+    {% if not minimo %}
+    <p class="muted fs-13" style="margin:8px 0 0">Cadastre os custos fixos do mês, logo abaixo, para ver quanto falta para pagar a conta.</p>
+    {% else %}
+    <div class="fw-7 fs-13 {{ 'tone-txt-teal' if sobra >= 0 else 'tone-txt-red' }}">{{ brl(sobra|abs, 0) }} {{ 'acima' if sobra >= 0 else 'abaixo' }} do mínimo<span class="d-only"> ({{ brl(minimo, 0) }})</span></div>
+    {{ gauge((recebido / gauge_max * 100)|round(1), [(minimo / gauge_max * 100, 'red-bg'), (22, 'yellow-bg'), (100 - minimo / gauge_max * 100 - 22, 'teal-bg')], 'R$ 0', brl(gauge_max, 0), 'Faturamento de ' ~ brl(recebido, 0) ~ ' contra mínimo de ' ~ brl(minimo, 0)) }}
+    {% endif %}
+  </section>
+
+  <section class="card card--pad c7" aria-labelledby="h-graf">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h2 class="ctitle" id="h-graf">{{ grafico.titulo }}</h2><div class="csub">{{ grafico.sub }}</div></div>
+      <span class="chip chip--green d-only">{{ grafico.selo }}</span>
+    </div>
+    <div class="chart" style="margin-top:14px" data-chart="barras"
+      data-json='{{ {"labels": grafico.labels, "valores": grafico.valores, "meta": grafico.meta, "metaRotulo": grafico.meta_rotulo or "média", "metaCor": "neutra", "destaque": grafico.destaque, "destaqueCor": "amarelo", "titulo": grafico.titulo, "unidade": "reais", "todosRotulos": true, "altura": 220}|tojson|forceescape }}'></div>
+  </section>
+
+  <section class="card card--pad c5" aria-labelledby="h-ticket">
+    <h2 class="ctitle" id="h-ticket">Ticket médio por aluno</h2>
+    <div class="csub">Faturamento dividido pelos alunos ativos</div>
+    <div class="big-num">{{ brl(ticket) }}</div>
+    {# [back-11-relatorios] antes: a linha aparecia sempre; sem mês anterior para comparar ela fica de fora #}
+    {% if ticket_delta %}<div class="fw-7 fs-13 tone-txt-teal">{{ ticket_delta }}</div>{% endif %}
+  </section>
+
+  {% if academia.checkin_ativo %}
+  <section class="card card--pad c7" aria-labelledby="h-mapa">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
+      <div><h2 class="ctitle" id="h-mapa">Movimento por dia e horário</h2><div class="csub"><span class="d-only">Check-in pelo app ou pela recepção — não depende de catraca</span><span class="m-only">Pico: {{ mapa.pico|replace(' ', ' às ') }}</span></div></div>
+      <span class="chip chip--blue d-only">Pico: {{ mapa.pico }}</span>
+    </div>
+    {# o mapa visual é um grid de <span> (escondido do leitor de tela); a tabela invisível logo abaixo é a versão acessível dos mesmos dados #}
+    <div class="heat" aria-hidden="true">
+      <span></span>{% for d in mapa.dias %}<span class="heat__dia"><span class="d-only">{{ d }}</span><span class="m-only">{{ d[0] }}</span></span>{% endfor %}
+      {% for h in mapa.horas %}{% set i = loop.index0 %}
+      <span class="heat__hora">{{ h }}</span>
+      {% for d in mapa.dias %}{% set nv = mapa.niveis[i][loop.index0] %}<span class="heat__c heat__c--{{ nv }}" data-dica="{{ d }} {{ h }} · {{ mapa.nomes[nv] }}"></span>{% endfor %}
+      {% endfor %}
+    </div>
+    {# a classe vai num <div>: <table> ignora width:1px e causava rolagem lateral no celular #}
+    <div class="visually-hidden"><table>
+      <caption>Movimento por dia da semana e horário</caption>
+      <thead><tr><th scope="col">Horário</th>{% for d in mapa.dias %}<th scope="col">{{ d }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for h in mapa.horas %}{% set i = loop.index0 %}<tr><th scope="row">{{ h }}</th>{% for d in mapa.dias %}<td>{{ mapa.nomes[mapa.niveis[i][loop.index0]] }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+    </table></div>
+    <div class="heat-leg"><span>vazio</span>{% for n in range(5) %}<i class="heat__c--{{ n }}"></i>{% endfor %}<span>lotado</span></div>
+  </section>
+  {% endif %}
+
+  {# Sem check-in, este card sobe pra c12 e ocupa sozinho a linha que o "Movimento por dia e horário" deixou. #}
+  <section class="card card--pad {{ 'c12' if not academia.checkin_ativo else 'c5' }}" aria-labelledby="h-ret">
+    <h2 class="ctitle" id="h-ret">Quanto tempo o aluno fica</h2>
+    <div class="csub">% que continua ativo depois de X dias de matrícula</div>
+    {# [back-11-relatorios] antes: o gráfico aparecia sempre. Sem histórico suficiente ele chega vazio e a tela diz "sem dado" #}
+    {% if not retencao.valores %}<p class="muted fs-13" style="margin:10px 0 0">Sem dado ainda: o gráfico aparece quando houver alunos matriculados há mais de 30 dias.</p>{% else %}
+    <div class="chart" style="margin-top:10px" data-chart="linha"
+      data-json='{{ {"labels": retencao.labels, "valores": retencao.valores, "meta": retencao.meta, "titulo": "Retenção do aluno por dias de matrícula", "unidade": "% ativos", "sufixo": "%", "altura": 220, "todosRotulos": true}|tojson|forceescape }}'></div>
+    <div class="chart-cap">dias desde a matrícula</div>
+    {% endif %}
+  </section>
+
+  <section class="card card--pad c5" aria-labelledby="h-comp">
+    <h2 class="ctitle" id="h-comp">Este mês contra o anterior</h2>
+    <div class="csub">Quanto menor, melhor</div>
+    <ul class="dumb">
+      {% for c in comparativo %}
+      <li><div class="dumb__top"><span>{{ c.nome }}</span><span>{{ n1(c.ant, c.casas) }}{{ c.unidade }} → <span class="bom">{{ n1(c.atu, c.casas) }}{{ c.unidade }}</span></span></div>
+        <div class="dumb__track" role="img" aria-label="{{ c.nome }}: de {{ n1(c.ant, c.casas) }}{{ c.unidade }} para {{ n1(c.atu, c.casas) }}{{ c.unidade }}">
+          <i class="dumb__seg" style="left:{{ [c.p_ant, c.p_atu]|min }}%;width:{{ (c.p_ant - c.p_atu)|abs }}%"></i>
+          <i class="dumb__dot dumb__dot--ant" style="left:{{ c.p_ant }}%"></i><i class="dumb__dot dumb__dot--atu" style="left:{{ c.p_atu }}%"></i></div></li>
+      {# [back-11-relatorios] linha nova: sem dois meses de história não há o que comparar #}
+      {% else %}<li class="muted fs-13">Sem dado ainda: a comparação aparece quando houver um mês anterior com histórico.</li>
+      {% endfor %}
+    </ul>
+    <div class="row-flex gap-4 fs-12 faint" style="margin-top:6px"><span class="row-flex gap-2"><i class="dumb__dot dumb__dot--ant" style="position:static;translate:none"></i>mês anterior</span><span class="row-flex gap-2"><i class="dumb__dot dumb__dot--atu" style="position:static;translate:none"></i>este mês</span></div>
+  </section>
+
+  <section class="card card--pad c7" aria-labelledby="h-risco">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
+      <div><h2 class="ctitle" id="h-risco">Quem está mais perto de cancelar</h2><div class="csub">Score combina {{ 'frequência, ' if academia.checkin_ativo }}pagamento e tempo de casa · abaixo de 50 acende</div></div>
+      <a class="fs-13 fw-7 nowrap" href="{{ url_for('alunos.lista', status='pendente') }}">Ver os {{ risco_total }}</a>
+    </div>
+    <ul class="risco">
+      {% for r in risco %}
+      <li>{{ avatar(r.aluno.nome, 'lg') }}
+        <div class="grow" style="min-width:110px"><b class="truncate" style="display:block">{{ r.aluno.nome }}</b><span class="faint fs-12">{{ r.motivo }}</span></div>
+        <div class="risco__bar d-only" role="img" aria-label="Score {{ r.score }} de 100"><i style="width:{{ r.score }}%;background:var({{ '--red' if r.score < 40 else '--yellow' }})"></i></div>
+        <span class="risco__score">{{ r.score }}</span>
+        <a class="btn btn-green btn-sm" href="https://wa.me/55{{ r.aluno.telefone|replace('(', '')|replace(')', '')|replace('-', '')|replace(' ', '') }}" target="_blank" rel="noopener" aria-label="Chamar {{ r.aluno.nome }} no WhatsApp">{{ icon('chat', 15) }}Chamar</a>
+      </li>
+      {# [back-11-relatorios] linha nova: ninguém em risco #}
+      {% else %}<li class="muted fs-13">Ninguém com nota abaixo de 50 agora.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="card card--pad c7" id="custos" aria-labelledby="h-custos">
+    <div class="row-flex" style="justify-content:space-between;align-items:flex-start;gap:10px">
+      <div><h2 class="ctitle" id="h-custos">Custos fixos do mês</h2><div class="csub">É essa soma que define o ponto de equilíbrio lá em cima</div></div>
+      <span class="chip chip--blue nowrap">{{ custos|length }} lançados</span>
+    </div>
+    <ul class="custos">
+      {% for c in custos %}
+      <li><span class="grow linha1">{{ c.descricao }}</span><b>{{ brl(c.valor, 0) }}</b>
+        <button type="button" class="iconbtn" data-open="dlg-custo-{{ c.id }}" aria-label="Editar {{ c.descricao }}">{{ icon('edit', 16) }}</button></li>
+      {% endfor %}
+    </ul>
+    <div class="total-row"><span>Total por mês</span><b>{{ brl(custos_total, 0) }}</b></div>
+    <button type="button" class="btn btn-ghost btn-block" style="border-style:dashed" data-open="dlg-custo-novo">{{ icon('plus', 16) }}Adicionar custo</button>
+  </section>
+
+  <section class="card card--pad c5" aria-labelledby="h-fecha">
+    <h2 class="ctitle" id="h-fecha">Fechamento do mês</h2>
+    {# [back-11-relatorios] antes: "Setembro de 2026", fixo #}
+    <div class="csub" style="margin-bottom:10px">{{ mes_txt }}</div>
+    <div class="fecha-row"><span>Recebido</span><b class="tone-txt-teal">{{ brl(recebido, 0) }}</b></div>
+    <div class="fecha-row"><span>Ainda a receber</span><b>{{ brl(a_receber, 0) }}</b></div>
+    <div class="fecha-row"><span>Em atraso</span><b class="tone-txt-red">{{ brl(em_atraso, 0) }}</b></div>
+    {# [back-11-relatorios] antes: custos_total (o de um mês). `minimo` é o custo do período escolhido, que é o que entra na conta de baixo #}
+    <div class="fecha-row"><span>Custos fixos</span><b>−&nbsp;{{ brl(minimo, 0) }}</b></div>
+    <hr class="divider" style="margin:10px 0">
+    {# [back-11-relatorios] antes: sempre "Sobrou no mês", em verde, mesmo quando faltava #}
+    <div class="total-row" style="padding-top:4px"><span>{{ 'Sobrou' if sobra >= 0 else 'Faltou' }}</span><b class="{{ 'tone-txt-teal' if sobra >= 0 else 'tone-txt-red' }}" style="font-size:24px">{{ brl(sobra|abs, 0) }}</b></div>
+    <div class="row-flex gap-2">
+      <a class="btn btn-ghost grow" href="{{ url_for('relatorios.exportar', formato='xlsx') }}">{{ icon('download', 16) }}Excel</a>
+      <a class="btn btn-ghost grow" href="{{ url_for('relatorios.exportar', formato='pdf') }}">{{ icon('file', 16) }}PDF</a>
+      <a class="btn btn-ghost grow" href="{{ url_for('relatorios.exportar', formato='csv') }}" download>{{ icon('download', 16) }}CSV</a>
+    </div>
+    {# [back-11-relatorios] antes: a linha aparecia sempre. O sistema ainda não guarda quando o fechamento foi baixado #}
+    {% if ultimo_fechamento %}<p class="faint fs-12" style="margin:14px 0 0">Último fechamento: {{ ultimo_fechamento }}.</p>{% endif %}
+  </section>
+
+  {# ---- lançamentos: tabela (desktop) e lista (mobile) — incorporado da tela de Relatórios ---- #}
+  <section class="card card--flush c12" aria-labelledby="h-lanc">
+    <div class="row-flex" style="justify-content:space-between;padding:20px 24px 16px;gap:12px">
+      <h2 class="ctitle" id="h-lanc" style="font-size:16px">{# [back-11-relatorios] antes: "de setembro", fixo #}Lançamentos {{ periodo_de }}</h2>
+      <div class="row-flex gap-2">
+        <button type="button" class="btn btn-ghost btn-sm" data-open="dlg-filtro">{{ icon('filter', 16) }}Filtrar{% if filtro.forma or filtro.situacao %} <span class="chip chip--blue" style="margin-left:4px">{{ (1 if filtro.forma else 0) + (1 if filtro.situacao else 0) }}</span>{% endif %}</button>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('relatorios.exportar', formato='csv', forma=filtro.forma, situacao=filtro.situacao) }}" download aria-label="Exportar lançamentos em CSV">{{ icon('download', 16) }}<span class="d-only">Exportar</span></a>
+      </div>
+    </div>
+    {% if lancamentos %}
+    <div class="table-scroll d-only">
+      <table class="dtable">
+        <thead><tr><th scope="col">Aluno</th><th scope="col">Data</th><th scope="col">Plano</th><th scope="col">Forma</th><th scope="col">Valor</th><th scope="col">Situação</th></tr></thead>
+        <tbody>
+          {% for l in lancamentos %}
+          <tr><td><div class="cell-person">{{ avatar(l.aluno.nome) }}<b>{{ l.aluno.nome }}</b></div></td><td>{{ l.data }}</td><td>{{ l.plano }}</td>
+            <td>{{ origem(l.origem) }}{{ l.forma }}</td><td class="strong">{{ brl(l.valor) }}</td><td>{{ chip_status(l.situacao) }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <ul class="rel-lanc m-only" style="padding:0 18px 8px">
+      {% for l in lancamentos %}
+      <li>{{ avatar(l.aluno.nome, 'sm') }}<div class="grow"><b class="truncate" style="display:block">{{ l.aluno.nome }}</b><span class="faint fs-12">{{ l.data }} · {{ origem(l.origem) }}{{ l.forma }}</span></div>
+        <div class="ta-r"><b class="num">{{ brl(l.valor) }}</b><div style="margin-top:3px">{{ chip_status(l.situacao) }}</div></div></li>
+      {% endfor %}
+    </ul>
+    <div class="tfoot-bar"><span class="faint"><span class="nowrap-frase">{{ origem('webhook') }}o banco confirmou (PIX automático)</span> &nbsp;·&nbsp; <span class="nowrap-frase">{{ origem('manual') }}lançado pela recepção</span></span></div>
+    {% else %}
+    <p class="muted" style="padding:0 24px 24px;margin:0">Nenhum lançamento com esse filtro. <a href="{{ url_for('relatorios.admin', periodo=periodo) }}">Limpar filtro</a></p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+
+{% block dialogs %}
+{% macro dlg_custo(c) %}
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-custo-{{ c.id if c else 'novo' }}" aria-label="{{ 'Editar custo' if c else 'Adicionar custo' }}">
+  {{ dialog_head('Editar custo' if c else 'Adicionar custo', 'Entra na conta do ponto de equilíbrio', 'dollar', 'blue') }}
+  <form method="post" action="{{ url_for('relatorios.custo_salvar') }}" data-validate novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+    {% if c %}<input type="hidden" name="id" value="{{ c.id }}">{% endif %}
+    <div class="vt-dialog__body">
+      {{ campo('descricao', 'Nome do custo', c.descricao if c else '', obrigatorio=True, placeholder='Ex.: Aluguel', extra='data-foco' if not c else '') }}
+      {{ campo('valor', 'Valor por mês (R$)', ('%.2f'|format(c.valor)|replace('.', ',')) if c else '', obrigatorio=True, mask='dinheiro', inputmode='decimal', placeholder='0,00') }}
+    </div>
+    <div class="vt-dialog__foot">
+      {% if c %}<button class="btn btn-danger-ghost" type="submit" formaction="{{ url_for('relatorios.custo_excluir', id=c.id) }}" formnovalidate>{{ icon('trash', 16) }}Remover</button>{% endif %}
+      <button class="btn btn-primary" type="submit">Salvar</button>
+    </div>
+  </form>
+</dialog>
+{% endmacro %}
+{% for c in custos %}{{ dlg_custo(c) }}{% endfor %}
+{{ dlg_custo(none) }}
+
+<dialog class="vt-dialog vt-dialog--sm" id="dlg-filtro" aria-label="Filtrar lançamentos">
+  {{ dialog_head('Filtrar lançamentos', 'Escolha a forma e a situação', 'filter', 'blue') }}
+  <form method="get" action="{{ url_for('relatorios.admin') }}">
+    <input type="hidden" name="periodo" value="{{ periodo }}">
+    <div class="vt-dialog__body">
+      {{ seletor('forma', 'Forma de pagamento', [('PIX','PIX'),('Cartão','Cartão'),('Dinheiro','Dinheiro')], filtro.forma, vazio='Todas') }}
+      {{ seletor('situacao', 'Situação', [('pago','Pago'),('aberto','Em aberto'),('atrasado','Em atraso')], filtro.situacao, vazio='Todas') }}
+    </div>
+    <div class="vt-dialog__foot"><a class="btn btn-ghost" href="{{ url_for('relatorios.admin', periodo=periodo) }}">Limpar</a><button class="btn btn-primary" type="submit">Aplicar filtro</button></div>
+  </form>
+</dialog>
+{% endblock %}

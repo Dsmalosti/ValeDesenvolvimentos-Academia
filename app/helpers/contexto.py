@@ -20,6 +20,7 @@ ROTULO_DO_PAPEL = {'proprietario': 'proprietário', 'recepcao': 'recepção', 'i
 ACADEMIA_SEM_LOGIN = {
     'nome': 'Vale Tec', 'razao': '', 'cnpj': '', 'telefone': '', 'email': '',
     'cidade': '', 'endereco': '', 'pix_ligado': False, 'checkin_ativo': False, 'modelo': 'academia',
+    'cpf': '', 'cref': '',     # [back-17-personal] só a conta de personal preenche
 }
 
 
@@ -53,6 +54,8 @@ def _academia():
         'telefone': conta.telefone or '', 'email': conta.email or '',
         'cidade': conta.cidade or '', 'endereco': conta.endereco or '',
         'pix_ligado': conta.pix_ligado, 'checkin_ativo': conta.checkin_ativo, 'modelo': conta.modelo,
+        # [back-17-personal] na conta de personal, `academia` é o próprio profissional (pessoa física)
+        'cpf': conta.cpf or '', 'cref': conta.cref or '',
     }
 
 
