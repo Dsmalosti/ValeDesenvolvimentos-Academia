@@ -1,7 +1,6 @@
 from app.extensions.database import db
 from flask import Blueprint,render_template, url_for, request, redirect, flash, make_response
-from flask_login import login_user, logout_user, current_user, login_required
-from app.blueprints.alunos.form import AlunoForm
+from flask_login import current_user  # [back-27-telas-antigas] antes: também login_user, logout_user, login_required e o AlunoForm (das telas antigas)
 from app.services.aluno_service import AlunoService
 from app.models import Aluno, PAPEL_INSTRUTOR
 from app.services import aluno_tela_service as telas  # [back-07-alunos] regras das telas novas
@@ -12,102 +11,8 @@ from app.services import lgpd_service  # [back-19-lgpd] exportar e apagar os dad
 from app.exceptions import BusinessError
 from app.helpers.conta import DONO, DONO_E_RECEPCAO, da_conta, exigir_login_em, papel_requerido
 
-alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos', template_folder='templates')
+alunos_blueprint = Blueprint('alunos', __name__, url_prefix='/alunos')  # [back-27-telas-antigas] antes: template_folder='templates' (telas antigas)
 exigir_login_em(alunos_blueprint)  # [back-03-isolamento] toda rota daqui exige login, mesmo as futuras
-
-
-# Rota cadastro aluno
-@alunos_blueprint.route('/cadastro/', methods=['GET', 'POST'])
-@login_required
-@papel_requerido(*DONO_E_RECEPCAO)  # [back-06-contas-e-papeis] instrutor não cadastra aluno
-def cadastroAluno():
-
-    form = AlunoForm()
-
-    if form.validate_on_submit():
-        try:
-            AlunoService.criar_aluno(form.data, current_user.id)
-
-            flash("Aluno cadastrado com sucesso!", "success")
-            return redirect(url_for("main.homepage"))
-
-        except BusinessError as e:
-            flash(str(e), "danger")
-
-        except Exception:
-            flash("Erro inesperado ao cadastrar aluno", "danger")
-
-    return render_template("aluno_form.html", form=form)
-
-
-#Rota para listar aluno
-@alunos_blueprint.route('/listar/')
-@login_required
-def listarAlunos():
-    alunos = AlunoService.listar_alunos()
-
-    return render_template('aluno-lista.html', alunos=alunos)
-
-# Rota para editar aluno
-@alunos_blueprint.route('/editar/<int:aluno_id>', methods=['GET', 'POST'])
-@login_required
-@papel_requerido(*DONO_E_RECEPCAO)  # [back-06-contas-e-papeis] instrutor não edita o cadastro
-def editarAluno(aluno_id):
-    # filtra por instrutor_id também aqui, pra ninguém abrir/editar
-    # aluno de outra academia só trocando o id na URL
-    aluno = da_conta(Aluno).filter_by(id=aluno_id).first_or_404()  # [back-06-contas-e-papeis] antes: instrutor_id=current_user.id
-    form = AlunoForm(obj=aluno)  # 👈 pré-preenche o form
-
-    if form.validate_on_submit():
-        dados = {
-            "nome": form.nome.data,
-            "email": form.email.data,
-            "telefone": form.telefone.data,
-            "cpf": form.cpf.data,
-            "ativo": form.ativo.data,
-            "plano_id": form.plano_id.data,
-        }
-
-        try:
-            AlunoService.editar_aluno(aluno_id, dados)
-            flash("Aluno atualizado com sucesso", "success")
-            return redirect(url_for("alunos.listarAlunos"))
-
-        except BusinessError as e:
-            flash(str(e), "error")
-
-    return render_template(
-        "aluno_form.html",
-        form=form,
-        titulo="Editar Aluno"
-    )
-
-# Rota para excluir aluno
-@alunos_blueprint.route('/excluir/<int:aluno_id>', methods=['POST'])
-@login_required
-@papel_requerido(*DONO)  # [back-06-contas-e-papeis] apagar os dados de um aluno de vez é só com o dono (LGPD)
-def excluirAluno(aluno_id):
-    try:
-        AlunoService.excluir_aluno(aluno_id)
-        flash("Aluno excluído com sucesso", "success")
-    except BusinessError as e:
-        flash(str(e), "error")
-
-    return redirect(url_for("alunos.listarAlunos"))
-
-# Rota para ativar/desativar aluno
-@alunos_blueprint.route('/status/<int:aluno_id>', methods=['POST'])
-@login_required
-@papel_requerido(*DONO_E_RECEPCAO)  # [back-06-contas-e-papeis] instrutor não ativa nem inativa aluno
-def alternarStatusAluno(aluno_id):
-    try:
-        aluno = AlunoService.alternar_status(aluno_id)
-        status = "ativado" if aluno.ativo else "desativado"
-        flash(f"Aluno {status} com sucesso", "success")
-    except BusinessError as e:
-        flash(str(e), "error")
-
-    return redirect(url_for("alunos.listarAlunos"))
 
 
 # ---------------------------------------------------------------------------
@@ -116,9 +21,8 @@ def alternarStatusAluno(aluno_id):
 # url_for('alunos.lista'), 'alunos.novo', 'alunos.detalhe', 'alunos.editar' etc.
 # Antes (back-04), estes endpoints eram só "pontes" que redirecionavam para as telas antigas.
 #
-# As rotas ANTIGAS, lá em cima (/alunos/listar/, /cadastro/, /editar/<id>, /excluir/<id> e
-# /status/<id>), continuam funcionando: as telas antigas de planos, fichas e pagamentos ainda
-# têm links para elas. Saem quando o layout antigo sair.
+# [back-27-telas-antigas] As rotas ANTIGAS que ficavam aqui em cima (/alunos/listar/, /cadastro/, /editar/<id>, /excluir/<id>
+# e /status/<id>), com os templates e o formulário delas, saíram junto com o layout antigo.
 #
 # As regras (validação, filtros, contagens) ficam em services/aluno_tela_service.py; aqui a
 # rota só confere a conta e o papel, chama o serviço e escolhe a resposta.
