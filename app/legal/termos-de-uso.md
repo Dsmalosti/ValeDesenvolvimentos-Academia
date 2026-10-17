@@ -33,15 +33,14 @@ O sistema é uma ferramenta de organização. Ele **não**:
 ## 4. Teste grátis, preço e pagamento
 
 - **Teste grátis:** toda conta nova usa o Vale Tec **de graça por 2 meses**, contados do dia em que foi criada. Não pedimos cartão para isso.
-- **Depois do teste:** o Vale Tec passa a ser pago, por mês. Os preços de lançamento são:
+- **Depois do teste:** o Vale Tec passa a ser pago, por mês. Os preços são:
 
-  | Tipo de conta | Preço por mês |
-  |---|---|
-  | Academia ou estúdio | R$ 59,99 |
-  | Personal trainer | R$ 29,99 |
+  | Tipo de conta | Preço de tabela | Preço de lançamento (o que você paga) |
+  |---|---|---|
+  | Academia ou estúdio | R$ 119,98 | **R$ 59,99** |
+  | Personal trainer | R$ 59,98 | **R$ 29,99** |
 
-  O preço da sua conta aparece na tela **Assinatura** do sistema, e o sistema avisa quando faltam 7 dias para o fim do teste.
-- **Promoção de lançamento:** as **10 primeiras contas** criadas no Vale Tec pagam **50% do preço** (R$ 29,99 a academia e R$ 14,99 o personal trainer) **enquanto a conta continuar ativa**. A tela de criar conta mostra quantas vagas ainda restam; a tela Assinatura mostra se a sua conta tem o desconto. Se a conta for cancelada, ou apagada depois do bloqueio por falta de pagamento, o desconto acaba e não volta numa conta nova. Se o preço mudar (item abaixo), quem tem a promoção continua pagando 50% do preço novo.
+  O preço de lançamento tem **50% de desconto** sobre o preço de tabela, vale para **todas as contas** e não tem data para acabar. Se um dia o desconto acabar, isso é uma mudança de preço e segue o item "Mudança de preço", abaixo (aviso com pelo menos 30 dias). O preço da sua conta aparece na tela **Assinatura** do sistema, e o sistema avisa quando faltam 7 dias para o fim do teste.
 - **Como pagar:** por PIX. A tela Assinatura mostra o código "PIX copia e cola" com o valor. A confirmação do pagamento é feita pela nossa equipe; a conta é liberada assim que o pagamento for confirmado.
 - **Sem pagamento:** depois do vencimento, a conta continua funcionando por **7 dias**, com aviso. Passado esse prazo, a conta é **bloqueada** e só abre a tela de pagamento. Os dados ficam guardados por **30 dias** depois do bloqueio; pagando nesse prazo, tudo volta como estava. Depois disso, a conta e os dados podem ser apagados.
 - **Mudança de preço:** avisamos com pelo menos **30 dias** de antecedência, por e-mail e dentro do sistema. Se não concordar, você pode cancelar antes de a mudança valer.

@@ -94,9 +94,6 @@ def criar_conta(valores, senha):
     academia = valores['tipo'] == 'academia'
     # O nome da academia é pedido depois, em Configurações (cadastro com poucos campos).
     conta = Conta(nome=(f'Academia de {partes[0]}' if academia else valores['nome'])[:120], modelo=valores['tipo'], checkin_ativo=academia)
-    # [back-28-precos-e-promocao] se ainda há vaga, a conta nova ganha o desconto da promoção de lançamento (antes: sempre preço cheio)
-    from app.services import assinatura_service
-    assinatura_service.entrar_na_promocao(conta)
     db.session.add(conta)
     db.session.flush()
     # [back-19-lgpd] a tela diz "Ao criar a conta você aceita os termos de uso e a política de privacidade": fica gravado
