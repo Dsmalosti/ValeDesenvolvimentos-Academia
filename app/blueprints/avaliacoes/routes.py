@@ -17,10 +17,13 @@ As regras ficam em services/avaliacao_service.py.
 from functools import wraps
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask_login import current_user  # [back-31-pdf-ficha-avaliacao]
 
+from app.helpers.arquivos import resposta_em_pdf  # [back-31-pdf-ficha-avaliacao]
 from app.helpers.conta import da_conta, exigir_login_em
 from app.models import Aluno
 from app.services import avaliacao_service as avaliacoes
+from app.services import pdf_service  # [back-31-pdf-ficha-avaliacao]
 from app.services import treino_service
 
 avaliacoes_blueprint = Blueprint('avaliacoes', __name__)
@@ -108,3 +111,11 @@ def registrar(id):
 def resultado(id):     # [back-22-ajustes-de-produto] antes: @so_quem_avalia (a recepção não abria)
     feita = avaliacoes.avaliacao_da_conta(id) or abort(404)
     return render_template('avaliacoes/resultado.html', **avaliacoes.contexto_do_resultado(feita))
+
+
+# [back-31-pdf-ficha-avaliacao] o resultado da avaliação em PDF, para mandar ao aluno. Antes o botão "Exportar PDF" só mostrava um aviso.
+# Quem abre o resultado baixa o PDF; avaliação de outra conta dá 404.
+@avaliacoes_blueprint.route('/avaliacoes/<int:id>/pdf')
+def pdf(id):
+    feita = avaliacoes.avaliacao_da_conta(id) or abort(404)
+    return resposta_em_pdf(*pdf_service.avaliacao_em_pdf(feita, current_user.conta))

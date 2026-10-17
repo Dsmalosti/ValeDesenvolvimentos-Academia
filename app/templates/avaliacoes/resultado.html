@@ -2,6 +2,8 @@
   GET /avaliacoes/<id> (avaliacoes.resultado)
   Contexto: aluno, e{id,data,avaliador,peso,imc,nota,...}, anterior|None, linhas[{nome,antes,agora,delta,melhor,un}], dias|None, wa_url
   "melhor" = a mudança foi na direção do objetivo (o backend decide; o front só pinta verde/vermelho).
+  [back-31-pdf-ficha-avaliacao] arquivo_pdf (opcional): com ele, "Exportar PDF" baixa o PDF de avaliacoes.pdf (no celular, abre o
+  Compartilhar com o arquivo: static/js/compartilhar-pdf.js). Sem ele, o botão continua só com o aviso, como no Drive.
 #}
 {% extends 'base.html' %}
 {% from '_macros/icons.html' import icon %}
@@ -26,8 +28,9 @@
 {% endif %}
 <section class="card card--pad" aria-labelledby="h-an"><h2 class="ctitle" id="h-an" style="margin-bottom:10px">Anotação do avaliador</h2>
   <p class="msg__txt" style="margin:0;font-size:13.5px">{{ e.nota or 'Sem anotação.' }}</p></section>
-<div class="row-flex gap-2"><a class="btn btn-green grow" href="{{ wa_url }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Enviar</a><button type="button" class="btn btn-ghost grow" data-toast="O PDF da avaliação é gerado pelo backend.">{{ icon('download', 16) }}Exportar PDF</button></div>
+<div class="row-flex gap-2"><a class="btn btn-green grow" href="{{ wa_url }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Enviar</a>{% if arquivo_pdf %}<a class="btn btn-ghost grow" href="{{ url_for('avaliacoes.pdf', id=e.id) }}" download="{{ arquivo_pdf }}" data-compartilhar-pdf data-arquivo="{{ arquivo_pdf }}" data-texto="Oi {{ aluno.nome.split()[0] }}! Segue o resultado da sua avaliação física.">{{ icon('download', 16) }}Exportar PDF</a>{% else %}<button type="button" class="btn btn-ghost grow" data-toast="O PDF da avaliação é gerado pelo backend.">{{ icon('download', 16) }}Exportar PDF</button>{% endif %}</div>
 {# [back-15-avaliacoes] antes: só os alunos de id 1, 2 e 3 (os do exemplo) iam para a ficha. A rota da ficha já leva quem não tem ficha para a biblioteca. #}
 <a class="btn btn-primary btn-lg btn-block" href="{{ url_for('treinos.ficha_aluno', id=aluno.id) }}">{{ icon('clipboard', 18) }}Ajustar a ficha de treino</a>
 <a class="btn btn-ghost btn-lg btn-block" href="{{ url_for('avaliacoes.agendar', aluno=aluno.id) }}">{{ icon('calendar', 18) }}Agendar a próxima</a>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/compartilhar-pdf.js') }}" defer></script>{% endblock %}

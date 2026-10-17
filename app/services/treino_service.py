@@ -419,6 +419,26 @@ def texto_da_ficha(aluno, ficha):
     return '\n'.join(linhas)
 
 
+def dados_para_o_pdf(aluno, ficha):
+    """
+    [back-31-pdf-ficha-avaliacao] Tudo o que o PDF da ficha precisa (services/pdf_service.py desenha). Treino sem exercício fica de fora,
+    como na mensagem do WhatsApp.
+    """
+    treinos = []
+    for letra, treino in treinos_da(ficha).items():
+        itens = _itens(treino)
+        if itens:
+            treinos.append({'letra': letra, 'nome': _nome_do_treino(treino, letra),
+                            'itens': [{'nome': i['ex']['nome'], 'grupo': i['ex']['grupo_muscular'], 'series': i['series'],
+                                       'repeticoes': i['repeticoes'], 'carga': i['carga'], 'descanso': i['descanso']} for i in itens]})
+    return {'aluno': aluno.nome or 'Aluno sem nome', 'ficha': ficha_para_a_tela(ficha), 'treinos': treinos}
+
+
+def _nome_do_arquivo_pdf(aluno):
+    from app.services.pdf_service import nome_do_arquivo     # import aqui dentro: o pdf_service importa este arquivo
+    return nome_do_arquivo('ficha', aluno.nome)
+
+
 def contexto_do_envio(aluno, ficha):
     """
     Variáveis de treinos/enviar.html. O sistema não manda nada sozinho: monta o texto e o endereço
@@ -440,4 +460,6 @@ def contexto_do_envio(aluno, ficha):
             # helpers/whatsapp.py, que a avaliação física também usa. O resultado é o mesmo.
             'wa_url': link_do_whatsapp(aluno.telefone, mensagem),
             'primeiro': {'nome': _nome_do_treino(treinos[primeira], primeira)}, 'exs': itens,
-            'total_ex': sum(len(t.exercicios) for t in treinos.values()), 'so_texto': True}
+            # [back-31-pdf-ficha-avaliacao] antes: 'so_texto': True (só texto). Agora o PDF existe: vem escolhido; a imagem continua desligada.
+            'total_ex': sum(len(t.exercicios) for t in treinos.values()), 'so_texto': False, 'sem_imagem': True,
+            'arquivo_pdf': _nome_do_arquivo_pdf(aluno)}

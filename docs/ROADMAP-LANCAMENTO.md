@@ -123,6 +123,7 @@ O código do roadmap original está pronto. Esta lista junta o que apareceu depo
 
 | | Item | O que é | Trava |
 |---|---|---|---|
+| [x] | `back-31-pdf-ficha-avaliacao` | **Feito (17/10/2026).** Ficha de treino e resultado da avaliação física em PDF (A4, com as cores do front, "Página X de Y"), gerados por um gerador próprio, sem dependência nova. Na tela Enviar ficha a opção PDF vem escolhida; no celular "Enviar o PDF" abre o Compartilhar com o arquivo; no resultado da avaliação, "Exportar PDF" baixa o arquivo. `no-store` e o mesmo acesso das telas | Ensaio no celular de verdade (Compartilhar). Imagem da ficha continua desligada |
 | [x] | `back-30-meu-perfil` | **Feito (17/10/2026).** Tela Meu perfil (`/perfil`) para todos os papéis e o personal: nome, sobrenome, e-mail (pede a senha atual) e trocar a senha (os outros aparelhos saem). Item no menu do desktop e na gaveta do celular. O admin dentro da conta de um cliente não muda o perfil do dono. Sem migration | Template novo: levar para o Drive |
 | [x] | `back-28-precos-e-promocao` | **Feito (17/10/2026).** Preços confirmados: academia R$ 59,99 e personal R$ 29,99. Promoção de lançamento: as 10 primeiras contas criadas pagam 50% (R$ 29,99 e R$ 14,99) enquanto a conta existir; aparece na tela de criar conta (com as vagas), na assinatura, no PIX e no admin, que pode dar ou tirar a promoção. Migration `b28f9a0b1c20` (A1). | Decidir: o desconto vale para sempre ou por um tempo? |
 | [x] | `back-22-ajustes-de-produto` | **Feito (14/10/2026).** Três decisões do Adauto: inatividade automática nasce desligada; a recepção vê o resultado da avaliação física (não registra); WhatsApp só com autorização (a caixa vem desmarcada) e o sistema avisa, em Mensagens e no perfil, quem ainda não autorizou. Migration `b22b5c6d7e80` (só o padrão de uma coluna). PR a abrir → `back-21-textos-legais`. | — |
@@ -305,3 +306,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 17/10/2026 | O Diogo juntou na `main` tudo até a `back-27` (PRs #50 e #51). `back-28-precos-e-promocao` enviada: preços confirmados (59,99 / 29,99) e a promoção de 50% para as 10 primeiras contas. |
 | 17/10/2026 | `back-29-dependencias` enviada: cinco pacotes atualizados (falhas conhecidas) e o Flask-JWT-Extended fora; testes num ambiente Python novo. |
 | 17/10/2026 | `back-30-meu-perfil` enviada: cada pessoa edita o próprio nome, e-mail e senha. |
+| 17/10/2026 | `back-31-pdf-ficha-avaliacao` enviada: ficha e avaliação em PDF, com o Compartilhar do celular. |
