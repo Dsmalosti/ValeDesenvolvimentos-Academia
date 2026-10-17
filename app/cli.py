@@ -32,9 +32,6 @@ def criar_conta_com_dono(nome_academia, nome, sobrenome, email, senha, modelo='a
     # [back-10-frequencia] antes: toda conta nascia com o check-in desligado. Academia nasce com ele ligado (a tela de
     # frequência só aparece assim); personal, desligado. Dá para trocar depois em Configurações.
     conta = Conta(nome=nome_academia.strip(), modelo=modelo, checkin_ativo=(modelo == 'academia'))
-    # [back-28-precos-e-promocao] conta criada por aqui também entra na promoção de lançamento, se houver vaga
-    from app.services import assinatura_service
-    assinatura_service.entrar_na_promocao(conta)
     db.session.add(conta)
     db.session.flush()   # gera o id da conta sem fechar a transação
     usuario = User(nome=nome, sobrenome=sobrenome, email=email, conta_id=conta.id, papel=PAPEL_PROPRIETARIO,
@@ -164,9 +161,5 @@ def registrar_comandos(app):
         if usuario is None:
             raise click.ClickException(f'Não existe usuário com o e-mail {email}. Crie a conta primeiro (tela /criar-conta).')
         usuario.admin_sistema = not remover
-        if not remover and usuario.conta and usuario.conta.desconto_promocional:
-            # [back-28-precos-e-promocao] a conta de um admin não paga: devolve a vaga da promoção para um cliente de verdade
-            usuario.conta.desconto_promocional = 0
-            click.echo('A conta dele estava na promoção de lançamento; a vaga foi liberada para outro cliente.')
         db.session.commit()
         click.echo(f"{usuario.email} {'não é mais' if remover else 'agora é'} administrador do Vale Tec (painel em /admin).")

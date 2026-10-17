@@ -4,8 +4,8 @@
   Campos (name == coluna): tipo (academia|personal), nome, email, senha.  Contexto: erros{campo: msg}, f (valores pra repovoar)
   Por que só 4 campos: cada campo a mais derruba cadastro. Nome da academia, CNPJ/CREF, WhatsApp e logo ficam pra
   Configurações, depois que a pessoa já viu o painel (cadastro progressivo).
-  [back-28-precos-e-promocao] promo (opcional): {vagas, desconto, academia, personal (preços já com desconto, em texto)}.
-  Aparece o aviso da promoção de lançamento enquanto houver vaga. Sem `promo`, a tela fica como era.
+  [back-28-precos-e-promocao] promo (opcional): {desconto, academia, academia_tabela, personal, personal_tabela} (preços em texto).
+  Aparece o aviso do preço de lançamento. Sem `promo`, a tela fica como era.
   Depois do POST: o backend cria a conta + o usuário proprietário, faz login e manda pro painel. Confirmação de e-mail
   vai por link, SEM travar o primeiro uso (só é exigida antes de ligar o PIX ou convidar equipe).
 #}
@@ -23,8 +23,8 @@
 {% block content %}
 <h2>Criar sua conta</h2>
 <p class="lead">Você é o dono: depois convida a recepção e os instrutores.</p>
-{% if promo and promo.vagas %}
-<div class="note note--green" style="margin-bottom:16px">{{ icon('gift', 20) }}<span><strong>Promoção de lançamento: {{ promo.desconto }}% de desconto</strong>2 meses grátis e, depois, {{ promo.academia }} por mês para academia ou {{ promo.personal }} para personal, enquanto a conta continuar ativa. Só para as 10 primeiras contas: {{ 'resta' if promo.vagas == 1 else 'restam' }} {{ promo.vagas }}.</span></div>
+{% if promo %}
+<div class="note note--green" style="margin-bottom:16px">{{ icon('gift', 20) }}<span><strong>Preço de lançamento: {{ promo.desconto }}% de desconto</strong>2 meses grátis e, depois, {{ promo.academia }} por mês para academia (de <s>{{ promo.academia_tabela }}</s>) ou {{ promo.personal }} para personal (de <s>{{ promo.personal_tabela }}</s>).</span></div>
 {% endif %}
 
 {% if erros %}<div class="note note--red" role="alert" style="margin-bottom:16px">{{ icon('alert', 20) }}<span><strong>Confira os campos marcados</strong>Falta pouco.</span></div>{% endif %}
