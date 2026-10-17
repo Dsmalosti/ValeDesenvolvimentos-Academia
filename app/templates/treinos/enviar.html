@@ -1,6 +1,8 @@
 {#
   GET /alunos/<id>/ficha/enviar (treinos.enviar)
   Contexto: aluno, ficha, msg (texto pronto), wa_url, letras, primeiro{nome,itens}, exs[{ex,series,repeticoes}], total_ex
+  [back-31-pdf-ficha-avaliacao] opcionais: sem_imagem (bool: Imagem desligada e PDF escolhido), arquivo_pdf (nome do arquivo).
+  O PDF vem de treinos.pdf; "Enviar o PDF" abre o Compartilhar do celular (static/js/compartilhar-pdf.js).
   A imagem/PDF são gerados pelo backend (treinos.baixar); o WhatsApp é aberto com wa.me e o texto já preenchido.
 #}
 {% extends 'base.html' %}
@@ -21,11 +23,13 @@
     {# [back-14-treinos] `so_texto` (bool): por enquanto o servidor só monta a ficha em TEXTO (imagem e PDF pedem bibliotecas novas).
        Com ele, Imagem e PDF ficam desabilitados e Texto vem escolhido. Sem a variável, a tela se comporta como no Drive. #}
     {% set so_texto = so_texto|default(false) %}
-    <button type="button" class="opcao opcao--ico" data-valor="imagem" aria-pressed="{{ 'false' if so_texto else 'true' }}"{% if so_texto %} disabled{% endif %}>{{ icon('image', 22) }}Imagem</button>
-    <button type="button" class="opcao opcao--ico" data-valor="pdf" aria-pressed="false"{% if so_texto %} disabled{% endif %}>{{ icon('file', 22) }}PDF</button>
+    {% set sem_imagem = sem_imagem|default(false) %}
+    {% set inicial = 'texto' if so_texto else ('pdf' if sem_imagem else 'imagem') %}
+    <button type="button" class="opcao opcao--ico" data-valor="imagem" aria-pressed="{{ 'true' if inicial == 'imagem' else 'false' }}"{% if so_texto or sem_imagem %} disabled{% endif %}>{{ icon('image', 22) }}Imagem</button>
+    <button type="button" class="opcao opcao--ico" data-valor="pdf" aria-pressed="{{ 'true' if inicial == 'pdf' else 'false' }}"{% if so_texto %} disabled{% endif %}>{{ icon('file', 22) }}PDF</button>
     <button type="button" class="opcao opcao--ico" data-valor="texto" aria-pressed="{{ 'true' if so_texto else 'false' }}">{{ icon('edit', 22) }}Texto</button>
   </div>
-  <input type="hidden" id="h-formato" value="{{ 'texto' if so_texto else 'imagem' }}">
+  <input type="hidden" id="h-formato" value="{{ inicial }}">
 </section>
 
 <section class="card card--pad" aria-labelledby="h-prev">
@@ -38,7 +42,7 @@
       {% if exs|length > 3 %}<div class="ficha-img__l" style="color:var(--text-faint)">+ {{ exs|length - 3 }} exercícios</div>{% endif %}</div>
     <div style="font-size:10.5px;text-align:center;opacity:.7;margin-top:10px">Treino {{ letras|join(' · ') }} nas próximas imagens</div>
   </div>
-  <div class="note note--blue" data-so-forma="pdf" hidden>{{ icon('file', 18) }}<span><strong>ficha-{{ aluno.nome.split()[0]|lower }}.pdf</strong>{{ letras|length }} treino{{ '' if letras|length == 1 else 's' }} · {{ total_ex }} exercícios</span></div>
+  <div class="note note--blue" data-so-forma="pdf" hidden>{{ icon('file', 18) }}<span><strong>{{ arquivo_pdf or 'ficha-' ~ aluno.nome.split()[0]|lower ~ '.pdf' }}</strong>{{ letras|length }} treino{{ '' if letras|length == 1 else 's' }} · {{ total_ex }} exercícios</span></div>
   <div class="note note--blue" data-so-forma="texto" hidden>{{ icon('edit', 18) }}<span><strong>Só texto</strong>Vai a lista dos exercícios na própria mensagem. Bom para ficha curta.</span></div>
 </section>
 
@@ -48,7 +52,16 @@
 </section>
 
 <div class="note" data-so-forma="imagem">{{ icon('image', 18) }}<span><strong>Por que imagem e não link</strong>Link exige app do aluno, que ainda não existe. A imagem abre na conversa, fica salva no celular dele e funciona sem internet na hora do treino.</span></div>
-<a class="btn btn-green btn-lg btn-block" href="{{ wa_url }}" target="_blank" rel="noopener">{{ icon('chat', 18) }}Abrir no WhatsApp</a>
+{# [back-31-pdf-ficha-avaliacao] com PDF: "Enviar o PDF" (no celular abre o Compartilhar com o arquivo; no computador baixa) e
+   "Baixar o PDF". Antes só existiam os dois botões de baixo, para imagem e texto. #}
+{% if sem_imagem %}
+<div class="note note--blue" data-so-forma="pdf" hidden>{{ icon('info', 18) }}<span><strong>Como mandar o PDF</strong>No celular, toque em "Enviar o PDF" e escolha o WhatsApp do aluno. No computador, o arquivo é baixado: anexe na conversa do WhatsApp Web.</span></div>
+<a class="btn btn-green btn-lg btn-block" data-so-forma="pdf" href="{{ url_for('treinos.pdf', id=aluno.id) }}" download="{{ arquivo_pdf }}" data-compartilhar-pdf data-arquivo="{{ arquivo_pdf }}"
+   data-texto="Oi {{ aluno.nome.split()[0] }}! Segue a sua ficha de treino.">{{ icon('send', 18) }}Enviar o PDF</a>
+<a class="btn btn-ghost btn-block" data-so-forma="pdf" href="{{ url_for('treinos.pdf', id=aluno.id) }}" download="{{ arquivo_pdf }}">{{ icon('download', 16) }}Baixar o PDF</a>
+{% endif %}
+<a class="btn btn-green btn-lg btn-block" href="{{ wa_url }}" target="_blank" rel="noopener"{% if sem_imagem %} data-so-forma="imagem texto"{% endif %}>{{ icon('chat', 18) }}Abrir no WhatsApp</a>
 {# [back-14-treinos] antes: sempre "Baixar as imagens" #}
-<a class="btn btn-ghost btn-block" href="{{ url_for('treinos.baixar', id=aluno.id) }}" download>{{ icon('download', 16) }}{{ 'Baixar a ficha em texto' if so_texto else 'Baixar as imagens' }}</a>
+<a class="btn btn-ghost btn-block" href="{{ url_for('treinos.baixar', id=aluno.id) }}" download{% if sem_imagem %} data-so-forma="imagem texto"{% endif %}>{{ icon('download', 16) }}{{ 'Baixar a ficha em texto' if (so_texto or sem_imagem) else 'Baixar as imagens' }}</a>
 {% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/compartilhar-pdf.js') }}" defer></script>{% endblock %}

@@ -320,7 +320,9 @@ def test_enviar_monta_o_texto_e_abre_o_whatsapp_de_quem_usa(app, academia):
 
     assert "Oi Ana! Sua ficha de treino está pronta." in html and "- Leg press 45: 2 x 15 · descanso 60s" in html and "Academia de Diana" in html
     assert 'href="https://wa.me/5511999990000?text=Oi%20Ana%21' in html          # telefone do aluno com o código do país; texto já no link
-    assert html.count("disabled") >= 2 and "Baixar a ficha em texto" in html      # imagem e PDF ainda não existem
+    # [back-31-pdf-ficha-avaliacao] antes: imagem e PDF desligados. Agora o PDF vem escolhido; a imagem continua desligada
+    assert 'data-valor="imagem" aria-pressed="false" disabled' in html and 'data-valor="pdf" aria-pressed="true">' in html
+    assert f'href="/alunos/{academia["ana"]}/ficha/pdf"' in html and "Enviar o PDF" in html and "Baixar a ficha em texto" in html
 
     arquivo = dono.get(f"/alunos/{academia['ana']}/ficha/baixar")
     texto = arquivo.get_data(as_text=True)

@@ -415,7 +415,49 @@ def contexto_do_resultado(avaliacao):
                            'melhor': delta <= 0 if menor_e_melhor else delta >= 0, 'un': unidade})
     return {'aluno': {'id': aluno.id, 'nome': aluno.nome or 'Aluno sem nome'}, 'e': e, 'anterior': anterior, 'linhas': linhas,
             'dias': (avaliacao.data - antes.data).days if antes else None,
-            'wa_url': link_do_whatsapp(aluno.telefone, _mensagem_do_resultado(aluno, e, linhas, anterior))}
+            'wa_url': link_do_whatsapp(aluno.telefone, _mensagem_do_resultado(aluno, e, linhas, anterior)),
+            'arquivo_pdf': _nome_do_arquivo_pdf(aluno)}          # [back-31-pdf-ficha-avaliacao]
+
+
+def _nome_do_arquivo_pdf(aluno):
+    from app.services.pdf_service import nome_do_arquivo     # import aqui dentro: o pdf_service importa este arquivo
+    return nome_do_arquivo('avaliacao', aluno.nome)
+
+
+# [back-31-pdf-ficha-avaliacao] medidas que o PDF mostra, na ordem: (nome, chave em _para_a_tela, unidade, casas decimais)
+MEDIDAS_DO_PDF = [('Peso', 'peso', 'kg', 1), ('Altura', 'altura', 'cm', 0), ('IMC', 'imc', '', 1), ('Cintura', 'cintura', 'cm', 1),
+                  ('Quadril', 'quadril', 'cm', 1), ('Relação cintura-quadril', 'rcq', '', 2), ('Tórax', 'torax', 'cm', 1),
+                  ('Braço direito', 'braco', 'cm', 1), ('Coxa direita', 'coxa', 'cm', 1), ('Panturrilha', 'panturrilha', 'cm', 1)]
+
+
+def dados_para_o_pdf(avaliacao):
+    """
+    [back-31-pdf-ficha-avaliacao] Tudo o que o PDF da avaliação precisa (services/pdf_service.py desenha): a avaliação, a anterior (se houver)
+    e, para cada medida feita, o valor de antes, o de agora e a variação. A cor da variação segue COMPARADAS (só peso, IMC,
+    cintura, braço e coxa têm "melhor"); as outras ficam neutras. Sem interpretação: o PDF mostra números.
+    """
+    e = _para_a_tela(avaliacao)
+    antes = _anterior_a(avaliacao)
+    anterior = _para_a_tela(antes) if antes else None
+    melhor_se_menor = {chave: menor for _, chave, _, menor in COMPARADAS}
+    medidas = []
+    for nome, chave, unidade, casas in MEDIDAS_DO_PDF:
+        if e[chave] is None:
+            continue
+        linha = {'nome': nome, 'unidade': unidade, 'agora': _br(e[chave], casas), 'antes': None, 'delta': None, 'tom': None}
+        if anterior and anterior[chave] is not None:
+            delta = round(e[chave] - anterior[chave], casas)
+            linha['antes'] = _br(anterior[chave], casas)
+            linha['delta'] = ('+' if delta > 0 else '') + _br(delta, casas)
+            if chave in melhor_se_menor and delta != 0:
+                linha['tom'] = 'bom' if (delta < 0) == melhor_se_menor[chave] else 'ruim'
+        medidas.append(linha)
+    destaques = [(rotulo, _br(e[chave], casas) if e[chave] is not None else '—', unidade)
+                 for rotulo, chave, unidade, casas in (('Peso', 'peso', 'kg', 1), ('Altura', 'altura', 'cm', 0),
+                                                       ('IMC', 'imc', '', 1), ('Cintura', 'cintura', 'cm', 1))]
+    return {'aluno': avaliacao.aluno.nome or 'Aluno sem nome', 'data': e['data'], 'avaliador': e['avaliador'], 'nota': e['nota'],
+            'anterior': anterior['data'] if anterior else None, 'dias': (avaliacao.data - antes.data).days if antes else None,
+            'destaques': destaques, 'medidas': medidas}
 
 
 # ------------------------------------------------------------------ perfil do aluno e painel

@@ -156,6 +156,19 @@ def test_atras_do_proxy_o_limite_de_tentativas_enxerga_o_ip_de_verdade(app, ambi
 MARCA = "ZZSEGREDO"
 
 
+def _texto_da_resposta(resposta):
+    """
+    O texto de uma resposta. [back-31-pdf-ficha-avaliacao] antes: só get_data(as_text=True). Com os PDFs da ficha e da avaliação,
+    a resposta pode ser um arquivo PDF: aí o texto está dentro do "desenho" compactado de cada página, que é aberto aqui.
+    Assim a varredura confere também que o PDF de uma conta não mostra nada da outra.
+    """
+    if resposta.headers.get("Content-Type") == "application/pdf":
+        import zlib
+        trechos = re.findall(rb"stream\n(.*?)\nendstream", resposta.data, re.S)
+        return b"".join(zlib.decompress(t) for t in trechos).decode("cp1252", errors="replace")
+    return resposta.get_data(as_text=True)
+
+
 def test_a_conta_b_nao_ve_nada_da_conta_a_em_nenhuma_rota(app):
     """
     A conta A tem um registro de cada tipo, todos com o id 1 e com a MARCA no texto. A conta B (vazia) pede TODAS as
@@ -195,7 +208,7 @@ def test_a_conta_b_nao_ve_nada_da_conta_a_em_nenhuma_rota(app):
                 quebras.append(f"{url}: {type(erro).__name__}")
                 continue
             conferidas += 1
-            if MARCA in resposta.get_data(as_text=True) or MARCA in (resposta.headers.get("Location") or ""):
+            if MARCA in _texto_da_resposta(resposta) or MARCA in (resposta.headers.get("Location") or ""):
                 com_marca.append(f"{url} ({resposta.status_code})")
         return com_marca, quebras, conferidas
 

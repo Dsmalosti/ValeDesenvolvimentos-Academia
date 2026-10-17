@@ -229,6 +229,14 @@ with sync_playwright() as p:
         link = pg.get_attribute("a:has-text('Enviar')", "href") or ""
         checa(f"[{nome}] 'Enviar' abre o WhatsApp da aluna com o resultado escrito", link.startswith("https://wa.me/5512982114400?text=Oi%20Camila%21") and "68%2C4%20kg" in link, link[:80])
         checa(f"[{nome}] resultado: sem 'None' e sem rolagem lateral", sem_none_nem_rolagem(pg))
+        # [back-31-pdf-ficha-avaliacao] antes o botão só mostrava um aviso; agora baixa o PDF (no navegador de teste não há
+        # "Compartilhar arquivo", então o link baixa, como num computador)
+        with pg.expect_download(timeout=8000) as baixando:
+            acionar("a:has-text('Exportar PDF')")
+        arquivo = baixando.value
+        caminho = arquivo.path()
+        checa(f"[{nome}] 'Exportar PDF' baixa o PDF da avaliação", arquivo.suggested_filename == f"avaliacao-{camila.lower().replace(' ', '-')}.pdf"
+              and open(caminho, "rb").read(8) == b"%PDF-1.4", arquivo.suggested_filename)
         pg.wait_for_timeout(400)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-8-resultado.png"), full_page=True)
 

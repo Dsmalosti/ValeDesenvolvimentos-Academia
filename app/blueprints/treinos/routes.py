@@ -15,8 +15,10 @@ from datetime import date, timedelta
 from flask import Blueprint, abort, flash, make_response, redirect, render_template, request, url_for
 from flask_login import current_user
 
+from app.helpers.arquivos import resposta_em_pdf  # [back-31-pdf-ficha-avaliacao]
 from app.helpers.conta import da_conta, exigir_login_em
 from app.models import Aluno
+from app.services import pdf_service  # [back-31-pdf-ficha-avaliacao]
 from app.services import treino_service as treinos
 
 treinos_blueprint = Blueprint('treinos', __name__)
@@ -158,3 +160,11 @@ def baixar(id):
     resposta.headers['Content-Type'] = 'text/plain; charset=utf-8'
     resposta.headers['Content-Disposition'] = f'attachment; filename=ficha-{aluno.id}.txt'
     return resposta
+
+
+# [back-31-pdf-ficha-avaliacao] a ficha em PDF, para mandar ao aluno. Antes não existia (a ficha só saía em texto: o PDF pedia uma biblioteca
+# nova; agora o PDF é montado por helpers/pdf.py, sem dependência). Mesmo acesso da ficha: aluno de outra conta dá 404.
+@treinos_blueprint.route('/alunos/<int:id>/ficha/pdf')
+def pdf(id):
+    aluno, ficha = _aluno_e_ficha(id)
+    return resposta_em_pdf(*pdf_service.ficha_em_pdf(aluno, ficha, current_user.conta))
