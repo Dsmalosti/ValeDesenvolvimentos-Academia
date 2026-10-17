@@ -387,7 +387,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Sai de:** `back-33-deploy-render` · **PR:** a abrir → `back-33-deploy-render` · **Data:** 17/10/2026
 - **O que mudou:** skill `auditoria-qualidade-web` (SKILL.md, critérios, receitas Flask, script `auditar_paginas.py`); auditoria local (31 itens); `app/helpers/estaticos.py` (cache de 1 ano com `?v=`), `app/blueprints/seo.py` (`robots.txt`, `sitemap.xml`, `llms.txt`, descrições, canonical, Open Graph, JSON-LD, `X-Robots-Tag: noindex`), tabelas legais com foco e nome, rodapé com termos e privacidade nas telas de acesso; `docs/MANUTENCAO-FRONT.md`; a skill nova no `CLAUDE.md`.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
-- **Testes:** `pytest` 567 passando (11 novos em `test_seo.py`); os 16 testes de navegador passando; auditoria depois: 0 violações no axe-core, 0 erros no console, 0 rolagem lateral em 56 combinações de página e largura.
+- **Testes:** `pytest` 560 passando depois do preço novo (567 antes; 11 novos em `test_seo.py`); os 16 testes de navegador passando; auditoria depois: 0 violações no axe-core, 0 erros no console, 0 rolagem lateral em 56 combinações de página e largura.
 - **Doc:** `docs/mudancas/back-34-auditoria-front.md`
 
 ## Onde parou (17/10/2026)
@@ -398,7 +398,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 | Branch | O que é |
 |---|---|
-| `back-28-precos-e-promocao` | R$ 59,99 / 29,99; 50% para as 10 primeiras contas. Migration `b28f9a0b1c20` |
+| `back-28-precos-e-promocao` | R$ 59,99 / 29,99 para todos, anunciado como 50% de desconto (de R$ 119,98 / 59,98). Sem migration |
 | `back-29-dependencias` | 5 atualizações de segurança; Flask-JWT-Extended fora |
 | `back-30-meu-perfil` | Nome, e-mail e senha de quem está logado |
 | `back-31-pdf-ficha-avaliacao` | Ficha e avaliação em PDF, sem dependência nova |
@@ -427,8 +427,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
   - advogado;
   - ensaio no celular.
 - **Os dois:**
-  - quanto tempo dura a promoção;
-  - WhatsApp automático;
+  - WhatsApp automático: decidido, entra depois dos primeiros clientes;
   - ambiente de teste × produção;
   - fonte única do front;
   - página de vendas depois dos testes.

@@ -120,8 +120,10 @@ def llms():
     """Fatos do Vale Tec em Markdown simples. Proposta aberta (llmstxt.org) que alguns buscadores com IA leem."""
     a = assinatura_service
     reais = a._reais
-    promo = (f"- Promoção de lançamento: as {a.VAGAS_DA_PROMOCAO} primeiras contas pagam {a.DESCONTO_DA_PROMOCAO}% "
-             f"enquanto a conta continuar ativa (restam {a.vagas_da_promocao()} vagas).\n") if a.vagas_da_promocao() else ''
+    # o preço de lançamento (back-28): o desconto sobre a tabela, igual para todas as contas
+    promo = (f"- Preço de lançamento, com {a.DESCONTO_DE_LANCAMENTO}% de desconto sobre a tabela "
+             f"({reais(a.PRECOS_DE_TABELA['academia'])} e {reais(a.PRECOS_DE_TABELA[CONTA_PERSONAL])}), para todas as contas.\n"
+             ) if a.DESCONTO_DE_LANCAMENTO else ''
     texto = f"""# Vale Tec
 
 > Sistema online de gestão para academias, estúdios e personal trainers, feito no Brasil. Funciona no navegador do celular ou do computador, sem instalar nada.

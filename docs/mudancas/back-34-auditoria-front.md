@@ -41,7 +41,7 @@ A skill entrou na lista de skills do `CLAUDE.md`.
 | Sem `robots.txt` e `sitemap.xml` | 404 | 200; o sitemap lista as 4 páginas públicas | `app/blueprints/seo.py` (novo) |
 | Páginas públicas sem descrição, canonical, Open Graph e dados estruturados | Faltava tudo; títulos com 17 a 34 caracteres | Login e criar conta com títulos de 57 a 59 caracteres; descrições de 147 a 151 nas 4; canonical; Open Graph; JSON-LD `Organization` + `SoftwareApplication` (com os preços) no login | `app/blueprints/seo.py` e `app/templates/base_auth.html` |
 | Telas internas sem "não indexar" | Nada impedia o Google de indexar um link de tela interna publicado por alguém | `X-Robots-Tag: noindex, nofollow` em toda tela que não é pública (inclui convite, nova senha e PDFs) | `app/blueprints/seo.py` |
-| Buscadores com IA | Nada | `/llms.txt` com os fatos: o que é, para quem, o que faz, preços, promoção, empresa, links | `app/blueprints/seo.py` |
+| Buscadores com IA | Nada | `/llms.txt` com os fatos: o que é, para quem, o que faz, preços (com o preço de lançamento), empresa, links | `app/blueprints/seo.py` |
 
 ### 4. Guia de manutenção do front
 
@@ -66,7 +66,7 @@ A skill entrou na lista de skills do `CLAUDE.md`.
 
 ## Como foi testado
 
-- `pytest` inteiro: **567 passaram**. `tests/test_seo.py` é novo (11 testes):
+- `pytest` inteiro: **560 passaram** (567 antes da troca da regra de preço na `back-28`). `tests/test_seo.py` é novo (11 testes):
   - `robots.txt`, `sitemap.xml` (todas as URLs respondem 200) e `llms.txt`;
   - título, descrição, canonical e JSON-LD do login, com os preços;
   - descrições das 4 públicas, no tamanho certo e diferentes entre si;
