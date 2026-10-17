@@ -15,7 +15,7 @@ Os dois textos que a tela "Criar conta" cita estão **publicados no sistema**, c
 | 0.2 | 13/10/2026 | `back-19-lgpd` | LGPD funcionando no sistema |
 | 0.3 | 13/10/2026 | `back-21-textos-legais` | Dados da empresa |
 | 0.4 | 14/10/2026 | `back-26-lgpd-final` | Teste grátis, administradores, registro de acessos |
-| **1.0** | **17/10/2026** | `back-32-textos-legais-final` | Domínio, e-mails do domínio, hospedagem (Render), envio de e-mail (Brevo), preços e promoção de lançamento, Meu perfil e PDFs |
+| **1.0** | **17/10/2026** | `back-32-textos-legais-final` | Domínio, e-mails do domínio, hospedagem (Render), envio de e-mail (Brevo), preços (com o preço de lançamento de 50% de desconto), Meu perfil e PDFs |
 
 **A versão 1.0 está escrita como se já fosse publicada:** sem aviso de "preliminar" e sem nada "a definir". **Ela ainda precisa da revisão do advogado** (o Adauto já encontrou um) **antes de o sistema ir ao ar.** O PDF para o advogado é gerado com os textos exatamente como o sistema mostra; o último é o `Textos-legais-Vale-Tec-v1.0.pdf`.
 
@@ -42,7 +42,7 @@ O Claude não é advogado. Os textos seguem a LGPD e a prática comum de sistema
 | Hospedagem e banco | Render (Render Services, Inc.), Estados Unidos | Política §4 |
 | E-mails do sistema | Brevo (Sendinblue SAS), União Europeia | Política §4 |
 | Preços | Academia R$ 59,99 e personal R$ 29,99 por mês (confirmados pelo Diogo) | Termos §4 |
-| Promoção | 50% para as 10 primeiras contas, enquanto a conta continuar ativa | Termos §4 |
+| Preço de lançamento | 50% de desconto sobre o preço de tabela (R$ 119,98 / R$ 59,98), para todas as contas, sem data para acabar | Termos §4 |
 | Data de publicação | 17/10/2026 | topo dos dois |
 
 **Antes de publicar:** as caixas `suporte@` e `ouvidoria@` precisam existir (ou encaminhar para o Gmail). Sem isso, quem escrever para elas não é atendido. Está na lista de lançamento.
@@ -56,7 +56,7 @@ Cada linha é uma promessa feita ao cliente. Atualizado em 17/10/2026 (branch `b
 | Promessa no texto | Já é verdade no sistema? |
 |---|---|
 | Teste grátis de 2 meses; aviso 7 dias antes do fim; 7 dias de tolerância depois do vencimento; dados guardados 30 dias depois do bloqueio | **Sim** (`back-24`). Avisar mudança de preço com 30 dias é compromisso de vocês |
-| Preços R$ 59,99 / R$ 29,99 e 50% para as 10 primeiras contas, enquanto a conta continuar ativa | **Sim** (`back-28`). O admin pode tirar a promoção de conta de teste ou repetida |
+| Preços R$ 59,99 / R$ 29,99 para todas as contas, mostrados como 50% de desconto sobre a tabela | **Sim** (`back-28`). Para parar de anunciar o desconto: `DESCONTO_DE_LANCAMENTO = 0` |
 | Mudar nome, e-mail e senha em Meu perfil; trocar a senha desconecta os outros aparelhos | **Sim** (`back-30`) |
 | PDF da ficha e da avaliação não fica guardado no Vale Tec | **Sim** (`back-31`): o arquivo é montado na hora e sai com `no-store` |
 | Nenhum dado de aluno vai para o Brevo | **Sim**: o sistema só manda e-mail de convite, de troca de senha e de avisos da conta, para quem usa o sistema |
@@ -85,7 +85,7 @@ Cada linha é uma promessa feita ao cliente. Atualizado em 17/10/2026 (branch `b
 2. **Transferência internacional** (Política §4). Os dados ficam nos EUA (Render) e o e-mail passa pela União Europeia (Brevo). O texto diz que a transferência segue os arts. 33 a 36 da LGPD com garantias contratuais dos fornecedores. Confirmar qual mecanismo usar: cláusulas-padrão da ANPD (Resolução CD/ANPD nº 19/2024) ou o contrato de tratamento (DPA) dos próprios fornecedores.
 3. **Encarregado (DPO).** O texto diz que o MEI é agente de pequeno porte, dispensado de encarregado pela Resolução CD/ANPD nº 2/2022, e mantém o canal `ouvidoria@`. Confirmar o enquadramento.
 4. **Limite de responsabilidade** (Termos §11). Escrito de forma conservadora e só "durante o teste grátis". Cláusula que tira responsabilidade pode ser abusiva se o cliente for tratado como consumidor.
-5. **Promoção de lançamento** (Termos §4). "Enquanto a conta continuar ativa" e "50% do preço novo, se o preço mudar". Confirmar se a redação protege vocês se um dia a promoção precisar acabar.
+5. **Preço "de/por" (Termos §4 e telas).** O sistema anuncia "de R$ 119,98 por R$ 59,99 (50% de desconto)", mas ninguém paga o preço de tabela, e o desconto não tem data para acabar. Isso pode ser visto como **desconto fictício** (publicidade enganosa, CDC art. 37), o que o Procon costuma multar. Confirmar se pode ficar assim, com a explicação dos termos, ou se é melhor anunciar só "preço de lançamento" (no sistema, `DESCONTO_DE_LANCAMENTO = 0`).
 6. **Contrato de tratamento de dados com a academia.** Hoje está embutido nos Termos (§7). Para clientes maiores, costuma virar documento separado.
 7. **Consentimento do aluno para a avaliação física.** O texto põe essa obrigação na academia. Vale oferecer a ela um modelo de termo de consentimento.
 8. **O que fica depois de apagar um aluno.** Os pagamentos continuam, sem nome. Confirmar o prazo de guarda desses registros.

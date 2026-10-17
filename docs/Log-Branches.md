@@ -368,7 +368,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 ## back-32-textos-legais-final
 
 - **Sai de:** `back-31-pdf-ficha-avaliacao` · **PR:** a abrir → `back-31-pdf-ficha-avaliacao` · **Data:** 17/10/2026
-- **O que mudou:** `app/legal/*.md` na versão 1.0 (domínio, e-mails do domínio, Render, Brevo, transferência internacional, encarregado dispensado com canal de ouvidoria, preços, promoção, Meu perfil, PDFs); `VERSAO = '1.0-2026-10-17'`; `VALE_TEC_SUPORTE_EMAIL` padrão `suporte@valesolucoestec.com.br`; `docs/legal/LEIA-ME.md` reescrito com os pontos para o advogado.
+- **O que mudou:** `app/legal/*.md` na versão 1.0 (domínio, e-mails do domínio, Render, Brevo, transferência internacional, encarregado dispensado com canal de ouvidoria, preços com o preço de lançamento, Meu perfil, PDFs); `VERSAO = '1.0-2026-10-17'`; `VALE_TEC_SUPORTE_EMAIL` padrão `suporte@valesolucoestec.com.br`; `docs/legal/LEIA-ME.md` reescrito com os pontos para o advogado.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 556 passando; navegador lgpd 28/28 e assinatura 42/42; PDF dos textos (`instance/Textos-legais-Vale-Tec-v1.0.pdf`) conferido página por página.
 - **Doc:** `docs/mudancas/back-32-textos-legais-final.md`
