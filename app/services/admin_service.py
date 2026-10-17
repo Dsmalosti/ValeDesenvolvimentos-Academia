@@ -85,7 +85,9 @@ def contexto_da_lista(filtro='', hoje=None):
     if filtro in assinatura_service.ROTULOS:
         linhas = [l for l in linhas if l['s']['estado'] == filtro]
     return {'linhas': linhas, 'contagem': contagem, 'total': sum(contagem.values()), 'receita_mensal': receita, 'filtro': filtro,
-            'rotulos': assinatura_service.ROTULOS, 'reais': _reais, 'novas_no_mes': Conta.query.filter(Conta.criado_em >= _inicio_do_mes(hoje)).count()}
+            'rotulos': assinatura_service.ROTULOS, 'reais': _reais, 'novas_no_mes': Conta.query.filter(Conta.criado_em >= _inicio_do_mes(hoje)).count(),
+            # [back-28-precos-e-promocao] quantas vagas da promoção de lançamento ainda sobram
+            'vagas_da_promocao': assinatura_service.vagas_da_promocao(), 'total_de_vagas': assinatura_service.VAGAS_DA_PROMOCAO}
 
 
 def contexto_da_conta(conta, hoje=None):
@@ -99,6 +101,7 @@ def contexto_da_conta(conta, hoje=None):
         'acoes': AcaoAdmin.query.filter_by(conta_id=conta.id).order_by(AcaoAdmin.quando.desc()).limit(15).all(),
         'pode_apagar': pode_apagar(conta, hoje)[0], 'motivo_de_nao_apagar': pode_apagar(conta, hoje)[1],
         'reais': _reais, 'hoje': hoje,
+        'vagas_da_promocao': assinatura_service.vagas_da_promocao(), 'desconto_da_promocao': assinatura_service.DESCONTO_DA_PROMOCAO,  # [back-28-precos-e-promocao]
     })
     return n
 
@@ -150,6 +153,25 @@ def desbloquear(admin, conta):
     conta.bloqueio_manual_em = None
     conta.bloqueio_motivo = None
     registrar(admin, conta, 'desbloqueio')
+    db.session.commit()
+
+
+def mudar_promocao(admin, conta, ligar):
+    """
+    [back-28-precos-e-promocao] Dá ou tira o desconto da promoção de lançamento de uma conta. Serve para corrigir à mão: conta de teste
+    ou repetida que pegou uma das vagas, ou um cliente que deveria ter ganhado. Dar só funciona se ainda houver vaga.
+    """
+    ligar = str(ligar) == '1'
+    if ligar == bool(conta.desconto_promocional):
+        return
+    if ligar:
+        if assinatura_service.vagas_da_promocao() <= 0:
+            raise AcaoRecusada(f'As {assinatura_service.VAGAS_DA_PROMOCAO} vagas da promoção já foram usadas. Tire de outra conta primeiro.')
+        conta.desconto_promocional = assinatura_service.DESCONTO_DA_PROMOCAO
+        registrar(admin, conta, 'promocao', f'ganhou {conta.desconto_promocional}% de desconto')
+    else:
+        conta.desconto_promocional = 0
+        registrar(admin, conta, 'promocao', 'perdeu o desconto da promoção')
     db.session.commit()
 
 

@@ -7,7 +7,7 @@
 {% if e_dono %}
 <div class="stack gap-3">
   <div class="row-flex gap-3"><span class="tile tone-green">{{ icon('pix', 22) }}</span>
-    <div><b style="font-size:16px">Pagar por PIX</b><div class="csub" style="margin:0">{{ reais(s.preco) }} por mês</div></div></div>
+    <div><b style="font-size:16px">Pagar por PIX</b><div class="csub" style="margin:0">{{ reais(s.preco) }} por mês{% if s.desconto %} (promoção de lançamento, {{ s.desconto }}% de desconto){% endif %}</div></div></div>{# [back-28-precos-e-promocao] #}
   {% if pix %}
   <label class="label" for="pix-codigo">PIX copia e cola</label>
   <textarea class="input" id="pix-codigo" rows="4" readonly style="font-family:ui-monospace,monospace;font-size:12.5px;word-break:break-all;resize:none">{{ pix }}</textarea>

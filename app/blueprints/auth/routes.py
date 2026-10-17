@@ -154,11 +154,20 @@ def criar_conta():
     if request.method == 'POST':
         valores, erros = acesso.validar_conta_nova(request.form)
         if erros:
-            return render_template('auth/criar_conta.html', erros=erros, f=valores), 400
+            return render_template('auth/criar_conta.html', erros=erros, f=valores, promo=_promocao()), 400
         _entrar(acesso.criar_conta(valores, request.form.get('senha')))
         flash('Conta criada. Bem-vindo ao Vale Tec! Complete os dados da academia em Configurações.', 'success')
         return redirect(url_for('painel.index'))
-    return render_template('auth/criar_conta.html', f={}, erros={})
+    return render_template('auth/criar_conta.html', f={}, erros={}, promo=_promocao())   # [back-28-precos-e-promocao] antes: sem promo
+
+
+def _promocao():
+    """[back-28-precos-e-promocao] O aviso da promoção de lançamento na tela de criar conta (vagas e preços com desconto)."""
+    from app.models import CONTA_PERSONAL, Conta
+    from app.services import assinatura_service as a
+    com_desconto = lambda modelo: a._reais(a.preco(Conta(modelo=modelo, desconto_promocional=a.DESCONTO_DA_PROMOCAO)))
+    return {'vagas': a.vagas_da_promocao(), 'desconto': a.DESCONTO_DA_PROMOCAO,
+            'academia': com_desconto('academia'), 'personal': com_desconto(CONTA_PERSONAL)}
 
 
 @auth_blueprint.route('/convite/<token>', methods=['GET', 'POST'])

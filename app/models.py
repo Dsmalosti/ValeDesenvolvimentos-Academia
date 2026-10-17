@@ -83,6 +83,10 @@ class Conta(db.Model):
     # [back-25-admin] bloqueio feito à mão por um admin (independe do pagamento): o dia e o motivo, que o cliente vê. Vazio = sem bloqueio.
     bloqueio_manual_em = db.Column(db.Date, nullable=True)
     bloqueio_motivo = db.Column(db.String(200), nullable=True)
+    # [back-28-precos-e-promocao] desconto da PROMOÇÃO DE LANÇAMENTO, em % (0 = sem promoção). Antes não existia: toda conta
+    # pagava o preço cheio. As 10 primeiras contas criadas ganham 50% (regra em services/assinatura_service.py); o admin
+    # pode tirar ou dar a promoção em /admin/contas/<id>.
+    desconto_promocional = db.Column(db.Integer, nullable=False, default=0, server_default='0')
 
     def __repr__(self):
         return f'<Conta {self.nome}>'

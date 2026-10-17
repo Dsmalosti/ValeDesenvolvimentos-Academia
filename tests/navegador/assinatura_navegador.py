@@ -88,7 +88,7 @@ with sync_playwright() as p:
         entrar(pg, BASE, QUASE, SENHA, celular)
         aviso = pg.locator(".note--yellow:has-text('Seu teste grátis termina')")
         checa(f"[{nome}] o painel avisa que o teste grátis termina em 3 dias", aviso.count() == 1 and "termina em 3 dias" in aviso.inner_text()
-              and "R$ 49,99 por mês" in aviso.inner_text(), aviso.count())
+              and "R$ 59,99 por mês" in aviso.inner_text(), aviso.count())
         checa(f"[{nome}] painel com o aviso: sem 'None' e sem rolagem lateral", sem_none_nem_rolagem(pg))
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-1-aviso-no-painel.png"))
         aviso.locator("a[href='/assinatura']").scroll_into_view_if_needed()
@@ -96,7 +96,7 @@ with sync_playwright() as p:
         pg.wait_for_url(BASE + "/assinatura", timeout=8000)
         texto = pg.inner_text("#conteudo")
         codigo = pg.locator("#pix-codigo")
-        checa(f"[{nome}] a tela de assinatura mostra o teste, o preço e o PIX copia e cola", "Teste grátis até" in texto and "R$ 49,99 por mês" in texto
+        checa(f"[{nome}] a tela de assinatura mostra o teste, o preço e o PIX copia e cola", "Teste grátis até" in texto and "R$ 59,99 por mês" in texto
               and codigo.count() == 1 and codigo.input_value().startswith("000201") and "60499733000144" in codigo.input_value())
         acionar("button[data-copiar]")
         try:
@@ -112,6 +112,30 @@ with sync_playwright() as p:
         pg.wait_for_timeout(300)
         pg.screenshot(path=os.path.join(FOTOS, f"{nome}-2-assinatura.png"), full_page=True)
         conferir_console_e_rede(checa, nome + " teste", erros, falhas_rede)
+        ctx.close()
+
+        # ------------------------------------------------------------ [back-28-precos-e-promocao] promoção de lançamento
+        ctx, pg, erros, falhas_rede = abrir_pagina(nav, opts, tema)
+        acionar = pg.tap if celular else pg.click
+        pg.goto(BASE + "/criar-conta")
+        promo = pg.locator(".note--green:has-text('Promoção de lançamento')")
+        checa(f"[{nome}] a tela de criar conta mostra a promoção e as vagas", promo.count() == 1 and "restam" in promo.inner_text()
+              and "R$ 29,99 por mês para academia" in promo.inner_text(), promo.count())
+        checa(f"[{nome}] criar conta com a promoção: sem 'None' e sem rolagem lateral", sem_none_nem_rolagem(pg))
+        pg.screenshot(path=os.path.join(FOTOS, f"{nome}-2b-criar-conta-promocao.png"), full_page=True)
+        pg.fill("#f-nome", "Marina Albuquerque")
+        pg.fill("#f-email", f"marina.{nome}@valetec.com".replace(" ", ""))
+        pg.fill("#f-senha", SENHA)
+        acionar("button[type=submit]")
+        pg.wait_for_url(BASE + "/", timeout=8000)
+        pg.goto(BASE + "/assinatura")
+        texto = pg.inner_text("#conteudo")
+        checa(f"[{nome}] a conta nova ganhou a promoção: R$ 29,99 em vez de R$ 59,99", "Promoção de lançamento: 50% de desconto" in texto
+              and "R$ 29,99 por mês" in texto and pg.locator("s:has-text('R$ 59,99')").count() == 1)
+        checa(f"[{nome}] assinatura com promoção: sem 'None' e sem rolagem lateral", sem_none_nem_rolagem(pg))
+        pg.wait_for_timeout(300)
+        pg.screenshot(path=os.path.join(FOTOS, f"{nome}-2c-assinatura-promocao.png"), full_page=True)
+        conferir_console_e_rede(checa, nome + " promoção", erros, falhas_rede)
         ctx.close()
 
         # ------------------------------------------------------------ conta bloqueada

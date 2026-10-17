@@ -3,7 +3,8 @@
 
 Decisões do Adauto (14/10/2026):
   - teste grátis de 2 meses a partir da criação da conta; depois, pago;
-  - preço do lançamento (falta o Diogo confirmar): academia R$ 49,99 e personal R$ 24,99 por mês;
+  - preço: academia R$ 59,99 e personal R$ 29,99 por mês (confirmado pelo Diogo em 17/10/2026; antes: 49,99 e 24,99);
+  - PROMOÇÃO DE LANÇAMENTO: as 10 primeiras contas criadas pagam 50% (R$ 29,99 e R$ 14,99) enquanto a conta existir;
   - pagamento por PIX; a confirmação é manual (painel de administração ou `flask assinatura-paga`);
   - sem pagar, a conta é bloqueada 7 dias depois do vencimento, sozinha, e a tela diz por quê e mostra
     o código para pagar;
@@ -18,16 +19,21 @@ Como o sistema decide (é calculado a cada acesso; não precisa de tarefa agenda
   depois disso ............................... 'bloqueada'          (só abre a tela de pagamento, os termos e o sair)
 """
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 
 from flask import current_app
 
 from app.extensions.database import db
 from app.helpers.datas import somar_meses
 from app.helpers.pix import copia_e_cola
-from app.models import CONTA_PERSONAL, MESES_DE_TESTE_GRATIS, PAPEL_PROPRIETARIO, Mensalidade, User
+from app.models import CONTA_PERSONAL, MESES_DE_TESTE_GRATIS, PAPEL_PROPRIETARIO, Conta, Mensalidade, User
 
-PRECOS = {'academia': Decimal('49.99'), CONTA_PERSONAL: Decimal('24.99')}   # por mês; o Diogo ainda confirma
+# [back-28-precos-e-promocao] antes: 49.99 e 24.99 (preço provisório). Preço CHEIO, por mês; o desconto da promoção sai dele.
+PRECOS = {'academia': Decimal('59.99'), CONTA_PERSONAL: Decimal('29.99')}
+# [back-28-precos-e-promocao] promoção de lançamento: quantas contas ganham e quanto. Para encerrar a promoção, ponha VAGAS_DA_PROMOCAO = 0
+# (quem já ganhou continua com o desconto; o admin tira conta por conta, se precisar).
+VAGAS_DA_PROMOCAO = 10
+DESCONTO_DA_PROMOCAO = 50        # %
 DIAS_DE_AVISO = 7                 # o aviso amarelo aparece quando faltam menos que isso para vencer
 DIAS_DE_TOLERANCIA = 7            # depois do vencimento, ainda funciona por estes dias (com aviso vermelho)
 DIAS_GUARDANDO_OS_DADOS = 30      # depois do bloqueio, os dados ficam guardados por este tempo
@@ -45,9 +51,43 @@ def _reais(valor):
     return 'R$ ' + f'{valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
-def preco(conta):
-    """Quanto a conta paga por mês."""
+def preco_cheio(conta):
+    """O preço de tabela da conta, sem desconto."""
     return PRECOS.get(conta.modelo, PRECOS['academia'])
+
+
+def preco(conta):
+    """
+    Quanto a conta paga por mês. [back-28-precos-e-promocao] antes: sempre o preço cheio. Com promoção, o preço cheio menos o desconto,
+    arredondado para BAIXO no centavo (59,99 com 50% = 29,99, e não 30,00: o cliente nunca paga mais que a metade).
+    """
+    desconto = conta.desconto_promocional or 0
+    cheio = preco_cheio(conta)
+    if desconto <= 0:
+        return cheio
+    return (cheio * (100 - desconto) / 100).quantize(Decimal('0.01'), rounding=ROUND_DOWN)
+
+
+# ------------------------------------------------------------------ [back-28-precos-e-promocao] promoção de lançamento
+def contas_na_promocao():
+    """Quantas contas têm o desconto da promoção hoje (contas apagadas liberam a vaga)."""
+    return Conta.query.filter(Conta.desconto_promocional > 0).count()
+
+
+def vagas_da_promocao():
+    """Quantas vagas da promoção ainda sobram (aparece na tela de criar conta)."""
+    return max(0, VAGAS_DA_PROMOCAO - contas_na_promocao())
+
+
+def entrar_na_promocao(conta):
+    """
+    Chamada quando uma conta NOVA é criada (tela /criar-conta e `flask criar-conta`): se ainda há vaga, ela ganha o desconto.
+    Não grava no banco sozinha: quem chama faz o commit junto com o resto da conta. Devolve True se ganhou.
+    """
+    if vagas_da_promocao() <= 0:
+        return False
+    conta.desconto_promocional = DESCONTO_DA_PROMOCAO
+    return True
 
 
 def fim_do_teste(conta):
@@ -85,7 +125,8 @@ def situacao(conta, hoje=None):
     return {'estado': estado, 'rotulo': ROTULOS[estado], 'tom': TONS[estado], 'vence': vence,
             'dias_para_vencer': (vence - hoje).days, 'dias_vencida': max(0, (hoje - vence).days),
             'bloqueia_em': bloqueia_em, 'guardar_ate': bloqueia_em + timedelta(days=DIAS_GUARDANDO_OS_DADOS),
-            'preco': preco(conta), 'em_teste': em_teste, 'fim_do_teste': fim, 'pago_ate': conta.pago_ate,
+            'preco': preco(conta), 'preco_cheio': preco_cheio(conta), 'desconto': conta.desconto_promocional or 0,  # [back-28-precos-e-promocao]
+            'em_teste': em_teste, 'fim_do_teste': fim, 'pago_ate': conta.pago_ate,
             'manual': manual, 'motivo': conta.bloqueio_motivo or ''}
 
 
@@ -110,9 +151,14 @@ def aviso_do_topo(conta, papel, hoje=None):
     quando = 'hoje' if s['dias_para_vencer'] == 0 else ('amanhã' if s['dias_para_vencer'] == 1 else f"em {s['dias_para_vencer']} dias")
     if s['estado'] == TESTE:
         return {'tom': 'yellow', 'titulo': f"Seu teste grátis termina {quando} ({_dmy(s['vence'])})",
-                'texto': f"Depois dele, o Vale Tec custa {_reais(s['preco'])} por mês, pago por PIX.", 'link': True}
+                'texto': f"Depois dele, o Vale Tec custa {_reais(s['preco'])} por mês, pago por PIX." + _com_promocao(s), 'link': True}
     return {'tom': 'yellow', 'titulo': f"Sua mensalidade vence {quando} ({_dmy(s['vence'])})",
-            'texto': f"Valor: {_reais(s['preco'])}, por PIX.", 'link': True}
+            'texto': f"Valor: {_reais(s['preco'])}, por PIX." + _com_promocao(s), 'link': True}
+
+
+def _com_promocao(s):
+    """[back-28-precos-e-promocao] o pedacinho de texto que lembra o desconto, nos avisos do topo."""
+    return f" Promoção de lançamento: {s['desconto']}% de desconto." if s['desconto'] else ''
 
 
 def codigo_pix(conta):

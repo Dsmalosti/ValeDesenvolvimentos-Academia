@@ -25,7 +25,7 @@
   {% for chave, rotulo in rotulos.items() %}
   <a class="chip chip--{{ 'blue' if filtro == chave else 'slate' }}" href="{{ url_for('admin.index', situacao=chave) }}">{{ rotulo }} ({{ contagem[chave] }})</a>
   {% endfor %}
-  <span class="faint fs-12">{{ novas_no_mes }} {{ 'conta nova' if novas_no_mes == 1 else 'contas novas' }} este mês</span>
+  <span class="faint fs-12">{{ novas_no_mes }} {{ 'conta nova' if novas_no_mes == 1 else 'contas novas' }} este mês · promoção: {{ total_de_vagas - vagas_da_promocao }} de {{ total_de_vagas }} vagas usadas</span>{# [back-28-precos-e-promocao] #}
 </nav>
 
 <section class="card card--flush" aria-label="Contas">
@@ -43,7 +43,7 @@
             <span class="faint fs-12">{{ 'Personal' if l.conta.modelo == 'personal' else 'Academia' }} · {{ l.dono.email if l.dono else 'sem dono' }}</span></span></a></td>
           <td><span class="chip chip--{{ l.s.tom }}">{{ l.s.rotulo }}</span><br><span class="faint fs-12">
             {% if l.dias_de_teste is not none %}{{ l.dias_de_teste }} {{ 'dia' if l.dias_de_teste == 1 else 'dias' }} de teste
-            {% else %}vence {{ l.s.vence.strftime('%d/%m/%Y') }}{% endif %}</span></td>
+            {% else %}vence {{ l.s.vence.strftime('%d/%m/%Y') }}{% endif %}</span>{% if l.s.desconto %}<br><span class="chip chip--green">Promoção {{ l.s.desconto }}%</span>{% endif %}</td>
           <td class="strong">{{ l.alunos_ativos }}</td>
           <td>{% if l.ultimo_acesso %}{{ l.ultimo_acesso.strftime('%d/%m %Hh%M') }}{% else %}nunca{% endif %}{% if l.parado %}<br><span class="chip chip--yellow">parada</span>{% endif %}</td>
           <td>{{ l.pagamentos_mes }}<br><span class="faint fs-12">{{ reais(l.entradas_mes) }}</span></td>
