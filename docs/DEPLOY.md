@@ -4,6 +4,8 @@ Guia para subir o sistema num servidor de verdade e para atualizar depois. Escri
 
 **O que este guia não decide:** onde hospedar (D4), o domínio (D5) e o e-mail (D6). Ele diz o que o sistema precisa, seja qual for a hospedagem escolhida. Os comandos de exemplo são de Linux, que é o que as hospedagens usam.
 
+> **[back-33-deploy-render] Decidido em 17/10/2026:** hospedagem **Render**, domínio **valesolucoestec.com.br** (Registro.br) e e-mail **Brevo**. O passo a passo no Render está em `docs/DEPLOY-RENDER.md`; este arquivo continua valendo para o que não depende da hospedagem.
+
 ## 1. O que o servidor precisa ter
 
 | Item | Detalhe |
@@ -101,7 +103,7 @@ O sistema decide "hoje" pelo relógio do servidor: vencimento, aniversariantes, 
 
 ## 10. Backup
 
-Os termos de uso (versão preliminar) falam em backup **diário, guardado por 30 dias**. O sistema não faz backup sozinho: isso se liga na hospedagem do banco (D4).
+Os termos de uso (versão 1.0) prometem backup **diário, guardado por 30 dias**. O sistema não faz backup sozinho: no Render, ver `docs/DEPLOY-RENDER.md`, seção 8 (recuperação do Render + cópia diária guardada por 30 dias).
 
 - Ligar o backup automático diário do Postgres e conferir o prazo de guarda.
 - **Testar a restauração uma vez antes de entrar o primeiro cliente**: restaurar o backup num banco separado e abrir o sistema apontando para ele. Backup que nunca foi restaurado não conta.
