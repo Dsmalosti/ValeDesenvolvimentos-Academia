@@ -131,7 +131,7 @@ O código do roadmap original está pronto. Esta lista junta o que apareceu depo
 | [x] | Ranking de presença do mês | **Feito na `back-23-ranking-frequencia` (14/10/2026).** Card "Ranking do mês" na tela de Frequência: os 10 alunos ativos que vieram em mais dias no mês. PR a abrir → `back-22-ajustes-de-produto` | — |
 | [ ] | Front mais rápido e leve | Pedido do Adauto. Medir antes (peso de CSS, JS e imagens, tempo de carga no celular), depois cortar | Nenhuma. Não bloqueia o lançamento |
 | [ ] | Front mais fácil de manter | Pedido do Adauto. Hoje o front vive em dois lugares (Drive e repositório) e cada branch deixou ajustes marcados só no repositório. Decidir uma fonte só e documentar | Decidir se o Drive continua sendo a fonte do design |
-| [ ] | Atualizar 5 dependências | Achado do `pip-audit` na `back-20` | OK para mexer no `requirements.txt` |
+| [x] | Atualizar 5 dependências | **Feito na `back-29-dependencias` (17/10/2026), com o OK do Adauto:** Flask 3.1.3, Werkzeug 3.1.9, idna 3.15, Mako 1.3.12, python-dotenv 1.2.2; o Flask-JWT-Extended (sem uso) saiu. `pip-audit`: nenhuma falha conhecida | — |
 | [ ] | Servidor de aplicação | Gunicorn, Waitress ou o da hospedagem | Hospedagem (D4); é dependência nova |
 | [ ] | Cancelar a conta e exportar tudo | Os termos prometem 30 dias para exportar depois do cancelamento; não existe a tela | Pode ser feito à mão no começo |
 | [x] | Remover as telas antigas | **Feito na `back-27-telas-antigas` (14/10/2026), com o OK do Adauto:** 50 arquivos do layout antigo saíram (4 blueprints, rotas antigas de alunos, exercícios e planos, templates, CSS e serviços), e com eles os dois erros 500. A regra de conteúdo não libera mais o CDN do Bootstrap. Falta: tirar o Flask-JWT-Extended, que não é usado (dependência: pede OK) | — |
@@ -302,3 +302,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 14/10/2026 | `back-26-lgpd-final` enviada: textos legais 0.4 (teste grátis, PIX, bloqueio, acesso dos administradores, suporte sem horário) e registro de acessos de 6 meses (Marco Civil). PDF dos textos entregue ao Adauto para ele e o advogado revisarem. Migration `b26e8f9a0b10`. |
 | 14/10/2026 | `back-27-telas-antigas` enviada: o layout antigo saiu (50 arquivos, cerca de 2.300 linhas), com os dois erros 500 que vinham da `main`; os testes de papéis e isolamento passaram para as telas novas. |
 | 17/10/2026 | O Diogo juntou na `main` tudo até a `back-27` (PRs #50 e #51). `back-28-precos-e-promocao` enviada: preços confirmados (59,99 / 29,99) e a promoção de 50% para as 10 primeiras contas. |
+| 17/10/2026 | `back-29-dependencias` enviada: cinco pacotes atualizados (falhas conhecidas) e o Flask-JWT-Extended fora; testes num ambiente Python novo. |

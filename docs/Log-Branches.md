@@ -340,6 +340,15 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Testes:** `pytest` 532 passando (14 novos em `test_promocao.py`); navegador assinatura 42/42 e admin 18/18; migration no Postgres 12/12; varredura por papel igual à `main`.
 - **Doc:** `docs/mudancas/back-28-precos-e-promocao.md`
 
+## back-29-dependencias
+
+- **Sai de:** `back-28-precos-e-promocao` · **PR:** a abrir → `back-28-precos-e-promocao` · **Data:** 17/10/2026
+- **O que mudou:** `requirements.txt` com Flask 3.1.3, Werkzeug 3.1.9, idna 3.15, Mako 1.3.12 e python-dotenv 1.2.2 (as cinco com falha conhecida no `pip-audit`); saiu o Flask-JWT-Extended, que só era ligado em `app/extensions/security.py` e nunca usado.
+- **Migration:** nenhuma. **Dependência:** uma a menos (OK do Adauto em 17/10/2026).
+- **Testes:** num ambiente Python novo, só com o `requirements-dev.txt`: `pytest` 532 passando e os 16 testes de navegador passando; `pip-audit`: nenhuma falha conhecida.
+- **Para o Adauto:** depois do merge, `pip install -r requirements.txt` no `.venv` dele.
+- **Doc:** `docs/mudancas/back-29-dependencias.md`
+
 ## Onde parou (13/10/2026)
 
 **O roadmap original acabou.** O que falta para lançar está na seção "O que falta para lançar" do roadmap (cobrança do próprio SaaS, painel de administrador, página de apresentação, e os três pedidos novos do Adauto: front mais rápido, front mais fácil de manter e ranking de presença). D12 e D13 foram respondidas em 13/10/2026. Tudo enviado até a `back-27-telas-antigas` (PRs da `back-21` em diante a abrir): todas as telas do front ligadas (menos a central de notificações e o painel do instrutor, que não estão em nenhuma branch), segurança (`back-18`), LGPD (`back-19`) e preparação de produção com a checklist final (`back-20`). Em 11/10/2026 o Diogo juntou na `main` (PR #23, `integracao-main`) tudo até a `front-05-cobranca` e a proposta de esquema da `back-09`, com um ajuste dele em `auth/routes.py`; **os 20 PRs de `back-09-cobranca` a `back-20-producao` estão abertos desde 13/10/2026**, com o título numerado de `[01/20]` a `[20/20]`: #22 (01), #25 a #38 (02 a 15), #24 (16) e #39 a #42 (17 a 20). Cada um aponta para a branch anterior. **Dois ajustes ficaram para o Adauto fazer à mão no GitHub** (a ferramenta não deixou o Claude alterar PR que já existia): no #22, trocar a base de `front-05-cobranca` para `main` e o título para `[01/20] back-09: cobrança, renovação, diária avulsa e extrato`; no #24, trocar a base de `main` para `back-16-mensagens`. A junção da `back-20` com a `main` atual foi simulada: sem conflito, testes passando. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b19`** e instalar as dependências da `back-18` (`pip install -r requirements.txt`): pedir o OK dele, backup antes, avisar da inatividade automática da `b12`. Enquanto isso a pasta do projeto fica em `back-08-planos`, que é onde o banco dele está.
