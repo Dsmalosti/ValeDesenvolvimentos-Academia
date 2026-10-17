@@ -20,11 +20,11 @@ Versão **1.0, de 17/10/2026**, escrita como se já fosse publicada: sem o aviso
 |---|---|
 | Termos §1, Política (abertura) | O site: https://valesolucoestec.com.br (domínio registrado pelo Adauto no Registro.br) |
 | Termos §3 | "Meu perfil": mudar nome, e-mail e senha (`back-30`); trocar a senha desconecta os outros aparelhos |
-| Termos §4 | Tabela de preços (academia R$ 59,99, personal R$ 29,99, confirmados pelo Diogo) e a **promoção de lançamento**: 50% para as 10 primeiras contas, enquanto a conta continuar ativa; se o preço mudar, quem tem a promoção paga 50% do preço novo; conta cancelada ou apagada perde o desconto (`back-28`) |
+| Termos §4 | Tabela de preços: preço de tabela (R$ 119,98 / R$ 59,98) e **preço de lançamento** com 50% de desconto, o que se paga (academia **R$ 59,99**, personal **R$ 29,99**), para todas as contas e sem data para acabar; se o desconto acabar, é mudança de preço, com aviso de 30 dias (`back-28`) |
 | Termos §8 e §14, Política §7 e §9 | E-mails do domínio: **suporte@valesolucoestec.com.br** (sistema e assinatura) e **ouvidoria@valesolucoestec.com.br** (dados pessoais). Antes: o Gmail |
 | Termos §11 | "Enquanto o serviço for gratuito" virou "Durante o teste grátis" (o serviço agora é pago depois do teste) |
 | Política (abertura) | Encarregado: agente de pequeno porte, dispensado pela Resolução CD/ANPD nº 2/2022, com o canal `ouvidoria@` |
-| Política §2.1 | A promoção entra nos dados da assinatura |
+| Política §2.1 | (sem mudança na linha da assinatura: o preço é igual para todos, não há dado novo por conta) |
 | Política §2.2 | Ficha e avaliação em PDF: montadas na hora, **não ficam guardadas** (`back-31`) |
 | Política §4 | **Hospedagem: Render** (EUA) e **e-mail: Brevo** (União Europeia; recebe só nome, e-mail e o texto da mensagem, nenhum dado de aluno) |
 | Política §4 | **Transferência internacional**: arts. 33 a 36 da LGPD, com garantias contratuais dos fornecedores |

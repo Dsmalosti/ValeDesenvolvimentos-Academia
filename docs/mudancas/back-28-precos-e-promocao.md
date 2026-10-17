@@ -1,4 +1,4 @@
-# back-28-precos-e-promocao — preços confirmados e promoção de lançamento
+# back-28-precos-e-promocao — preço final do Vale Tec, com "preço de lançamento, 50% de desconto"
 
 | | |
 |---|---|
@@ -6,86 +6,60 @@
 | **Sai de** | `main` (8a334eb, depois do PR #51 do Diogo) |
 | **Data** | 17/10/2026 |
 | **Feito por** | Adauto (com o Claude) — **revisão: Diogo** |
-| **Decisão** | Adauto e Diogo, 17/10/2026: "R$ 59,99 academia e R$ 29,99 personal — confirmado, e coloque que está em promoção 50% de preço dos dois para os primeiros 10 clientes" |
-| **Tem migration** | Sim: `b28f9a0b1c20` (uma coluna nova em `contas`). Autorização A1 do Diogo |
+| **Decisão** | Adauto e Diogo, 17/10/2026: "o preço final para academia e personal é 59,99 academia e 29,99 personal, eles já estão com 50% de desconto e pode deixar pra sempre assim, não vai ser por quem criar primeiro, queremos que o pessoal ache que o preço está baixo agora" |
+| **Tem migration** | Não |
 | **Dependência nova** | Não |
+
+> **Histórico desta branch:** a primeira versão (17/10/2026, mais cedo) dava 50% só às 10 primeiras contas, com uma coluna nova no banco, uma migration e botões no /admin. Na mesma data a decisão mudou para a regra abaixo, e tudo aquilo saiu **antes do PR**: a branch não mexe no banco nem no /admin.
 
 ## O que mudou
 
-1. **Preço da mensalidade**: academia **R$ 59,99** (era 49,99) e personal **R$ 29,99** (era 24,99). Fica em `PRECOS`, em `app/services/assinatura_service.py`.
-2. **Promoção de lançamento**: as **10 primeiras contas criadas** ganham **50% de desconto**: academia R$ 29,99 e personal R$ 14,99.
-   - A conta ganha a promoção no momento em que é criada, pela tela `/criar-conta` ou pelo `flask criar-conta`.
-   - O desconto vale enquanto a conta existir (ver "Decisões que ficaram" abaixo).
-   - Arredondamento para **baixo** no centavo: 59,99 ÷ 2 = 29,995, e o cliente paga **29,99**, nunca mais que a metade.
-3. **Onde a promoção aparece:**
-   - Tela de **criar conta**: aviso verde com os preços com desconto e quantas vagas restam. Some quando as vagas acabam.
-   - Tela de **assinatura**: preço com desconto, preço cheio riscado e o aviso "Promoção de lançamento: 50% de desconto".
-   - **PIX copia e cola**: já sai com o valor da promoção.
-   - **Aviso do topo** (teste acabando ou mensalidade vencendo): lembra o desconto.
-   - **Painel de admin**: selo "Promoção 50%" na lista e na conta, e "X de 10 vagas usadas" no topo da lista.
-4. **Controle do admin** (`/admin/contas/<id>`): botões **"Dar a promoção"** e **"Tirar a promoção"**.
-   - Servem para corrigir à mão uma conta de teste ou repetida que pegou uma vaga.
-   - Dar só funciona se ainda houver vaga.
-   - Fica registrado em `acoes_admin`.
-5. **`flask admin-do-sistema --email ...`**: se a conta da pessoa tinha pegado uma vaga, a vaga é devolvida. A conta de um admin não paga.
-
-## Por quê
-
-O preço provisório (49,99 / 24,99) foi trocado pelo confirmado. A promoção é para atrair os primeiros clientes. Ela fica gravada em cada conta, e não calculada pela ordem de criação, por dois motivos:
-- o desconto não muda se uma conta mais antiga for apagada;
-- o admin pode corrigir conta por conta.
+1. **Preço cobrado** (`PRECOS`, em `app/services/assinatura_service.py`), igual para todas as contas:
+   - academia **R$ 59,99** por mês (antes 49,99, provisório);
+   - personal **R$ 29,99** por mês (antes 24,99).
+2. **Como o preço aparece:** "**Preço de lançamento: 50% de desconto**", com o preço de tabela riscado: academia ~~R$ 119,98~~ e personal ~~R$ 59,98~~ (`PRECOS_DE_TABELA`).
+   - **Criar conta:** aviso verde com os dois preços e os de tabela riscados.
+   - **Assinatura:** o preço com o de tabela riscado e o aviso "Você paga R$ 59,99 por mês em vez de R$ 119,98".
+   - **Pagar por PIX:** "(preço de lançamento, 50% de desconto)". O código PIX cobra R$ 59,99 / R$ 29,99.
+   - **Aviso do topo** (teste acabando, mensalidade vencendo): "Preço de lançamento, com 50% de desconto."
+3. **Desligar o desconto:** `DESCONTO_DE_LANCAMENTO = 0` no `assinatura_service.py`. As telas param de mostrar o preço riscado e o aviso; o preço cobrado continua o de `PRECOS`.
 
 ## Como era antes
 
-- Toda conta pagava o mesmo preço por modelo, sem desconto.
+- Preço provisório (49,99 / 24,99), sem nenhum aviso de desconto.
 - A tela de criar conta não falava de preço.
 
 ## Arquivos
 
 | Arquivo | Mudança |
 |---|---|
-| `app/models.py` | `Conta.desconto_promocional` (inteiro, %, padrão 0) |
-| `migrations/versions/b28f9a0b1c20_promocao_de_lancamento.py` | Cria a coluna. As contas que já existem ficam com 0 |
-| `app/services/assinatura_service.py` | `PRECOS` novos, `VAGAS_DA_PROMOCAO = 10`, `DESCONTO_DA_PROMOCAO = 50`, `preco_cheio()`, `preco()` com desconto, `vagas_da_promocao()`, `entrar_na_promocao()`; `situacao()` devolve também `preco_cheio` e `desconto` |
-| `app/services/acesso_service.py`, `app/cli.py` | A conta nova entra na promoção se houver vaga; `admin-do-sistema` devolve a vaga |
-| `app/services/admin_service.py`, `app/blueprints/admin/routes.py` | `mudar_promocao()` e a rota `POST /admin/contas/<id>/promocao` |
-| `app/blueprints/auth/routes.py` | A tela de criar conta recebe `promo` (vagas e preços) |
-| Templates | `auth/criar_conta.html`, `assinatura/index.html`, `assinatura/_pagar.html`, `admin/index.html`, `admin/conta.html` (marcados com `[back-28-precos-e-promocao]`) |
-
-**Para o Drive (Adauto):** o aviso verde da promoção em `auth/criar_conta.html` é o único ajuste num template que veio do Drive. Os outros são templates que nasceram no repositório.
-
-**Para encerrar a promoção:** `VAGAS_DA_PROMOCAO = 0` no `assinatura_service.py`. Quem já ganhou continua com o desconto; o admin tira conta por conta, se precisar.
+| `app/services/assinatura_service.py` | `PRECOS` novos, `PRECOS_DE_TABELA`, `DESCONTO_DE_LANCAMENTO`, `preco_de_tabela()`; `situacao()` devolve também `preco_de_tabela` e `desconto`; os avisos do topo lembram o desconto |
+| `app/blueprints/auth/routes.py` | A tela de criar conta recebe `promo` (preços em texto, com espaço que não quebra entre "R$" e o número) |
+| `app/templates/auth/criar_conta.html` | Aviso do preço de lançamento (**levar para o Drive**) |
+| `app/templates/assinatura/index.html`, `assinatura/_pagar.html` | Preço de tabela riscado e aviso (templates que nasceram no repositório) |
+| `tests/test_precos.py` | **Novo** (7 testes) |
+| `tests/test_assinatura.py`, `tests/navegador/assinatura_navegador.py` | Preços novos; a tela de criar conta e a assinatura com o desconto |
 
 ## Como foi testado
 
-- `pytest` inteiro: **532 passaram**. Arquivo novo `tests/test_promocao.py`, com 14 testes:
-  - preços e arredondamento;
-  - a 1ª conta ganha a promoção e a 11ª não;
-  - conta apagada devolve a vaga;
-  - `flask criar-conta`;
-  - as telas, o PIX com o valor da promoção e o aviso do topo;
-  - o personal;
-  - o admin dá e tira, não dá sem vaga, e quem não é admin recebe 404;
-  - virar admin devolve a vaga.
-- Testes antigos de assinatura atualizados para os preços novos.
-- Navegador (`tests/navegador/assinatura_navegador.py`): **42/42**, no celular (390 px, toque, claro) e no desktop (1440 px, escuro). Confere a tela de criar conta com a promoção, a criação da conta pela tela e a assinatura com R$ 29,99 e o preço cheio riscado. Sem rolagem lateral e com o console limpo. `admin_navegador.py`: 18/18.
-- Migration num Postgres descartável (`qa/testa_migration_b28.py`): **12/12**. Testa o upgrade, as contas antigas com 0, o padrão 0 em conta inserida sem a coluna, o `flask db check`, o downgrade e o upgrade de novo.
-- Varredura de todas as rotas GET por papel (dono, recepção, instrutor): igual à `main`, 0 problemas.
+- `pytest` inteiro: **525 passaram**. `tests/test_precos.py` confere:
+  - o preço cobrado e o de tabela, e que o desconto anunciado bate com a conta (59,99 é 50% de 119,98);
+  - que **12 contas criadas em sequência** pagam o mesmo preço (não existe mais "as primeiras");
+  - as telas de criar conta, assinatura e personal;
+  - o código PIX com R$ 59,99;
+  - o aviso do topo;
+  - que, com `DESCONTO_DE_LANCAMENTO = 0`, nenhuma tela mostra o preço riscado.
+- Navegador `assinatura_navegador.py`: **42/42** (celular 390 px e desktop 1440 px escuro). Inclui criar uma conta pela tela e ver R$ 59,99 com ~~R$ 119,98~~. `admin_navegador.py`: 18/18.
 
 ## Como revisar
 
 ```bash
 git fetch origin
 git diff origin/main..origin/back-28-precos-e-promocao --stat
-git diff origin/main..origin/back-28-precos-e-promocao -- app/services/assinatura_service.py app/models.py migrations/
+git diff origin/main..origin/back-28-precos-e-promocao -- app/services/assinatura_service.py
 ```
 
 ## Riscos
 
-- **Vagas queimadas por contas falsas**: o cadastro é aberto. Quem criar 10 contas de mentira tira a promoção dos clientes de verdade. O cadastro tem limite por IP (`back-18`) e o admin tira a promoção das contas falsas; a vaga volta para a próxima conta criada.
-- **Contas que já existiam antes da migration ficam sem promoção.** Em produção o banco nasce vazio, então não muda nada. Na demonstração e no banco local, as contas antigas pagam o preço cheio até o admin dar a promoção.
-
-## Decisões que ficaram (estão na lista do Adauto)
-
-- **Até quando vale o desconto?** Fiz "enquanto a conta continuar ativa", que é o mais simples de anunciar. Se for por um tempo (ex.: 12 meses), muda uma linha e o texto dos termos.
-- **O cliente piloto conta como uma das 10 vagas?** Do jeito que está, conta, se criar a conta antes de as vagas acabarem.
+- **Preço "de" que nunca é cobrado.** Anunciar "de R$ 119,98 por R$ 59,99" quando ninguém paga R$ 119,98 pode ser visto como **desconto fictício**, uma forma de publicidade enganosa pelo Código de Defesa do Consumidor (art. 37). O Procon multa essa prática no varejo, e academia pequena pode ser tratada como consumidora. O texto dos termos (`back-32`) diz que o preço de tabela existe e que o desconto não tem data para acabar. **Está na lista de pontos para o advogado.** Se ele preferir, basta `DESCONTO_DE_LANCAMENTO = 0` e anunciar só "preço de lançamento".
+- **Acabar com o desconto um dia** é aumento de preço: os termos pedem aviso com 30 dias.

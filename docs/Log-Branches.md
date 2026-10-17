@@ -335,9 +335,9 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 ## back-28-precos-e-promocao
 
 - **Sai de:** `main` (8a334eb, depois do PR #51) · **PR:** a abrir → `main` · **Data:** 17/10/2026
-- **O que mudou:** preços confirmados (academia R$ 59,99, personal R$ 29,99) e a promoção de lançamento: as 10 primeiras contas criadas ganham 50% (`Conta.desconto_promocional`), com o aviso na tela de criar conta (vagas restantes), na assinatura (preço cheio riscado), no PIX e no admin (dar e tirar a promoção, vagas usadas). Virar admin pelo `flask admin-do-sistema` devolve a vaga.
-- **Migration:** `b28f9a0b1c20` (A1). **Dependência nova:** nenhuma.
-- **Testes:** `pytest` 532 passando (14 novos em `test_promocao.py`); navegador assinatura 42/42 e admin 18/18; migration no Postgres 12/12; varredura por papel igual à `main`.
+- **O que mudou:** preço final igual para todas as contas (academia R$ 59,99, personal R$ 29,99), anunciado como "preço de lançamento, 50% de desconto" com o preço de tabela riscado (R$ 119,98 / R$ 59,98): criar conta, assinatura, PIX e avisos do topo. `DESCONTO_DE_LANCAMENTO = 0` desliga o anúncio. A primeira versão (50% só para as 10 primeiras contas, com coluna nova e migration) foi trocada no mesmo dia, antes do PR.
+- **Migration:** nenhuma. **Dependência nova:** nenhuma.
+- **Testes:** `pytest` 525 passando (7 em `test_precos.py`); navegador assinatura 42/42 e admin 18/18.
 - **Doc:** `docs/mudancas/back-28-precos-e-promocao.md`
 
 ## back-29-dependencias
@@ -368,7 +368,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 ## back-32-textos-legais-final
 
 - **Sai de:** `back-31-pdf-ficha-avaliacao` · **PR:** a abrir → `back-31-pdf-ficha-avaliacao` · **Data:** 17/10/2026
-- **O que mudou:** `app/legal/*.md` na versão 1.0 (domínio, e-mails do domínio, Render, Brevo, transferência internacional, encarregado dispensado com canal de ouvidoria, preços, promoção, Meu perfil, PDFs); `VERSAO = '1.0-2026-10-17'`; `VALE_TEC_SUPORTE_EMAIL` padrão `suporte@valesolucoestec.com.br`; `docs/legal/LEIA-ME.md` reescrito com os pontos para o advogado.
+- **O que mudou:** `app/legal/*.md` na versão 1.0 (domínio, e-mails do domínio, Render, Brevo, transferência internacional, encarregado dispensado com canal de ouvidoria, preços com o preço de lançamento, Meu perfil, PDFs); `VERSAO = '1.0-2026-10-17'`; `VALE_TEC_SUPORTE_EMAIL` padrão `suporte@valesolucoestec.com.br`; `docs/legal/LEIA-ME.md` reescrito com os pontos para o advogado.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 556 passando; navegador lgpd 28/28 e assinatura 42/42; PDF dos textos (`instance/Textos-legais-Vale-Tec-v1.0.pdf`) conferido página por página.
 - **Doc:** `docs/mudancas/back-32-textos-legais-final.md`

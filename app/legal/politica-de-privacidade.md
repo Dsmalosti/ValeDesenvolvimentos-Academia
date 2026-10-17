@@ -29,7 +29,7 @@ Há dois grupos de pessoas com dados no sistema, e a situação de cada um é di
 | Dados do negócio: nome da academia, CNPJ ou CPF, telefone, endereço, CREF | Configurar a conta e aparecer nos seus documentos e mensagens | Execução do contrato |
 | Registros de acesso: data, hora e endereço IP de cada entrada no sistema | Segurança e cumprimento da lei | Obrigação legal (Marco Civil da Internet, art. 15) e legítimo interesse em proteger o sistema |
 | Data e hora do último uso do sistema | Mostrar à nossa equipe quais contas estão usando o sistema, para oferecer ajuda | Legítimo interesse (art. 7º, IX) |
-| Pagamentos da mensalidade do Vale Tec: valor, período e data; se a conta tem o desconto da promoção de lançamento | Controlar a assinatura e liberar ou bloquear a conta | Execução do contrato |
+| Pagamentos da mensalidade do Vale Tec: valor, período e data | Controlar a assinatura e liberar ou bloquear a conta | Execução do contrato |
 
 ### 2.2 Dos alunos (cadastrados pela academia ou pelo personal)
 
