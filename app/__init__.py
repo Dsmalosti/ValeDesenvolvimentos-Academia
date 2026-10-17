@@ -120,6 +120,7 @@ def create_app():
     from app.blueprints.saude import saude_blueprint  # [back-20-producao] /saude: a hospedagem pergunta se o app está de pé
     from app.blueprints.assinatura.routes import assinatura_blueprint  # [back-24-assinatura] teste grátis, mensalidade e bloqueio
     from app.blueprints.admin.routes import admin_blueprint  # [back-25-admin] painel de administração do Vale Tec
+    from app.blueprints.perfil.routes import perfil_blueprint  # [back-30-meu-perfil] cada pessoa edita o próprio nome, e-mail e senha
     from app.blueprints.pendentes import blueprints_pendentes
     app.register_blueprint(painel_blueprint)
     app.register_blueprint(cobrancas_blueprint)  # [back-09-cobranca]
@@ -134,6 +135,7 @@ def create_app():
     app.register_blueprint(saude_blueprint)  # [back-20-producao]
     app.register_blueprint(assinatura_blueprint)  # [back-24-assinatura]
     app.register_blueprint(admin_blueprint)  # [back-25-admin]
+    app.register_blueprint(perfil_blueprint)  # [back-30-meu-perfil]
     for blueprint_pendente in blueprints_pendentes():
         app.register_blueprint(blueprint_pendente)
 

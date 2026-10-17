@@ -1,4 +1,5 @@
 {# Gaveta do menu (mobile): o que não cabe nas 4 abas.
+   [back-30-meu-perfil] item novo nas duas variantes: Meu perfil (antes não existia).
    Variante Personal (academia.modelo == 'personal', Figma 24 personal): a 4ª aba é Agenda, então Fichas de treino volta pra cá;
    sem check-in e sem equipe. #}
 {% from '_macros/icons.html' import icon %}
@@ -9,6 +10,7 @@
   ('mensagens','mensagens.index','chat','green','Mensagens','Lembretes, aniversários e cobranças de hoje'),
   ('avaliacoes','avaliacoes.agenda','calendar-plus','orange','Avaliações físicas','Agenda e resultados'),
   ('exercicios','exercicios.lista','dumbbell','slate','Exercícios','Catálogo com vídeo por grupo'),
+  ('perfil','perfil.index','user','blue','Meu perfil','Nome, e-mail e senha'),
   ('config','config.index','settings','slate','Configurações','Perfil, locais e recebimento')] %}
 {% else %}
 {% set _itens = [
@@ -17,6 +19,7 @@
   ('mensagens','mensagens.index','chat','green','Mensagens','Lembretes, aniversários e cobranças de hoje'),
   ('avaliacoes','avaliacoes.agenda','calendar-plus','orange','Avaliações físicas','Agenda e resultados'),
   ('exercicios','exercicios.lista','dumbbell','slate','Exercícios','Catálogo com vídeo por grupo'),
+  ('perfil','perfil.index','user','blue','Meu perfil','Nome, e-mail e senha'),
   ('config','config.index','settings','slate','Configurações','Perfil, equipe e horário' if usuario.perfil == 'instrutor' else 'Academia, equipe e recebimento')] %}
 {% endif %}
 <dialog class="vt-drawer" id="gaveta" aria-label="Menu">
