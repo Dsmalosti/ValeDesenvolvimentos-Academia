@@ -21,6 +21,8 @@
     {% if usuario.perfil != 'instrutor' %}{{ item('administrativo', 'relatorios.admin', 'trend', 'Administrativo') }}{% endif %}
   </nav>
   <div class="rail__spacer"></div>
+  {# [back-30-meu-perfil] item novo: Meu perfil (nome, e-mail e senha de quem está logado). Antes o menu ia direto de Administrativo para Configurações #}
+  {{ item('perfil', 'perfil.index', 'user', 'Meu perfil') }}
   {{ item('config', 'config.index', 'settings', 'Configurações') }}
   <form method="post" action="{{ url_for('auth.logout') }}" style="margin:0">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">

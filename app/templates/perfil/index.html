@@ -1,0 +1,83 @@
+{#
+  GET /perfil (perfil.index) — MEU PERFIL: a pessoa logada edita o próprio nome e e-mail e troca a própria senha.
+  [back-30-meu-perfil] ESTE TEMPLATE NÃO VEIO DO DRIVE. Montado só com peças do front (card, campo, field-icon com o botão
+  de mostrar a senha, medidor de força `data-forca`, note). Adauto: revise o visual e leve para o front.
+  Formulários:
+    POST perfil.dados  campos nome, sobrenome, email, senha_atual (só obrigatória se o e-mail mudar)
+    POST perfil.senha  campos senha_atual, senha_nova
+  Contexto: f{nome, sobrenome, email}, erros{campo: msg}, bloco ('dados' | 'senha' | ''): de qual formulário são os erros,
+            admin_dentro_da_conta (bool): o admin do Vale Tec está usando a conta; os formulários ficam desligados.
+#}
+{% extends 'base.html' %}
+{% from '_macros/icons.html' import icon %}
+{% from '_macros/ui.html' import campo, avatar %}
+{% set nav_ativo = 'perfil' %}
+{% set pagina_titulo = 'Meu perfil' %}
+{% set pagina_sub = 'Seu nome, e-mail de login e senha' %}
+{% set m_voltar = true %}
+{% set e_dados = bloco == 'dados' %}
+{% set e_senha = bloco == 'senha' %}
+{% macro campo_senha(id, name, label, autocomplete, placeholder, erro=None, forca=False, ajuda=None) -%}
+<div class="field-group">
+  <label class="label" for="{{ id }}">{{ label }}</label>
+  <div class="field-icon">
+    <input class="input{{ ' is-invalid' if erro }}" id="{{ id }}" name="{{ name }}" type="password" autocomplete="{{ autocomplete }}" placeholder="{{ placeholder }}"
+           style="padding-left:14px;padding-right:52px"{% if forca %} minlength="8" data-forca aria-describedby="{{ id }}-forca"{% elif erro %} aria-invalid="true" aria-describedby="{{ id }}-erro"{% endif %}>
+    <button type="button" class="iconbtn iconbtn--soft field-action" data-toggle-senha="{{ id }}" aria-label="Mostrar senha" aria-pressed="false" style="border:0;background:none">{{ icon('eye', 20) }}</button>
+  </div>
+  {% if forca %}<div class="forca" aria-hidden="true"><i data-forca-barra></i></div>
+  <div class="field-hint" id="{{ id }}-forca" data-forca-txt>Pelo menos 8 caracteres. Uma frase curta é mais forte que uma senha difícil.</div>{% endif %}
+  {% if erro %}<div class="field-error" id="{{ id }}-erro" data-server>{{ erro }}</div>{% elif ajuda %}<div class="field-hint">{{ ajuda }}</div>{% endif %}
+</div>
+{%- endmacro %}
+{% block content %}
+<div class="stack gap-4" style="max-width:640px">
+  <section class="card card--pad" aria-label="Quem está logado">
+    <div class="row-flex gap-3">
+      {{ avatar(usuario.nome, 'lg') }}
+      <div class="grow" style="min-width:0">
+        <b class="truncate" style="display:block;font-size:17px">{{ usuario.nome }}</b>
+        <span class="faint fs-13 truncate" style="display:block">{{ usuario.papel|capitalize }} · {{ academia.nome }}</span>
+      </div>
+    </div>
+  </section>
+
+  {% if admin_dentro_da_conta %}
+  <div class="note note--blue" role="status">{{ icon('info', 20) }}<span><strong>Este perfil é do cliente</strong>Como administrador, você vê os dados, mas não muda o nome, o e-mail nem a senha do dono.</span></div>
+  {% endif %}
+
+  <section class="card card--pad" aria-labelledby="h-dados">
+    <h2 class="ctitle" id="h-dados" style="font-size:16px">Seus dados</h2>
+    <div class="csub" style="margin-bottom:14px">O e-mail é o seu login. Para trocá-lo, confirme com a senha atual.</div>
+    {% if e_dados and erros %}<div class="note note--red" role="alert" style="margin-bottom:14px">{{ icon('alert', 20) }}<span><strong>Confira os campos marcados</strong>Nada foi salvo ainda.</span></div>{% endif %}
+    <form method="post" action="{{ url_for('perfil.dados') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      <fieldset class="stack gap-4" style="border:0;margin:0;padding:0"{% if admin_dentro_da_conta %} disabled{% endif %}>
+        <div class="cfg-2">
+          {{ campo('nome', 'Nome', f.nome, obrigatorio=True, autocomplete='given-name', erro=erros.nome if e_dados) }}
+          {{ campo('sobrenome', 'Sobrenome', f.sobrenome, autocomplete='family-name', erro=erros.sobrenome if e_dados) }}
+        </div>
+        {{ campo('email', 'E-mail de login', f.email, 'email', 'seu@email.com', obrigatorio=True, autocomplete='email', inputmode='email', erro=erros.email if e_dados) }}
+        {{ campo_senha('f-dados-senha', 'senha_atual', 'Senha atual (só para trocar o e-mail)', 'current-password', 'Sua senha de hoje', erros.senha_atual if e_dados) }}
+        <button type="submit" class="btn btn-primary btn-lg" data-carregando>{{ icon('check', 18) }}Salvar dados</button>
+      </fieldset>
+    </form>
+  </section>
+
+  <section class="card card--pad" aria-labelledby="h-senha" id="senha">
+    <h2 class="ctitle" id="h-senha" style="font-size:16px">Trocar a senha</h2>
+    <div class="csub" style="margin-bottom:14px">Depois da troca, a conta sai dos outros aparelhos em que estiver aberta.</div>
+    {% if e_senha and erros %}<div class="note note--red" role="alert" style="margin-bottom:14px">{{ icon('alert', 20) }}<span><strong>A senha não foi trocada</strong>Confira os campos marcados.</span></div>{% endif %}
+    <form method="post" action="{{ url_for('perfil.senha') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+      {# o gerenciador de senhas do navegador usa este campo escondido para saber de qual login é a senha nova #}
+      <input type="email" name="usuario_login" value="{{ f.email }}" autocomplete="username" hidden aria-hidden="true" tabindex="-1">
+      <fieldset class="stack gap-4" style="border:0;margin:0;padding:0"{% if admin_dentro_da_conta %} disabled{% endif %}>
+        {{ campo_senha('f-senha-atual', 'senha_atual', 'Senha atual', 'current-password', 'Sua senha de hoje', erros.senha_atual if e_senha) }}
+        {{ campo_senha('f-senha-nova', 'senha_nova', 'Nova senha', 'new-password', 'Pelo menos 8 caracteres', erros.senha_nova if e_senha, forca=True) }}
+        <button type="submit" class="btn btn-primary btn-lg" data-carregando>{{ icon('lock', 18) }}Trocar a senha</button>
+      </fieldset>
+    </form>
+  </section>
+</div>
+{% endblock %}
