@@ -1,12 +1,12 @@
 # Política de Privacidade — Vale Tec
 
-> **Versão preliminar 0.4, de 14/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica. Os trechos marcados como "a definir" (a hospedagem e o serviço de e-mail) serão preenchidos antes da versão final.
-
-**Última atualização:** 14/10/2026
+**Versão 1.0** · **Última atualização:** 17/10/2026
 
 Esta política explica, em linguagem direta, quais dados o Vale Tec trata, para quê, por quanto tempo e quais são os seus direitos. Ela segue a Lei Geral de Proteção de Dados (Lei 13.709/2018, a LGPD).
 
-O Vale Tec é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, CNPJ 60.499.733/0001-44, com sede em Tremembé/SP. Contato para assuntos de dados pessoais: vale.informatica02@gmail.com.
+O Vale Tec (https://valesolucoestec.com.br) é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, CNPJ 60.499.733/0001-44, com sede em Tremembé/SP. Contato para assuntos de dados pessoais: **ouvidoria@valesolucoestec.com.br**.
+
+**Encarregado (DPO).** O Vale Tec é um agente de tratamento de pequeno porte e, pela Resolução CD/ANPD nº 2/2022, está dispensado de nomear um encarregado. Mesmo assim, mantém um canal próprio para quem tiver dúvidas, pedidos ou reclamações sobre dados pessoais: ouvidoria@valesolucoestec.com.br.
 
 ## 1. Para quem é esta política
 
@@ -29,7 +29,7 @@ Há dois grupos de pessoas com dados no sistema, e a situação de cada um é di
 | Dados do negócio: nome da academia, CNPJ ou CPF, telefone, endereço, CREF | Configurar a conta e aparecer nos seus documentos e mensagens | Execução do contrato |
 | Registros de acesso: data, hora e endereço IP de cada entrada no sistema | Segurança e cumprimento da lei | Obrigação legal (Marco Civil da Internet, art. 15) e legítimo interesse em proteger o sistema |
 | Data e hora do último uso do sistema | Mostrar à nossa equipe quais contas estão usando o sistema, para oferecer ajuda | Legítimo interesse (art. 7º, IX) |
-| Pagamentos da mensalidade do Vale Tec: valor, período e data | Controlar a assinatura e liberar ou bloquear a conta | Execução do contrato |
+| Pagamentos da mensalidade do Vale Tec: valor, período e data; se a conta tem o desconto da promoção de lançamento | Controlar a assinatura e liberar ou bloquear a conta | Execução do contrato |
 
 ### 2.2 Dos alunos (cadastrados pela academia ou pelo personal)
 
@@ -45,6 +45,7 @@ Estes dados são colocados no sistema pela academia ou pelo profissional. É ele
 | **Avaliação física**: peso, altura, medidas, dobras cutâneas e os cálculos feitos a partir delas | Acompanhar a evolução física do aluno |
 | Marcação de que o aluno aceita, ou não, receber mensagens pelo WhatsApp | Respeitar a vontade do aluno: a marcação começa desligada, e só entra na fila de mensagens quem autorizou |
 | Registro de que uma mensagem foi preparada para o aluno (o tipo e o dia; nunca o texto nem o telefone) | Evitar mandar a mesma cobrança várias vezes |
+| Ficha de treino e resultado da avaliação em PDF | Mandar ao aluno. O arquivo é montado na hora em que a academia pede e **não fica guardado** no Vale Tec; depois de enviado, fica com quem recebeu |
 
 **Dado sensível.** As informações da avaliação física dizem respeito à saúde e, pela LGPD, são dados pessoais sensíveis. Elas só devem ser registradas com o consentimento do aluno, que a academia ou o profissional é responsável por obter.
 
@@ -71,12 +72,12 @@ Usamos apenas o necessário para o sistema funcionar:
 Não vendemos dados e não os usamos para propaganda. Compartilhamos apenas com:
 
 - **Fornecedores que fazem o sistema funcionar**, que tratam os dados em nosso nome e seguindo as nossas instruções:
-  - hospedagem e banco de dados: `[PREENCHER: nome do provedor e país onde os dados ficam]`;
-  - envio de e-mails do sistema (convite, recuperação de senha): `[PREENCHER: nome do provedor]`.
+  - **hospedagem do sistema e do banco de dados: Render** (Render Services, Inc.), com os servidores nos **Estados Unidos**. Todos os dados do sistema ficam lá, incluindo os dos alunos;
+  - **envio dos e-mails do sistema** (convite da equipe, recuperação de senha e avisos da conta): **Brevo** (Sendinblue SAS), com os servidores na **União Europeia**. Para enviar um e-mail, o Brevo recebe só o nome e o e-mail de quem vai recebê-lo, e o texto da mensagem. Nenhum dado de aluno é enviado ao Brevo.
 - **A equipe do Vale Tec:** os administradores (hoje, os sócios) conseguem ver os dados de todas as contas, inclusive os dos alunos, e entrar numa conta como se fossem o dono. Só fazem isso para dar suporte, conferir pagamentos, investigar problemas e manter o sistema funcionando, e cada acesso fica registrado.
 - **Autoridades**, quando houver obrigação legal ou ordem judicial.
 
-**Transferência para fora do Brasil.** `[PREENCHER depois de escolher a hospedagem: se o provedor guardar os dados fora do Brasil, dizer aqui o país e que a transferência segue as regras dos arts. 33 a 36 da LGPD. Se ficar tudo no Brasil, dizer isso.]`
+**Transferência para fora do Brasil.** Como a hospedagem fica nos Estados Unidos e o envio de e-mails na União Europeia, os dados tratados no Vale Tec são transferidos para fora do Brasil. Essa transferência segue os artigos 33 a 36 da LGPD: os fornecedores só tratam os dados para prestar o serviço ao Vale Tec, seguindo as nossas instruções, e os contratos com eles trazem cláusulas de proteção de dados e de segurança. Se quiser saber mais sobre essas garantias, escreva para o contato de dados pessoais.
 
 ## 5. Como protegemos
 
@@ -116,7 +117,7 @@ A LGPD (art. 18) garante a você, entre outros, o direito de:
 
 **Como pedir:**
 
-- **Usuário do sistema:** escreva para vale.informatica02@gmail.com. Respondemos em até 15 dias. Muita coisa você mesmo resolve nas configurações da conta.
+- **Usuário do sistema:** escreva para ouvidoria@valesolucoestec.com.br. Respondemos em até 15 dias. Muita coisa você mesmo resolve: nome, e-mail e senha na tela **Meu perfil**, e os dados do negócio nas configurações da conta.
 - **Aluno:** procure a sua academia ou o seu personal, que é quem decide sobre os seus dados. O sistema permite que eles exportem e excluam os dados de um aluno. Se você escrever para nós, encaminhamos o pedido a eles.
 
 Para proteger você, podemos pedir uma confirmação de identidade antes de atender.
@@ -127,5 +128,6 @@ Podemos atualizar esta política. Mudanças importantes serão avisadas por e-ma
 
 ## 9. Contato
 
-- Assuntos de privacidade e proteção de dados: vale.informatica02@gmail.com
+- Assuntos de privacidade e proteção de dados (ouvidoria): ouvidoria@valesolucoestec.com.br
+- Suporte do sistema: suporte@valesolucoestec.com.br
 - Autoridade Nacional de Proteção de Dados: https://www.gov.br/anpd

@@ -101,7 +101,7 @@ def test_bloqueada_so_abre_a_tela_de_pagamento(app, academia):
         assert dono.get(url).headers.get("Location") == "/assinatura", url
     tela = dono.get("/assinatura").get_data(as_text=True)
     assert "Sua conta está bloqueada" in tela and "guardados até" in tela and (HOJE + 30 * DIA).strftime("%d/%m/%Y") in tela
-    assert 'action="/sair"' in tela and "vale.informatica02@gmail.com" in tela
+    assert 'action="/sair"' in tela and "suporte@valesolucoestec.com.br" in tela     # [back-32-textos-legais-final] antes: o Gmail
     assert dono.post("/configuracoes/funcionalidade", data={"chave": "lembretes", "ligado": "0"}).status_code == 403
     assert da_conta(academia["conta"], "lembretes_ligados") is True                # o envio recusado não gravou nada
     for url in ("/termos", "/privacidade", "/saude"):

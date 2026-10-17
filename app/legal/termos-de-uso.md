@@ -1,12 +1,10 @@
 # Termos de Uso — Vale Tec
 
-> **Versão preliminar 0.4, de 14/10/2026, ainda em revisão.** Este texto já descreve como o sistema funciona, mas ainda vai passar por revisão jurídica.
-
-**Última atualização:** 14/10/2026
+**Versão 1.0** · **Última atualização:** 17/10/2026
 
 ## 1. Quem somos e o que é este documento
 
-O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers. Ele é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, inscrito no CNPJ 60.499.733/0001-44, com sede em Tremembé/SP ("Vale Tec", "nós").
+O **Vale Tec** é um sistema online de gestão para academias, estúdios e personal trainers, disponível em https://valesolucoestec.com.br. Ele é oferecido por 60.499.733 ADAUTO RODRIGUES DOS SANTOS NETTO, inscrito no CNPJ 60.499.733/0001-44, com sede em Tremembé/SP ("Vale Tec", "nós").
 
 Estes Termos são o contrato entre o Vale Tec e quem cria uma conta para usar o sistema ("você", "cliente"): a academia, o estúdio ou o profissional. Ao criar a conta, você declara que leu e aceita estes Termos e a nossa [Política de Privacidade](politica-de-privacidade).
 
@@ -29,12 +27,21 @@ O sistema é uma ferramenta de organização. Ele **não**:
 - As informações do cadastro devem ser verdadeiras e ficar atualizadas.
 - A conta tem um **responsável** (o dono), que pode convidar outras pessoas da equipe, como recepção e instrutores. Você responde pelo que essas pessoas fizerem dentro da sua conta.
 - Cada pessoa usa o próprio acesso. Não compartilhe senha.
-- Se desconfiar de acesso indevido, troque a senha e nos avise em vale.informatica02@gmail.com.
+- Você pode mudar o seu nome, o seu e-mail de login e a sua senha na tela **Meu perfil**. Trocar o e-mail ou a senha pede a senha atual.
+- Se desconfiar de acesso indevido, troque a senha em Meu perfil (isso desconecta os outros aparelhos) e nos avise em suporte@valesolucoestec.com.br.
 
 ## 4. Teste grátis, preço e pagamento
 
 - **Teste grátis:** toda conta nova usa o Vale Tec **de graça por 2 meses**, contados do dia em que foi criada. Não pedimos cartão para isso.
-- **Depois do teste:** o Vale Tec passa a ser pago, por mês. O preço vigente aparece na tela **Assinatura** do sistema, e o sistema avisa quando faltam 7 dias para o fim do teste.
+- **Depois do teste:** o Vale Tec passa a ser pago, por mês. Os preços de lançamento são:
+
+  | Tipo de conta | Preço por mês |
+  |---|---|
+  | Academia ou estúdio | R$ 59,99 |
+  | Personal trainer | R$ 29,99 |
+
+  O preço da sua conta aparece na tela **Assinatura** do sistema, e o sistema avisa quando faltam 7 dias para o fim do teste.
+- **Promoção de lançamento:** as **10 primeiras contas** criadas no Vale Tec pagam **50% do preço** (R$ 29,99 a academia e R$ 14,99 o personal trainer) **enquanto a conta continuar ativa**. A tela de criar conta mostra quantas vagas ainda restam; a tela Assinatura mostra se a sua conta tem o desconto. Se a conta for cancelada, ou apagada depois do bloqueio por falta de pagamento, o desconto acaba e não volta numa conta nova. Se o preço mudar (item abaixo), quem tem a promoção continua pagando 50% do preço novo.
 - **Como pagar:** por PIX. A tela Assinatura mostra o código "PIX copia e cola" com o valor. A confirmação do pagamento é feita pela nossa equipe; a conta é liberada assim que o pagamento for confirmado.
 - **Sem pagamento:** depois do vencimento, a conta continua funcionando por **7 dias**, com aviso. Passado esse prazo, a conta é **bloqueada** e só abre a tela de pagamento. Os dados ficam guardados por **30 dias** depois do bloqueio; pagando nesse prazo, tudo volta como estava. Depois disso, a conta e os dados podem ser apagados.
 - **Mudança de preço:** avisamos com pelo menos **30 dias** de antecedência, por e-mail e dentro do sistema. Se não concordar, você pode cancelar antes de a mudança valer.
@@ -90,7 +97,7 @@ Por isso:
 
 ## 8. Suporte e disponibilidade
 
-- **Suporte:** atendemos pelo e-mail vale.informatica02@gmail.com e respondemos assim que possível.
+- **Suporte:** atendemos pelo e-mail suporte@valesolucoestec.com.br e respondemos assim que possível.
 - **Disponibilidade:** nos esforçamos para manter o sistema no ar, mas não garantimos funcionamento ininterrupto, principalmente durante o período de teste. Manutenções programadas serão avisadas com antecedência sempre que possível.
 - **Cópias de segurança:** fazemos cópia de segurança diária dos dados, guardada por 30 dias, para recuperar o sistema em caso de falha. Essa cópia serve para restaurar o serviço como um todo; ela não substitui a exportação que você pode fazer dos seus próprios dados.
 
@@ -112,7 +119,7 @@ O que você cadastra é seu. Sugestões e relatos de problema que você nos envi
 
 - Você é responsável pela veracidade do que cadastra, pelo uso que a sua equipe faz e pela relação com os seus alunos.
 - O Vale Tec é responsável por prestar o serviço com cuidado e por proteger os dados conforme estes Termos e a lei.
-- Enquanto o serviço for gratuito, e no limite do que a lei permitir, o Vale Tec não responde por lucros que você deixou de ter, nem por prejuízos indiretos causados por falha ou indisponibilidade do sistema.
+- Durante o teste grátis, e no limite do que a lei permitir, o Vale Tec não responde por lucros que você deixou de ter, nem por prejuízos indiretos causados por falha ou indisponibilidade do sistema.
 - Nada nestes Termos afasta direitos que a lei garante e que não podem ser renunciados, incluindo, quando for o caso, os do Código de Defesa do Consumidor e os da LGPD.
 
 ## 12. Mudanças nestes Termos
@@ -125,5 +132,6 @@ Estes Termos seguem as leis do Brasil. Fica eleito o foro de Tremembé/SP para r
 
 ## 14. Contato
 
-- Dúvidas sobre o sistema ou sobre estes Termos: vale.informatica02@gmail.com
-- Assuntos de privacidade e proteção de dados: vale.informatica02@gmail.com
+- Dúvidas sobre o sistema, sobre a assinatura ou sobre estes Termos: suporte@valesolucoestec.com.br
+- Assuntos de privacidade e proteção de dados, reclamações e pedidos sobre dados pessoais (ouvidoria): ouvidoria@valesolucoestec.com.br
+- Site: https://valesolucoestec.com.br
