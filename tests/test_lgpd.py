@@ -45,11 +45,11 @@ def test_termos_e_politica_sao_paginas_publicas(app, url, titulo, trecho):
     resposta = app.test_client().get(url)                                        # sem login
     html = resposta.get_data(as_text=True)
     assert resposta.status_code == 200 and titulo in html and trecho in html and f"Versão {legal_service.VERSAO}" in html
-    assert "Versão preliminar 0.4" in html and "ainda em revisão" in html         # avisa que o texto vai passar por revisão  [back-26-lgpd-final] antes: 0.3
-    # [back-21-textos-legais] antes: os dois textos tinham trechos "a definir". Agora os dois trazem quem oferece o sistema;
-    # nos termos não sobra nada a definir, e na política ficam só a hospedagem e o serviço de e-mail (decisões D4 e D6).
-    assert "60.499.733/0001-44" in html and "ADAUTO RODRIGUES DOS SANTOS NETTO" in html and "vale.informatica02@gmail.com" in html
-    assert "PREENCHER" not in html and ("<mark>a definir</mark>" in html) == (url == "/privacidade")
+    # [back-32-textos-legais-final] antes: "Versão preliminar 0.4 ... ainda em revisão" e, na política, a hospedagem e o e-mail
+    # "a definir". A 1.0 não tem aviso de preliminar nem nada a definir, e usa os e-mails do domínio.
+    assert "Versão 1.0" in html and "preliminar" not in html and "ainda em revisão" not in html
+    assert "60.499.733/0001-44" in html and "ADAUTO RODRIGUES DOS SANTOS NETTO" in html and "ouvidoria@valesolucoestec.com.br" in html
+    assert "vale.informatica02" not in html and "PREENCHER" not in html and "<mark>a definir</mark>" not in html
     corpo = html.split('<article class="legal">')[1].split("</article>")[0]
     assert "**" not in corpo and "|---" not in corpo and "\n## " not in corpo and "RASCUNHO" not in corpo      # nada de Markdown cru
     assert "<h3>" in corpo and "<ul>" in corpo and "<strong>" in corpo

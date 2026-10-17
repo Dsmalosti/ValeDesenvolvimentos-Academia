@@ -39,7 +39,8 @@ class Config:
     VALE_TEC_PIX_CHAVE = os.getenv("VALE_TEC_PIX_CHAVE") or ""
     VALE_TEC_PIX_NOME = os.getenv("VALE_TEC_PIX_NOME") or "VALE TEC"
     VALE_TEC_PIX_CIDADE = os.getenv("VALE_TEC_PIX_CIDADE") or "TREMEMBE"
-    VALE_TEC_SUPORTE_EMAIL = os.getenv("VALE_TEC_SUPORTE_EMAIL") or "vale.informatica02@gmail.com"
+    # [back-32-textos-legais-final] antes: "vale.informatica02@gmail.com". Agora o e-mail do domínio, o mesmo dos termos de uso
+    VALE_TEC_SUPORTE_EMAIL = os.getenv("VALE_TEC_SUPORTE_EMAIL") or "suporte@valesolucoestec.com.br"
     VALE_TEC_SUPORTE_WHATSAPP = os.getenv("VALE_TEC_SUPORTE_WHATSAPP") or ""
 
 
