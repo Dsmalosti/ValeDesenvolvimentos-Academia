@@ -96,14 +96,6 @@ def desbloquear(id):
     return _acao(id, admin_service.desbloquear, 'Bloqueio retirado.')
 
 
-# [back-28-precos-e-promocao] dá (ligar=1) ou tira (ligar=0) o desconto da promoção de lançamento
-@admin_blueprint.route('/admin/contas/<int:id>/promocao', methods=['POST'])
-@so_admin
-def promocao(id):
-    ligar = request.form.get('ligar', '0')
-    return _acao(id, admin_service.mudar_promocao, 'A conta ganhou a promoção.' if ligar == '1' else 'A promoção foi retirada da conta.', ligar)
-
-
 @admin_blueprint.route('/admin/contas/<int:id>/entrar', methods=['POST'])
 @so_admin
 def entrar(id):

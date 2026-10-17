@@ -162,12 +162,15 @@ def criar_conta():
 
 
 def _promocao():
-    """[back-28-precos-e-promocao] O aviso da promoção de lançamento na tela de criar conta (vagas e preços com desconto)."""
-    from app.models import CONTA_PERSONAL, Conta
+    """[back-28-precos-e-promocao] O aviso do preço de lançamento na tela de criar conta: preço cobrado e preço de tabela (riscado)."""
+    from app.models import CONTA_PERSONAL
     from app.services import assinatura_service as a
-    com_desconto = lambda modelo: a._reais(a.preco(Conta(modelo=modelo, desconto_promocional=a.DESCONTO_DA_PROMOCAO)))
-    return {'vagas': a.vagas_da_promocao(), 'desconto': a.DESCONTO_DA_PROMOCAO,
-            'academia': com_desconto('academia'), 'personal': com_desconto(CONTA_PERSONAL)}
+    if not a.DESCONTO_DE_LANCAMENTO:
+        return None
+    reais = lambda valor: a._reais(valor).replace(' ', '\u00a0')       # "R$" e o número sempre na mesma linha (espaço que não quebra)
+    return {'desconto': a.DESCONTO_DE_LANCAMENTO,
+            'academia': reais(a.PRECOS['academia']), 'academia_tabela': reais(a.PRECOS_DE_TABELA['academia']),
+            'personal': reais(a.PRECOS[CONTA_PERSONAL]), 'personal_tabela': reais(a.PRECOS_DE_TABELA[CONTA_PERSONAL])}
 
 
 @auth_blueprint.route('/convite/<token>', methods=['GET', 'POST'])
