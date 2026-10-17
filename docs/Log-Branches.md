@@ -334,7 +334,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-28-precos-e-promocao
 
-- **Sai de:** `main` (8a334eb, depois do PR #51) · **PR:** a abrir → `main` · **Data:** 17/10/2026
+- **Sai de:** `main` (8a334eb, depois do PR #51) · **PR:** [#52](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/52) → `main` · **Data:** 17/10/2026
 - **O que mudou:** preço final igual para todas as contas (academia R$ 59,99, personal R$ 29,99), anunciado como "preço de lançamento, 50% de desconto" com o preço de tabela riscado (R$ 119,98 / R$ 59,98): criar conta, assinatura, PIX e avisos do topo. `DESCONTO_DE_LANCAMENTO = 0` desliga o anúncio. A primeira versão (50% só para as 10 primeiras contas, com coluna nova e migration) foi trocada no mesmo dia, antes do PR.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 525 passando (7 em `test_precos.py`); navegador assinatura 42/42 e admin 18/18.
@@ -342,7 +342,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-29-dependencias
 
-- **Sai de:** `back-28-precos-e-promocao` · **PR:** a abrir → `back-28-precos-e-promocao` · **Data:** 17/10/2026
+- **Sai de:** `back-28-precos-e-promocao` · **PR:** [#53](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/53) → `back-28-precos-e-promocao` · **Data:** 17/10/2026
 - **O que mudou:** `requirements.txt` com Flask 3.1.3, Werkzeug 3.1.9, idna 3.15, Mako 1.3.12 e python-dotenv 1.2.2 (as cinco com falha conhecida no `pip-audit`); saiu o Flask-JWT-Extended, que só era ligado em `app/extensions/security.py` e nunca usado.
 - **Migration:** nenhuma. **Dependência:** uma a menos (OK do Adauto em 17/10/2026).
 - **Testes:** num ambiente Python novo, só com o `requirements-dev.txt`: `pytest` 532 passando e os 16 testes de navegador passando; `pip-audit`: nenhuma falha conhecida.
@@ -351,7 +351,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-30-meu-perfil
 
-- **Sai de:** `back-29-dependencias` · **PR:** a abrir → `back-29-dependencias` · **Data:** 17/10/2026
+- **Sai de:** `back-29-dependencias` · **PR:** [#54](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/54) → `back-29-dependencias` · **Data:** 17/10/2026
 - **O que mudou:** tela nova `/perfil` (blueprint `perfil`, `services/perfil_service.py`, `templates/perfil/index.html`): nome, sobrenome e e-mail (trocar o e-mail pede a senha atual) e troca de senha (pede a atual; este aparelho continua logado e os outros saem). Item "Meu perfil" no menu (`_cabecalho.html`, `_gaveta.html`). Limite de 10 envios por hora. O admin dentro da conta de um cliente vê os campos desligados e o servidor recusa.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 544 passando (12 novos em `test_perfil.py`); navegador `perfil_navegador.py` 26/26, e login, painel, equipe, personal e configurações passando; varredura por papel: só a rota nova `/perfil`.
@@ -359,7 +359,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-31-pdf-ficha-avaliacao
 
-- **Sai de:** `back-30-meu-perfil` · **PR:** a abrir → `back-30-meu-perfil` · **Data:** 17/10/2026
+- **Sai de:** `back-30-meu-perfil` · **PR:** [#55](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/55) → `back-30-meu-perfil` · **Data:** 17/10/2026
 - **O que mudou:** `helpers/pdf.py` (gerador de PDF só com a biblioteca padrão: Helvetica, cp1252, retângulos, linhas, quebra de linha), `services/pdf_service.py` (desenho da ficha e da avaliação), rotas `treinos.pdf` (`/alunos/<id>/ficha/pdf`) e `avaliacoes.pdf` (`/avaliacoes/<id>/pdf`), `static/js/compartilhar-pdf.js` (Compartilhar do celular). Telas `treinos/enviar.html` (PDF escolhido, Imagem desligada) e `avaliacoes/resultado.html` ("Exportar PDF" de verdade).
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 556 passando (12 novos em `test_pdf.py`; a varredura de isolamento passou a ler os PDFs); navegador treinos 83/83 e avaliações 70/70; PDFs de exemplo abertos e conferidos a olho; varredura por papel: só as duas rotas novas (200).
@@ -367,7 +367,7 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-32-textos-legais-final
 
-- **Sai de:** `back-31-pdf-ficha-avaliacao` · **PR:** a abrir → `back-31-pdf-ficha-avaliacao` · **Data:** 17/10/2026
+- **Sai de:** `back-31-pdf-ficha-avaliacao` · **PR:** [#56](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/56) → `back-31-pdf-ficha-avaliacao` · **Data:** 17/10/2026
 - **O que mudou:** `app/legal/*.md` na versão 1.0 (domínio, e-mails do domínio, Render, Brevo, transferência internacional, encarregado dispensado com canal de ouvidoria, preços com o preço de lançamento, Meu perfil, PDFs); `VERSAO = '1.0-2026-10-17'`; `VALE_TEC_SUPORTE_EMAIL` padrão `suporte@valesolucoestec.com.br`; `docs/legal/LEIA-ME.md` reescrito com os pontos para o advogado.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma.
 - **Testes:** `pytest` 556 passando; navegador lgpd 28/28 e assinatura 42/42; PDF dos textos (`instance/Textos-legais-Vale-Tec-v1.0.pdf`) conferido página por página.
@@ -375,20 +375,60 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 
 ## back-33-deploy-render
 
-- **Sai de:** `back-32-textos-legais-final` · **PR:** a abrir → `back-32-textos-legais-final` · **Data:** 17/10/2026
+- **Sai de:** `back-32-textos-legais-final` · **PR:** [#57](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/57) → `back-32-textos-legais-final` · **Data:** 17/10/2026
 - **O que mudou:** só documentação: `docs/DEPLOY-RENDER.md` (novo), `docs/exemplos/backup-diario.yml` (modelo desligado, só roda com o repositório privado), `docs/DEPLOY.md` aponta para o guia, `.env.example` com os valores do Brevo em comentário.
 - **Migration:** nenhuma. **Dependência nova:** nenhuma (o guia depende do Gunicorn, que espera o OK).
 - **Testes:** YAMLs validados; formato do remetente conferido; testes de produção e configuração passando.
 - **Achado:** o repositório `Dsmalosti/ValeDesenvolvimentos-Academia` é público; o histórico tem o SQLite antigo de desenvolvimento (2 usuários com hash bcrypt e 3 alunos de teste). Recomendação: torná-lo privado.
 - **Doc:** `docs/mudancas/back-33-deploy-render.md`
 
-## Onde parou (13/10/2026)
+## back-34-auditoria-front
 
-**O roadmap original acabou.** O que falta para lançar está na seção "O que falta para lançar" do roadmap (cobrança do próprio SaaS, painel de administrador, página de apresentação, e os três pedidos novos do Adauto: front mais rápido, front mais fácil de manter e ranking de presença). D12 e D13 foram respondidas em 13/10/2026. Tudo enviado até a `back-27-telas-antigas` (PRs da `back-21` em diante a abrir): todas as telas do front ligadas (menos a central de notificações e o painel do instrutor, que não estão em nenhuma branch), segurança (`back-18`), LGPD (`back-19`) e preparação de produção com a checklist final (`back-20`). Em 11/10/2026 o Diogo juntou na `main` (PR #23, `integracao-main`) tudo até a `front-05-cobranca` e a proposta de esquema da `back-09`, com um ajuste dele em `auth/routes.py`; **os 20 PRs de `back-09-cobranca` a `back-20-producao` estão abertos desde 13/10/2026**, com o título numerado de `[01/20]` a `[20/20]`: #22 (01), #25 a #38 (02 a 15), #24 (16) e #39 a #42 (17 a 20). Cada um aponta para a branch anterior. **Dois ajustes ficaram para o Adauto fazer à mão no GitHub** (a ferramenta não deixou o Claude alterar PR que já existia): no #22, trocar a base de `front-05-cobranca` para `main` e o título para `[01/20] back-09: cobrança, renovação, diária avulsa e extrato`; no #24, trocar a base de `main` para `back-16-mensagens`. A junção da `back-20` com a `main` atual foi simulada: sem conflito, testes passando. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b19`** e instalar as dependências da `back-18` (`pip install -r requirements.txt`): pedir o OK dele, backup antes, avisar da inatividade automática da `b12`. Enquanto isso a pasta do projeto fica em `back-08-planos`, que é onde o banco dele está.
+- **Sai de:** `back-33-deploy-render` · **PR:** [#58](https://github.com/Dsmalosti/ValeDesenvolvimentos-Academia/pull/58) → `back-33-deploy-render` · **Data:** 17/10/2026
+- **O que mudou:** skill `auditoria-qualidade-web` (SKILL.md, critérios, receitas Flask, script `auditar_paginas.py`); auditoria local (31 itens); `app/helpers/estaticos.py` (cache de 1 ano com `?v=`), `app/blueprints/seo.py` (`robots.txt`, `sitemap.xml`, `llms.txt`, descrições, canonical, Open Graph, JSON-LD, `X-Robots-Tag: noindex`), tabelas legais com foco e nome, rodapé com termos e privacidade nas telas de acesso; `docs/MANUTENCAO-FRONT.md`; a skill nova no `CLAUDE.md`.
+- **Migration:** nenhuma. **Dependência nova:** nenhuma.
+- **Testes:** `pytest` 560 passando depois do preço novo (567 antes; 11 novos em `test_seo.py`); os 16 testes de navegador passando; auditoria depois: 0 violações no axe-core, 0 erros no console, 0 rolagem lateral em 56 combinações de página e largura.
+- **Doc:** `docs/mudancas/back-34-auditoria-front.md`
 
-O que falta, e de quem depende:
+## Onde parou (17/10/2026)
 
-- **Adauto e Diogo:** hospedagem, domínio e e-mail (D4, D5, D6); servidor de aplicação (dependência nova); atualizar as 5 dependências do `pip-audit`; conferir a configuração de produção da `back-20`; remoção das telas antigas e do Flask-JWT-Extended sem uso; a migration antiga `f456ba924031`.
-- **Adauto:** dados da empresa para os textos legais (D13) e o advogado; levar para o Drive os ajustes marcados nos templates (a lista está em cada `docs/mudancas/back-*.md`) e os templates que nasceram no repositório (`auth/nova_senha.html`, `errors/429.html`, `errors/413.html`, `legal/pagina.html`); as decisões de produto anotadas em cada doc (treinos: "Editar o modelo", "Duplicar ficha", "Salvar ficha" no desktop; avaliação: recepção vê medidas?, preço da avulsa, fotos, percentual de gordura; mensagens: envio automático pago, chave de lembretes, filas de sumido e boas-vindas; personal: D12, validade do pacote, falta, confirmação do aluno; LGPD: opção de WhatsApp começa ligada?, aceitar de novo na versão final).
-- **Depois da hospedagem:** ambiente, backup com teste de restauração e ensaio geral no celular (`docs/DEPLOY.md`, seção 13).
-- **Sem branch no roadmap:** central de notificações, painel do instrutor, PIX automático, ficha e avaliação em PDF.
+**Na `main`:** tudo até a `back-27-telas-antigas`. O Diogo juntou em 15/10/2026 (PRs #50 e #51, `integracao-2` e `integracao-3`), com um ajuste dele no `auth/routes.py`: proteção extra contra link malicioso no `?next=`.
+
+**Enviadas em 17/10/2026, cada uma saindo da anterior. PRs abertos em 17/10/2026: #52 (28) a #58 (34), cada um com base na branch anterior.** A `back-28` mudou de regra no mesmo dia (preço único para todos, anunciado como 50% de desconto) e foi juntada nas seguintes antes dos PRs.
+
+| Branch | O que é |
+|---|---|
+| `back-28-precos-e-promocao` | R$ 59,99 / 29,99 para todos, anunciado como 50% de desconto (de R$ 119,98 / 59,98). Sem migration |
+| `back-29-dependencias` | 5 atualizações de segurança; Flask-JWT-Extended fora |
+| `back-30-meu-perfil` | Nome, e-mail e senha de quem está logado |
+| `back-31-pdf-ficha-avaliacao` | Ficha e avaliação em PDF, sem dependência nova |
+| `back-32-textos-legais-final` | Termos e política 1.0; PDF para o advogado em `instance/Textos-legais-Vale-Tec-v1.0.pdf` |
+| `back-33-deploy-render` | Guia do Render, Brevo, DNS e backup |
+| `back-34-auditoria-front` | Skill `auditoria-qualidade-web`, auditoria, cache, SEO, acessibilidade e o guia de manutenção do front |
+
+**Ambiente:**
+
+- As branches novas são feitas no worktree `instance/demo/codigo`. A pasta principal está na `main`.
+- A demonstração (`instance/demo`, porta 5002) foi recriada com o código da `back-34`. A senha está no `LOGIN-DE-TESTE.txt`.
+- Os testes da `back-29` em diante rodam num ambiente Python separado, com as dependências novas. O `.venv` do Adauto ainda tem as antigas: falta `pip install -r requirements.txt` depois do merge.
+- O banco local do Adauto (Postgres) continua em `b08c3d4e5f60`. Pedir o OK e fazer backup antes de rodar `b09` a `b28`.
+
+**O que falta, e de quem depende:** a lista completa está na última mensagem ao Adauto (17/10/2026) e na tabela "O que falta para lançar" do roadmap.
+
+- **Diogo:**
+  - autorizar o Gunicorn;
+  - tornar o repositório privado;
+  - conferir a configuração de produção da `back-20`;
+  - revisar os PRs 28 a 34.
+- **Adauto:**
+  - chave PIX (conta do banco sendo aberta);
+  - chip do WhatsApp do suporte;
+  - caixas `suporte@` e `ouvidoria@`;
+  - advogado;
+  - ensaio no celular.
+- **Os dois:**
+  - WhatsApp automático: decidido, entra depois dos primeiros clientes;
+  - ambiente de teste × produção;
+  - fonte única do front;
+  - página de vendas depois dos testes.
+- **Claude, depois do OK do Gunicorn:** fazer o deploy junto com o Diogo, testar a restauração do backup e medir a auditoria em produção.

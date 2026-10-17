@@ -20,6 +20,8 @@ ROTAS_PUBLICAS = {"static", "auth.login", "auth.esqueci_senha", "auth.criar_cont
                   # [back-27-telas-antigas] antes também "instrutores.login" e "instrutores.cadastroInstrutor" (telas antigas, saíram)
                   # [back-19-lgpd] termos de uso e política de privacidade: quem ainda vai criar a conta precisa conseguir ler
                   "legal.termos", "legal.privacidade",
+                  # [back-34-auditoria-front] o que os buscadores leem: não tem dado de ninguém e precisa abrir sem login
+                  "seo.robots", "seo.sitemap", "seo.llms",
                   # [back-20-producao] /saude: a hospedagem pergunta se o app está de pé; responde só "ok"
                   "saude.saude"}
 

@@ -35,6 +35,7 @@ O front do Drive roda com `_dev/app.py` (mock). Os templates e o `static/` dele 
 - `saas-qa-release`: antes de dar push em qualquer branch com tela. Varredura de rotas por perfil, Playwright no celular (390px, toque) e no PC (1440px), tema claro e escuro, console limpo. A seção 6 dela (entrega pelo Drive) NÃO vale aqui: aqui a entrega é branch + PR.
 - `saas-flask-seguranca`: em toda branch `back-*` e na revisão final antes do lançamento (isolamento entre academias, papéis, CSRF, rate limit, headers, segredos, LGPD).
 - `saas-interacoes-mobile`: quando a tela tiver popup, gaveta, arrastar, linha clicável ou transição.
+- `auditoria-qualidade-web` (criada em 17/10/2026, `.claude/skills/auditoria-qualidade-web/`): antes do lançamento, depois do deploy (em produção) e a cada mudança grande de visual, peso ou página pública (ex.: a página de vendas). Mede responsividade, acessibilidade, peso, imagens, SEO, GEO, privacidade e HTTPS, com status aprovado/reprovado/não verificado. A última está em `docs/auditorias/`.
 Se uma skill não estiver disponível, avise o Adauto em vez de seguir sem ela.
 
 ## Testes

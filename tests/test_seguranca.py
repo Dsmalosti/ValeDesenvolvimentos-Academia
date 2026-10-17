@@ -177,7 +177,9 @@ def test_as_telas_novas_nao_tem_script_nem_evento_embutido(app, dono):
         for nome in arquivos:
             if nome.endswith(".html"):
                 texto = open(os.path.join(pasta, nome), encoding="utf-8").read()
-                for achado in re.finditer(r"<script(?![^>]*\bsrc=)(?![^>]*application/json)[^>]*>|\son[a-z]+=\"", texto):
+                # [back-34-auditoria-front] antes só aceitava application/json; agora também application/ld+json (dados estruturados
+                # para o Google). Os dois são blocos de DADOS: o navegador não executa, e a CSP não precisa liberar nada.
+                for achado in re.finditer(r"<script(?![^>]*\bsrc=)(?![^>]*application/(?:ld\+)?json)[^>]*>|\son[a-z]+=\"", texto):
                     problemas.append(f"{nome}: {achado.group(0)[:40]}")
     assert problemas == []
 

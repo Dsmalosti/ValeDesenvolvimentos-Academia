@@ -398,6 +398,8 @@ dialog::backdrop{background:rgba(8,36,59,.55);backdrop-filter:blur(2px);}
 .auth__form{max-width:400px;margin:0 auto;}
 .auth__form h2{font-size:24px;font-weight:700;margin:0;font-family:var(--font-body);} .auth__form .lead{color:var(--text-soft);font-size:14px;margin:4px 0 22px;}
 .auth__foot{text-align:center;color:var(--text-faint);font-size:12.5px;margin-top:26px;}
+/* [back-34-auditoria-front] links dos termos e da privacidade no rodapé das telas de acesso: área de toque de 44 px no celular */
+.auth__foot a{display:inline-flex;align-items:center;min-height:44px;padding:0 6px;color:inherit;text-decoration:underline;text-underline-offset:3px;}
 .or-line{display:flex;align-items:center;gap:14px;color:var(--text-faint);font-size:12.5px;margin:18px 0;}
 .or-line::before,.or-line::after{content:"";flex:1;height:1px;background:var(--border);}
 @media (min-width:992px){
