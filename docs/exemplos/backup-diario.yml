@@ -1,0 +1,60 @@
+# [back-33-deploy-render] MODELO do backup diário do banco de produção (Render), por GitHub Actions.
+#
+# NÃO está ligado: para ligar, copie este arquivo para .github/workflows/backup-diario.yml (num PR que o Diogo aprova)
+# e crie, em Settings > Secrets and variables > Actions, os segredos:
+#   BANCO_URL_EXTERNA  o "External Database URL" do Postgres no Render
+#   SENHA_DO_BACKUP    uma senha longa; guarde também fora do GitHub (sem ela o backup não abre)
+#
+# O que faz, todo dia às 03h de Brasília:
+#   1. instala o pg_dump da mesma versão do banco (18);
+#   2. copia o banco inteiro, compacta e criptografa com a senha (AES-256);
+#   3. guarda o arquivo no GitHub por 30 dias (é o prazo prometido nos termos de uso); depois disso o GitHub apaga sozinho.
+#
+# SÓ RODA COM O REPOSITÓRIO PRIVADO: num repositório público os arquivos guardados podem ser baixados por qualquer
+# pessoa com conta no GitHub. Ver docs/DEPLOY-RENDER.md, seção 8.
+#
+# Restaurar: baixar o arquivo em Actions, depois
+#   gpg --decrypt backup.sql.gz.gpg | gunzip > backup.sql
+#   psql "<URL de um banco de teste>" < backup.sql
+name: Backup diário
+
+on:
+  schedule:
+    - cron: "0 6 * * *"          # 06h UTC = 03h em Brasília
+  workflow_dispatch: {}          # botão "Run workflow", para rodar à mão
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Instalar o pg_dump 18 (a mesma versão do banco)
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-18
+
+      - name: Copiar, compactar e criptografar o banco
+        env:
+          BANCO: ${{ secrets.BANCO_URL_EXTERNA }}
+          SENHA: ${{ secrets.SENHA_DO_BACKUP }}
+        run: |
+          set -euo pipefail
+          /usr/lib/postgresql/18/bin/pg_dump --no-owner --no-privileges "$BANCO" \
+            | gzip -9 \
+            | gpg --batch --yes --pinentry-mode loopback --passphrase "$SENHA" --symmetric --cipher-algo AES256 -o backup.sql.gz.gpg
+          echo "Tamanho do backup: $(du -h backup.sql.gz.gpg | cut -f1)"     # só o tamanho: nada do conteúdo vai para o log
+
+      - name: Guardar por 30 dias
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_number }}
+          path: backup.sql.gz.gpg
+          retention-days: 30
+          if-no-files-found: error

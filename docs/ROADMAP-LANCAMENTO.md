@@ -123,6 +123,7 @@ O código do roadmap original está pronto. Esta lista junta o que apareceu depo
 
 | | Item | O que é | Trava |
 |---|---|---|---|
+| [x] | `back-33-deploy-render` | **Feito (17/10/2026).** `docs/DEPLOY-RENDER.md`: passo a passo do Render (banco, serviço, variáveis, `banco-novo`, admins), DNS no Registro.br, Brevo, caixas suporte@/ouvidoria@ por encaminhamento, backup diário (modelo `docs/exemplos/backup-diario.yml`, desligado) e teste de restauração, `render.yaml` e ambientes de teste × produção. Achado: o repositório no GitHub é **público** | Gunicorn (OK do Diogo); repositório privado (Diogo); fazer o deploy |
 | [x] | `back-32-textos-legais-final` | **Feito (17/10/2026).** Termos e Política na versão 1.0, sem "preliminar" e sem "a definir": site valesolucoestec.com.br, e-mails suporte@ e ouvidoria@ do domínio, hospedagem Render (EUA) e e-mail Brevo (UE) com a transferência internacional, preços e promoção de lançamento, Meu perfil e PDFs. `VERSAO = 1.0-2026-10-17`; suporte padrão no domínio. PDF para o advogado com os 10 pontos de revisão | Advogado revisar; criar as caixas suporte@ e ouvidoria@ (ou encaminhamento) antes do lançamento |
 | [x] | `back-31-pdf-ficha-avaliacao` | **Feito (17/10/2026).** Ficha de treino e resultado da avaliação física em PDF (A4, com as cores do front, "Página X de Y"), gerados por um gerador próprio, sem dependência nova. Na tela Enviar ficha a opção PDF vem escolhida; no celular "Enviar o PDF" abre o Compartilhar com o arquivo; no resultado da avaliação, "Exportar PDF" baixa o arquivo. `no-store` e o mesmo acesso das telas | Ensaio no celular de verdade (Compartilhar). Imagem da ficha continua desligada |
 | [x] | `back-30-meu-perfil` | **Feito (17/10/2026).** Tela Meu perfil (`/perfil`) para todos os papéis e o personal: nome, sobrenome, e-mail (pede a senha atual) e trocar a senha (os outros aparelhos saem). Item no menu do desktop e na gaveta do celular. O admin dentro da conta de um cliente não muda o perfil do dono. Sem migration | Template novo: levar para o Drive |
@@ -309,3 +310,4 @@ Coisas vistas durante o trabalho que ainda não têm dono. Cada uma já está en
 | 17/10/2026 | `back-30-meu-perfil` enviada: cada pessoa edita o próprio nome, e-mail e senha. |
 | 17/10/2026 | `back-31-pdf-ficha-avaliacao` enviada: ficha e avaliação em PDF, com o Compartilhar do celular. |
 | 17/10/2026 | `back-32-textos-legais-final` enviada: textos legais 1.0 e o PDF para o advogado. |
+| 17/10/2026 | `back-33-deploy-render` enviada: guia do deploy no Render. O repositório no GitHub está público (achado). |
