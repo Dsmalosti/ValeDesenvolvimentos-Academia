@@ -44,7 +44,7 @@
     </div>
     <div class="stack gap-2" style="margin-top:10px;font-size:14.5px">
       <div>Teste grátis até <b>{{ s.fim_do_teste.strftime('%d/%m/%Y') }}</b>{% if dias_de_teste is not none %} ({{ dias_de_teste }} {{ 'dia' if dias_de_teste == 1 else 'dias' }}){% endif %}</div>
-      <div>Pago até <b>{{ s.pago_ate.strftime('%d/%m/%Y') if s.pago_ate else 'nunca pagou' }}</b> · {{ reais(s.preco) }} por mês{% if s.desconto %} <span class="chip chip--green">Promoção {{ s.desconto }}%</span> <span class="faint fs-12">(cheio: {{ reais(s.preco_cheio) }})</span>{% endif %}</div>{# [back-28-precos-e-promocao] o selo da promoção #}
+      <div>Pago até <b>{{ s.pago_ate.strftime('%d/%m/%Y') if s.pago_ate else 'nunca pagou' }}</b> · {{ reais(s.preco) }} por mês</div>
       {% if s.manual %}<div class="note note--red">{{ icon('lock', 20) }}<span><strong>Bloqueada pelo suporte em {{ s.bloqueia_em.strftime('%d/%m/%Y') }}</strong>{{ conta.bloqueio_motivo }}</span></div>
       {% elif s.estado in ('vencida', 'bloqueada') %}<div>Venceu em <b>{{ s.vence.strftime('%d/%m/%Y') }}</b>; {{ 'bloqueada desde' if s.estado == 'bloqueada' else 'será bloqueada em' }} <b>{{ s.bloqueia_em.strftime('%d/%m/%Y') }}</b>.</div>{% endif %}
     </div>
@@ -57,14 +57,6 @@
         <button type="submit" class="btn btn-green">{{ icon('check', 18) }}Confirmar pagamento</button>
       </form>
       <p class="faint fs-12" style="margin:-8px 0 0">Confira no aplicativo do banco antes. Sem valor, vale o preço da conta vezes os meses.</p>
-
-      {# [back-28-precos-e-promocao] dar ou tirar a promoção de lançamento #}
-      <form method="post" action="{{ url_for('admin.promocao', id=conta.id) }}" class="row-flex gap-3" style="flex-wrap:wrap;align-items:center">
-        {{ token() }}<input type="hidden" name="ligar" value="{{ '0' if s.desconto else '1' }}">
-        {% if s.desconto %}<button type="submit" class="btn btn-ghost">{{ icon('close', 18) }}Tirar a promoção</button>
-        {% else %}<button type="submit" class="btn btn-ghost"{% if not vagas_da_promocao %} disabled{% endif %}>{{ icon('gift', 18) }}Dar a promoção ({{ desconto_da_promocao }}%)</button>{% endif %}
-        <span class="faint fs-12">{{ vagas_da_promocao }} {{ 'vaga sobrando' if vagas_da_promocao == 1 else 'vagas sobrando' }} na promoção de lançamento</span>
-      </form>
 
       <form method="post" action="{{ url_for('admin.teste', id=conta.id) }}" class="row-flex gap-3" style="flex-wrap:wrap;align-items:flex-end">
         {{ token() }}
