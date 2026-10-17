@@ -92,7 +92,12 @@ def para_html(markdown, url_para):
                 tabela.append([c.strip() for c in linhas[i].strip().strip('|').split('|')])
                 i += 1
             corpo = [l for l in tabela[1:] if not all(re.fullmatch(r':?-+:?', c or '-') for c in l)]
-            saida.append('<div class="legal-tabela"><table><thead><tr>' + ''.join(f'<th>{_em_linha(c, url_para)}</th>' for c in tabela[0])
+            # [back-34-auditoria-front] antes: <div class="legal-tabela"> sem foco. A tabela rola de lado no celular, e quem usa teclado não conseguia
+            # rolar (axe-core: scrollable-region-focusable, gravidade séria). Agora a área recebe foco pelo Tab e tem um nome
+            # próprio (número e colunas): duas áreas com o mesmo nome confundem quem navega pelo leitor de tela.
+            numero = sum('class="legal-tabela"' in parte for parte in saida) + 1
+            nome = escape(f"Tabela {numero}: {', '.join(re.sub(r'[*_`]', '', c) for c in tabela[0])}")
+            saida.append(f'<div class="legal-tabela" tabindex="0" role="region" aria-label="{nome}"><table><thead><tr>' + ''.join(f'<th>{_em_linha(c, url_para)}</th>' for c in tabela[0])
                          + '</tr></thead><tbody>' + ''.join('<tr>' + ''.join(f'<td>{_em_linha(c, url_para)}</td>' for c in l) + '</tr>' for l in corpo)
                          + '</tbody></table></div>')
         elif re.match(r'(-|\*|\d+\.)\s', limpa):

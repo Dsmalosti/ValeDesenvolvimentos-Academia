@@ -382,13 +382,54 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Achado:** o repositório `Dsmalosti/ValeDesenvolvimentos-Academia` é público; o histórico tem o SQLite antigo de desenvolvimento (2 usuários com hash bcrypt e 3 alunos de teste). Recomendação: torná-lo privado.
 - **Doc:** `docs/mudancas/back-33-deploy-render.md`
 
-## Onde parou (13/10/2026)
+## back-34-auditoria-front
 
-**O roadmap original acabou.** O que falta para lançar está na seção "O que falta para lançar" do roadmap (cobrança do próprio SaaS, painel de administrador, página de apresentação, e os três pedidos novos do Adauto: front mais rápido, front mais fácil de manter e ranking de presença). D12 e D13 foram respondidas em 13/10/2026. Tudo enviado até a `back-27-telas-antigas` (PRs da `back-21` em diante a abrir): todas as telas do front ligadas (menos a central de notificações e o painel do instrutor, que não estão em nenhuma branch), segurança (`back-18`), LGPD (`back-19`) e preparação de produção com a checklist final (`back-20`). Em 11/10/2026 o Diogo juntou na `main` (PR #23, `integracao-main`) tudo até a `front-05-cobranca` e a proposta de esquema da `back-09`, com um ajuste dele em `auth/routes.py`; **os 20 PRs de `back-09-cobranca` a `back-20-producao` estão abertos desde 13/10/2026**, com o título numerado de `[01/20]` a `[20/20]`: #22 (01), #25 a #38 (02 a 15), #24 (16) e #39 a #42 (17 a 20). Cada um aponta para a branch anterior. **Dois ajustes ficaram para o Adauto fazer à mão no GitHub** (a ferramenta não deixou o Claude alterar PR que já existia): no #22, trocar a base de `front-05-cobranca` para `main` e o título para `[01/20] back-09: cobrança, renovação, diária avulsa e extrato`; no #24, trocar a base de `main` para `back-16-mensagens`. A junção da `back-20` com a `main` atual foi simulada: sem conflito, testes passando. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b19`** e instalar as dependências da `back-18` (`pip install -r requirements.txt`): pedir o OK dele, backup antes, avisar da inatividade automática da `b12`. Enquanto isso a pasta do projeto fica em `back-08-planos`, que é onde o banco dele está.
+- **Sai de:** `back-33-deploy-render` · **PR:** a abrir → `back-33-deploy-render` · **Data:** 17/10/2026
+- **O que mudou:** skill `auditoria-qualidade-web` (SKILL.md, critérios, receitas Flask, script `auditar_paginas.py`); auditoria local (31 itens); `app/helpers/estaticos.py` (cache de 1 ano com `?v=`), `app/blueprints/seo.py` (`robots.txt`, `sitemap.xml`, `llms.txt`, descrições, canonical, Open Graph, JSON-LD, `X-Robots-Tag: noindex`), tabelas legais com foco e nome, rodapé com termos e privacidade nas telas de acesso; `docs/MANUTENCAO-FRONT.md`; a skill nova no `CLAUDE.md`.
+- **Migration:** nenhuma. **Dependência nova:** nenhuma.
+- **Testes:** `pytest` 567 passando (11 novos em `test_seo.py`); os 16 testes de navegador passando; auditoria depois: 0 violações no axe-core, 0 erros no console, 0 rolagem lateral em 56 combinações de página e largura.
+- **Doc:** `docs/mudancas/back-34-auditoria-front.md`
 
-O que falta, e de quem depende:
+## Onde parou (17/10/2026)
 
-- **Adauto e Diogo:** hospedagem, domínio e e-mail (D4, D5, D6); servidor de aplicação (dependência nova); atualizar as 5 dependências do `pip-audit`; conferir a configuração de produção da `back-20`; remoção das telas antigas e do Flask-JWT-Extended sem uso; a migration antiga `f456ba924031`.
-- **Adauto:** dados da empresa para os textos legais (D13) e o advogado; levar para o Drive os ajustes marcados nos templates (a lista está em cada `docs/mudancas/back-*.md`) e os templates que nasceram no repositório (`auth/nova_senha.html`, `errors/429.html`, `errors/413.html`, `legal/pagina.html`); as decisões de produto anotadas em cada doc (treinos: "Editar o modelo", "Duplicar ficha", "Salvar ficha" no desktop; avaliação: recepção vê medidas?, preço da avulsa, fotos, percentual de gordura; mensagens: envio automático pago, chave de lembretes, filas de sumido e boas-vindas; personal: D12, validade do pacote, falta, confirmação do aluno; LGPD: opção de WhatsApp começa ligada?, aceitar de novo na versão final).
-- **Depois da hospedagem:** ambiente, backup com teste de restauração e ensaio geral no celular (`docs/DEPLOY.md`, seção 13).
-- **Sem branch no roadmap:** central de notificações, painel do instrutor, PIX automático, ficha e avaliação em PDF.
+**Na `main`:** tudo até a `back-27-telas-antigas`. O Diogo juntou em 15/10/2026 (PRs #50 e #51, `integracao-2` e `integracao-3`), com um ajuste dele no `auth/routes.py`: proteção extra contra link malicioso no `?next=`.
+
+**Enviadas em 17/10/2026, cada uma saindo da anterior. PRs a abrir:**
+
+| Branch | O que é |
+|---|---|
+| `back-28-precos-e-promocao` | R$ 59,99 / 29,99; 50% para as 10 primeiras contas. Migration `b28f9a0b1c20` |
+| `back-29-dependencias` | 5 atualizações de segurança; Flask-JWT-Extended fora |
+| `back-30-meu-perfil` | Nome, e-mail e senha de quem está logado |
+| `back-31-pdf-ficha-avaliacao` | Ficha e avaliação em PDF, sem dependência nova |
+| `back-32-textos-legais-final` | Termos e política 1.0; PDF para o advogado em `instance/Textos-legais-Vale-Tec-v1.0.pdf` |
+| `back-33-deploy-render` | Guia do Render, Brevo, DNS e backup |
+| `back-34-auditoria-front` | Skill `auditoria-qualidade-web`, auditoria, cache, SEO, acessibilidade e o guia de manutenção do front |
+
+**Ambiente:**
+
+- As branches novas são feitas no worktree `instance/demo/codigo`. A pasta principal está na `main`.
+- A demonstração (`instance/demo`, porta 5002) foi recriada com o código da `back-34`. A senha está no `LOGIN-DE-TESTE.txt`.
+- Os testes da `back-29` em diante rodam num ambiente Python separado, com as dependências novas. O `.venv` do Adauto ainda tem as antigas: falta `pip install -r requirements.txt` depois do merge.
+- O banco local do Adauto (Postgres) continua em `b08c3d4e5f60`. Pedir o OK e fazer backup antes de rodar `b09` a `b28`.
+
+**O que falta, e de quem depende:** a lista completa está na última mensagem ao Adauto (17/10/2026) e na tabela "O que falta para lançar" do roadmap.
+
+- **Diogo:**
+  - autorizar o Gunicorn;
+  - tornar o repositório privado;
+  - conferir a configuração de produção da `back-20`;
+  - revisar os PRs 28 a 34.
+- **Adauto:**
+  - chave PIX (conta do banco sendo aberta);
+  - chip do WhatsApp do suporte;
+  - caixas `suporte@` e `ouvidoria@`;
+  - advogado;
+  - ensaio no celular.
+- **Os dois:**
+  - quanto tempo dura a promoção;
+  - WhatsApp automático;
+  - ambiente de teste × produção;
+  - fonte única do front;
+  - página de vendas depois dos testes.
+- **Claude, depois do OK do Gunicorn:** fazer o deploy junto com o Diogo, testar a restauração do backup e medir a auditoria em produção.

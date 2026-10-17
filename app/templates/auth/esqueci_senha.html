@@ -30,4 +30,5 @@
   </div>
 </form>
 {% endif %}
+<div class="auth__foot">Vale Tec · 2026 · <a href="{{ url_for('legal.termos') }}">Termos de uso</a> · <a href="{{ url_for('legal.privacidade') }}">Privacidade</a></div>{# [back-34-auditoria-front] antes: só "Vale Tec · 2026". A tela pede e-mail e senha: o link da política tem de estar à vista (LGPD) #}
 {% endblock %}

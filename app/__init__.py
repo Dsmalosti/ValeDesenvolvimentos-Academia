@@ -121,6 +121,7 @@ def create_app():
     from app.blueprints.assinatura.routes import assinatura_blueprint  # [back-24-assinatura] teste grátis, mensalidade e bloqueio
     from app.blueprints.admin.routes import admin_blueprint  # [back-25-admin] painel de administração do Vale Tec
     from app.blueprints.perfil.routes import perfil_blueprint  # [back-30-meu-perfil] cada pessoa edita o próprio nome, e-mail e senha
+    from app.blueprints.seo import seo_blueprint  # [back-34-auditoria-front] robots.txt, sitemap.xml, llms.txt e o que o buscador lê de cada tela
     from app.blueprints.pendentes import blueprints_pendentes
     app.register_blueprint(painel_blueprint)
     app.register_blueprint(cobrancas_blueprint)  # [back-09-cobranca]
@@ -136,6 +137,10 @@ def create_app():
     app.register_blueprint(assinatura_blueprint)  # [back-24-assinatura]
     app.register_blueprint(admin_blueprint)  # [back-25-admin]
     app.register_blueprint(perfil_blueprint)  # [back-30-meu-perfil]
+    app.register_blueprint(seo_blueprint)  # [back-34-auditoria-front]
+    # [back-34-auditoria-front] cache de 1 ano nos estáticos, com o carimbo de versão na URL (antes: sem cache, tudo baixado de novo a cada tela)
+    from app.helpers import estaticos
+    estaticos.ligar(app)
     for blueprint_pendente in blueprints_pendentes():
         app.register_blueprint(blueprint_pendente)
 
