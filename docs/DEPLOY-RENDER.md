@@ -99,7 +99,6 @@ flask --app main admin-do-sistema --email adauto.netto2005@gmail.com
 flask --app main admin-do-sistema --email dsmalosti@gmail.com
 ```
 
-Se a conta de um admin tiver pegado uma das 10 vagas da promoção de lançamento, o comando devolve a vaga.
 
 ## 6. Domínio: valesolucoestec.com.br (DNS no Registro.br)
 
