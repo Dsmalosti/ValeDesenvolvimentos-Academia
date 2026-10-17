@@ -2,7 +2,7 @@
   GET /assinatura (assinatura.index) — a assinatura da conta no Vale Tec: situação, preço e como pagar.
   [back-24-assinatura] ESTE TEMPLATE NÃO VEIO DO DRIVE. Montado com as peças do front (card, chip, note, dtable).
   Adauto: revise o visual e leve para o front.
-  Contexto: s{estado, rotulo, tom, vence, dias_para_vencer, bloqueia_em, preco, preco_cheio, desconto, em_teste, fim_do_teste, pago_ate},
+  Contexto: s{estado, rotulo, tom, vence, dias_para_vencer, bloqueia_em, preco, preco_de_tabela, desconto, em_teste, fim_do_teste, pago_ate},
             pix, contato, e_dono, nome_do_dono, modelo_txt, historico[Mensalidade], dmy(), reais().
 #}
 {% extends 'base.html' %}
@@ -15,12 +15,12 @@
 <div class="stack gap-4" style="max-width:760px">
   <section class="card card--pad" aria-labelledby="h-plano">
     <div class="row-flex" style="justify-content:space-between;gap:10px;flex-wrap:wrap">
-      <div><h2 class="ctitle" id="h-plano">Vale Tec · {{ modelo_txt }}</h2><div class="csub" style="margin:0">{{ reais(s.preco) }} por mês{% if s.desconto %} <s class="faint">{{ reais(s.preco_cheio) }}</s>{% endif %}</div></div>
+      <div><h2 class="ctitle" id="h-plano">Vale Tec · {{ modelo_txt }}</h2><div class="csub" style="margin:0">{{ reais(s.preco) }} por mês{% if s.desconto %} <s class="faint">{{ reais(s.preco_de_tabela) }}</s>{% endif %}</div></div>
       <span class="chip chip--{{ s.tom }}">{{ s.rotulo }}</span>
     </div>
     <div class="stack gap-2" style="margin-top:14px;font-size:14.5px">
-      {# [back-28-precos-e-promocao] a conta está entre as 10 primeiras: paga a metade #}
-      {% if s.desconto %}<div class="note note--green">{{ icon('gift', 20) }}<span><strong>Promoção de lançamento: {{ s.desconto }}% de desconto</strong>Sua conta está entre as 10 primeiras do Vale Tec e paga {{ reais(s.preco) }} por mês em vez de {{ reais(s.preco_cheio) }}, enquanto a conta continuar ativa.</span></div>{% endif %}
+      {# [back-28-precos-e-promocao] preço de lançamento: o preço cobrado com o de tabela riscado #}
+      {% if s.desconto %}<div class="note note--green">{{ icon('gift', 20) }}<span><strong>Preço de lançamento: {{ s.desconto }}% de desconto</strong>Você paga {{ reais(s.preco) }} por mês em vez de {{ reais(s.preco_de_tabela) }}.</span></div>{% endif %}
       {% if s.estado == 'teste' %}
       <div>Teste grátis até <b>{{ dmy(s.fim_do_teste) }}</b>{% if s.dias_para_vencer > 0 %} (faltam {{ s.dias_para_vencer }} {{ 'dia' if s.dias_para_vencer == 1 else 'dias' }}){% else %} (termina hoje){% endif %}.</div>
       <div class="muted">Depois do teste, o pagamento é mensal, por PIX. Você pode pagar antes: o mês pago começa quando o teste termina.</div>
