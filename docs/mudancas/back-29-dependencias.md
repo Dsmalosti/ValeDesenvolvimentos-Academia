@@ -52,7 +52,7 @@ O segundo comando é opcional: só limpa o que não é mais usado.
 Tudo num **ambiente Python novo**, criado do zero só com o `requirements-dev.txt` desta branch e o Playwright. Assim ficou provado que o sistema sobe e funciona sem o Flask-JWT-Extended instalado.
 
 - `pytest` inteiro: **532 passaram**.
-- Os 16 testes de navegador (todas as telas, celular e desktop, temas claro e escuro): **712 conferências, todas passando**.
+- Os 16 testes de navegador (todas as telas, celular e desktop, temas claro e escuro): **672 conferências, todas passando**.
 - `pip-audit -r requirements.txt`: nenhuma falha conhecida.
 
 ## Como revisar
