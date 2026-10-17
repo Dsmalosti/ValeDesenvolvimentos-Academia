@@ -332,6 +332,14 @@ O que fazer a seguir está em `docs/ROADMAP-LANCAMENTO.md`; os detalhes de cada 
 - **Observações:** as telas novas não têm "meu perfil" (editar o próprio nome e e-mail), que a tela antiga de equipe tinha. Anotado como pendência do front.
 - **Doc:** `docs/mudancas/back-27-telas-antigas.md`
 
+## back-28-precos-e-promocao
+
+- **Sai de:** `main` (8a334eb, depois do PR #51) · **PR:** a abrir → `main` · **Data:** 17/10/2026
+- **O que mudou:** preço final igual para todas as contas (academia R$ 59,99, personal R$ 29,99), anunciado como "preço de lançamento, 50% de desconto" com o preço de tabela riscado (R$ 119,98 / R$ 59,98): criar conta, assinatura, PIX e avisos do topo. `DESCONTO_DE_LANCAMENTO = 0` desliga o anúncio. A primeira versão (50% só para as 10 primeiras contas, com coluna nova e migration) foi trocada no mesmo dia, antes do PR.
+- **Migration:** nenhuma. **Dependência nova:** nenhuma.
+- **Testes:** `pytest` 525 passando (7 em `test_precos.py`); navegador assinatura 42/42 e admin 18/18.
+- **Doc:** `docs/mudancas/back-28-precos-e-promocao.md`
+
 ## Onde parou (13/10/2026)
 
 **O roadmap original acabou.** O que falta para lançar está na seção "O que falta para lançar" do roadmap (cobrança do próprio SaaS, painel de administrador, página de apresentação, e os três pedidos novos do Adauto: front mais rápido, front mais fácil de manter e ranking de presença). D12 e D13 foram respondidas em 13/10/2026. Tudo enviado até a `back-27-telas-antigas` (PRs da `back-21` em diante a abrir): todas as telas do front ligadas (menos a central de notificações e o painel do instrutor, que não estão em nenhuma branch), segurança (`back-18`), LGPD (`back-19`) e preparação de produção com a checklist final (`back-20`). Em 11/10/2026 o Diogo juntou na `main` (PR #23, `integracao-main`) tudo até a `front-05-cobranca` e a proposta de esquema da `back-09`, com um ajuste dele em `auth/routes.py`; **os 20 PRs de `back-09-cobranca` a `back-20-producao` estão abertos desde 13/10/2026**, com o título numerado de `[01/20]` a `[20/20]`: #22 (01), #25 a #38 (02 a 15), #24 (16) e #39 a #42 (17 a 20). Cada um aponta para a branch anterior. **Dois ajustes ficaram para o Adauto fazer à mão no GitHub** (a ferramenta não deixou o Claude alterar PR que já existia): no #22, trocar a base de `front-05-cobranca` para `main` e o título para `[01/20] back-09: cobrança, renovação, diária avulsa e extrato`; no #24, trocar a base de `main` para `back-16-mensagens`. A junção da `back-20` com a `main` atual foi simulada: sem conflito, testes passando. O banco local do Adauto está em `b08c3d4e5f60`: **falta rodar `b09` a `b19`** e instalar as dependências da `back-18` (`pip install -r requirements.txt`): pedir o OK dele, backup antes, avisar da inatividade automática da `b12`. Enquanto isso a pasta do projeto fica em `back-08-planos`, que é onde o banco dele está.

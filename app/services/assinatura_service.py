@@ -3,7 +3,9 @@
 
 Decisões do Adauto (14/10/2026):
   - teste grátis de 2 meses a partir da criação da conta; depois, pago;
-  - preço do lançamento (falta o Diogo confirmar): academia R$ 49,99 e personal R$ 24,99 por mês;
+  - preço FINAL: academia R$ 59,99 e personal R$ 29,99 por mês, para todas as contas (Adauto e Diogo, 17/10/2026;
+    antes: 49,99 e 24,99). Ele é mostrado como "preço de lançamento, 50% de desconto" sobre o preço de tabela
+    (R$ 119,98 e R$ 59,98), sem data para acabar. Se um dia acabar, os termos pedem aviso com 30 dias;
   - pagamento por PIX; a confirmação é manual (painel de administração ou `flask assinatura-paga`);
   - sem pagar, a conta é bloqueada 7 dias depois do vencimento, sozinha, e a tela diz por quê e mostra
     o código para pagar;
@@ -27,7 +29,12 @@ from app.helpers.datas import somar_meses
 from app.helpers.pix import copia_e_cola
 from app.models import CONTA_PERSONAL, MESES_DE_TESTE_GRATIS, PAPEL_PROPRIETARIO, Mensalidade, User
 
-PRECOS = {'academia': Decimal('49.99'), CONTA_PERSONAL: Decimal('24.99')}   # por mês; o Diogo ainda confirma
+# [back-28-precos-e-promocao] antes: 49.99 e 24.99 (preço provisório). É o que se COBRA por mês, igual para todas as contas.
+PRECOS = {'academia': Decimal('59.99'), CONTA_PERSONAL: Decimal('29.99')}
+# [back-28-precos-e-promocao] preço de tabela, só para mostrar riscado ("de R$ 119,98 por R$ 59,99"). Para deixar de mostrar o desconto,
+# ponha DESCONTO_DE_LANCAMENTO = 0: as telas param de mostrar o preço riscado e o aviso de desconto.
+PRECOS_DE_TABELA = {'academia': Decimal('119.98'), CONTA_PERSONAL: Decimal('59.98')}
+DESCONTO_DE_LANCAMENTO = 50      # % (é o que as telas escrevem; o preço cobrado é o de PRECOS)
 DIAS_DE_AVISO = 7                 # o aviso amarelo aparece quando faltam menos que isso para vencer
 DIAS_DE_TOLERANCIA = 7            # depois do vencimento, ainda funciona por estes dias (com aviso vermelho)
 DIAS_GUARDANDO_OS_DADOS = 30      # depois do bloqueio, os dados ficam guardados por este tempo
@@ -46,8 +53,16 @@ def _reais(valor):
 
 
 def preco(conta):
-    """Quanto a conta paga por mês."""
+    """Quanto a conta paga por mês (o preço COM o desconto de lançamento, que é o que se cobra)."""
     return PRECOS.get(conta.modelo, PRECOS['academia'])
+
+
+def preco_de_tabela(conta):
+    """
+    [back-28-precos-e-promocao] O preço "de", sem o desconto de lançamento: só aparece riscado ao lado do preço, para mostrar o desconto.
+    Ninguém paga este valor enquanto o desconto existir.
+    """
+    return PRECOS_DE_TABELA.get(conta.modelo, PRECOS_DE_TABELA['academia'])
 
 
 def fim_do_teste(conta):
@@ -85,7 +100,8 @@ def situacao(conta, hoje=None):
     return {'estado': estado, 'rotulo': ROTULOS[estado], 'tom': TONS[estado], 'vence': vence,
             'dias_para_vencer': (vence - hoje).days, 'dias_vencida': max(0, (hoje - vence).days),
             'bloqueia_em': bloqueia_em, 'guardar_ate': bloqueia_em + timedelta(days=DIAS_GUARDANDO_OS_DADOS),
-            'preco': preco(conta), 'em_teste': em_teste, 'fim_do_teste': fim, 'pago_ate': conta.pago_ate,
+            'preco': preco(conta), 'preco_de_tabela': preco_de_tabela(conta), 'desconto': DESCONTO_DE_LANCAMENTO,  # [back-28-precos-e-promocao]
+            'em_teste': em_teste, 'fim_do_teste': fim, 'pago_ate': conta.pago_ate,
             'manual': manual, 'motivo': conta.bloqueio_motivo or ''}
 
 
@@ -110,9 +126,14 @@ def aviso_do_topo(conta, papel, hoje=None):
     quando = 'hoje' if s['dias_para_vencer'] == 0 else ('amanhã' if s['dias_para_vencer'] == 1 else f"em {s['dias_para_vencer']} dias")
     if s['estado'] == TESTE:
         return {'tom': 'yellow', 'titulo': f"Seu teste grátis termina {quando} ({_dmy(s['vence'])})",
-                'texto': f"Depois dele, o Vale Tec custa {_reais(s['preco'])} por mês, pago por PIX.", 'link': True}
+                'texto': f"Depois dele, o Vale Tec custa {_reais(s['preco'])} por mês, pago por PIX." + _com_promocao(s), 'link': True}
     return {'tom': 'yellow', 'titulo': f"Sua mensalidade vence {quando} ({_dmy(s['vence'])})",
-            'texto': f"Valor: {_reais(s['preco'])}, por PIX.", 'link': True}
+            'texto': f"Valor: {_reais(s['preco'])}, por PIX." + _com_promocao(s), 'link': True}
+
+
+def _com_promocao(s):
+    """[back-28-precos-e-promocao] o pedacinho de texto que lembra o desconto, nos avisos do topo."""
+    return f" Preço de lançamento, com {s['desconto']}% de desconto." if s['desconto'] else ''
 
 
 def codigo_pix(conta):

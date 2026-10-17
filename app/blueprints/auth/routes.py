@@ -154,11 +154,23 @@ def criar_conta():
     if request.method == 'POST':
         valores, erros = acesso.validar_conta_nova(request.form)
         if erros:
-            return render_template('auth/criar_conta.html', erros=erros, f=valores), 400
+            return render_template('auth/criar_conta.html', erros=erros, f=valores, promo=_promocao()), 400
         _entrar(acesso.criar_conta(valores, request.form.get('senha')))
         flash('Conta criada. Bem-vindo ao Vale Tec! Complete os dados da academia em Configurações.', 'success')
         return redirect(url_for('painel.index'))
-    return render_template('auth/criar_conta.html', f={}, erros={})
+    return render_template('auth/criar_conta.html', f={}, erros={}, promo=_promocao())   # [back-28-precos-e-promocao] antes: sem promo
+
+
+def _promocao():
+    """[back-28-precos-e-promocao] O aviso do preço de lançamento na tela de criar conta: preço cobrado e preço de tabela (riscado)."""
+    from app.models import CONTA_PERSONAL
+    from app.services import assinatura_service as a
+    if not a.DESCONTO_DE_LANCAMENTO:
+        return None
+    reais = lambda valor: a._reais(valor).replace(' ', '\u00a0')       # "R$" e o número sempre na mesma linha (espaço que não quebra)
+    return {'desconto': a.DESCONTO_DE_LANCAMENTO,
+            'academia': reais(a.PRECOS['academia']), 'academia_tabela': reais(a.PRECOS_DE_TABELA['academia']),
+            'personal': reais(a.PRECOS[CONTA_PERSONAL]), 'personal_tabela': reais(a.PRECOS_DE_TABELA[CONTA_PERSONAL])}
 
 
 @auth_blueprint.route('/convite/<token>', methods=['GET', 'POST'])

@@ -70,7 +70,7 @@ def test_conta_nova_nasce_com_dois_meses_de_teste(app, academia):
     assert da_conta(academia["conta"], "teste_ate") == somar_meses(HOJE, 2) and da_conta(academia["conta"], "pago_ate") is None
     dono = como(app, academia["dono"])
     html = dono.get("/assinatura").get_data(as_text=True)
-    assert "Teste grátis até" in html and somar_meses(HOJE, 2).strftime("%d/%m/%Y") in html and "R$ 49,99 por mês" in html
+    assert "Teste grátis até" in html and somar_meses(HOJE, 2).strftime("%d/%m/%Y") in html and "R$ 59,99 por mês" in html
     assert "Seu teste grátis termina" not in dono.get("/").get_data(as_text=True)           # longe do fim: sem aviso no topo
 
 
@@ -125,12 +125,12 @@ def test_codigo_pix_aparece_com_a_chave_configurada(app, academia):
 
     app.config["VALE_TEC_PIX_CHAVE"] = "60499733000144"
     html = dono.get("/assinatura").get_data(as_text=True)
-    assert 'id="pix-codigo"' in html and "011460499733000144" in html and "540549.99" in html and "data-copiar=" in html
+    assert 'id="pix-codigo"' in html and "011460499733000144" in html and "540559.99" in html and "data-copiar=" in html
     assert "pix-codigo" not in como(app, academia["recepcao"]).get("/assinatura").get_data(as_text=True)        # quem paga é o dono
 
     personal = criar_personal()
     tela = como(app, personal).get("/assinatura").get_data(as_text=True)
-    assert "Personal Trainer" in tela and "R$ 24,99 por mês" in tela and "540524.99" in tela
+    assert "Personal Trainer" in tela and "R$ 29,99 por mês" in tela and "540529.99" in tela
 
 
 # ------------------------------------------------------------------ pagamento
@@ -140,12 +140,12 @@ def test_pagar_em_dia_continua_do_vencimento(app, academia):
     with conftest._APP.app_context():
         conta = db.session.get(Conta, academia["conta"])
         registro = assinatura_service.registrar_pagamento(conta)
-        assert (registro.periodo_inicio, registro.periodo_fim, registro.valor) == (fim + DIA, somar_meses(fim, 1), Decimal("49.99"))
+        assert (registro.periodo_inicio, registro.periodo_fim, registro.valor) == (fim + DIA, somar_meses(fim, 1), Decimal("59.99"))
         assert conta.pago_ate == somar_meses(fim, 1) and assinatura_service.situacao(conta)["estado"] == "em_dia"
         with pytest.raises(ValueError):
             assinatura_service.registrar_pagamento(conta, meses=0)
     html = como(app, academia["dono"]).get("/assinatura").get_data(as_text=True)
-    assert "Pago até" in html and "Pagamentos confirmados" in html and "R$ 49,99" in html
+    assert "Pago até" in html and "Pagamentos confirmados" in html and "R$ 59,99" in html
 
 
 def test_pagar_depois_do_bloqueio_comeca_no_dia_do_pagamento_e_libera(app, academia):
